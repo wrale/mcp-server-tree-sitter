@@ -37,11 +37,66 @@ pip install -e ".[dev,languages]"
 
 ### Running with Claude Desktop
 
+You can make the server available in Claude Desktop either through the MCP CLI or by manually configuring Claude Desktop.
+
+#### Using MCP CLI
+
 Register the server with Claude Desktop:
 
 ```bash
 mcp install mcp_server_tree_sitter.server:mcp --name "Code Explorer"
 ```
+
+#### Manual Configuration
+
+Alternatively, you can manually configure Claude Desktop:
+
+1. Open your Claude Desktop configuration file:
+   - macOS/Linux: `~/Library/Application Support/Claude/claude_desktop_config.json`
+   - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+   
+   Create the file if it doesn't exist.
+
+2. Add the server to the `mcpServers` section:
+
+   ```json
+   {
+       "mcpServers": {
+           "Code Explorer": {
+               "command": "python",
+               "args": [
+                   "-m",
+                   "mcp_server_tree_sitter.server"
+               ]
+           }
+       }
+   }
+   ```
+
+   Alternatively, if using uv or another package manager:
+
+   ```json
+   {
+       "mcpServers": {
+           "Code Explorer": {
+               "command": "uv",
+               "args": [
+                   "--directory",
+                   "/ABSOLUTE/PATH/TO/YOUR/PROJECT",
+                   "run",
+                   "-m",
+                   "mcp_server_tree_sitter.server"
+               ]
+           }
+       }
+   }
+   ```
+
+   Note: Make sure to replace `/ABSOLUTE/PATH/TO/YOUR/PROJECT` with the actual absolute path to your project directory.
+
+3. Save the file and restart Claude Desktop.
+
+The MCP tools icon (hammer) will appear in Claude Desktop's interface once you have properly configured at least one MCP server. You can then access the Code Explorer's functionality by clicking on this icon.
 
 ### Running as a standalone server
 
