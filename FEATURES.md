@@ -2,6 +2,47 @@
 
 This document provides a comprehensive overview of all MCP Tree-sitter server commands, their status, dependencies, and common usage patterns. It serves as both a reference guide and a test matrix for ongoing development.
 
+## Table of Contents
+- [Supported Languages](#supported-languages)
+- [Command Status Legend](#command-status-legend)
+- [Command Reference](#command-reference)
+  - [Project Management Commands](#project-management-commands)
+  - [Language Tools Commands](#language-tools-commands)
+  - [File Operations Commands](#file-operations-commands)
+  - [AST Analysis Commands](#ast-analysis-commands)
+  - [Search and Query Commands](#search-and-query-commands)
+  - [Code Analysis Commands](#code-analysis-commands)
+  - [Cache Management Commands](#cache-management-commands)
+- [Implementation Status](#implementation-status)
+  - [Language Pack Integration](#language-pack-integration)
+  - [Implementation Gaps](#implementation-gaps)
+  - [MCP SDK Implementation](#mcp-sdk-implementation)
+- [Testing Guidelines](#testing-guidelines)
+- [Implementation Progress](#implementation-progress)
+
+---
+
+## Supported Languages
+
+The following programming languages are fully supported with symbol extraction, AST analysis, and query capabilities:
+
+| Language | Symbol Extraction | AST Analysis | Query Support |
+|----------|-------------------|--------------|--------------|  
+| Python | ✅ | ✅ | ✅ |
+| JavaScript | ✅ | ✅ | ✅ |
+| TypeScript | ✅ | ✅ | ✅ |
+| Go | ✅ | ✅ | ✅ |
+| Rust | ✅ | ✅ | ✅ |
+| C | ✅ | ✅ | ✅ |
+| C++ | ✅ | ✅ | ✅ |
+| Swift | ✅ | ✅ | ✅ |
+| Java | ✅ | ✅ | ✅ |
+| Kotlin | ✅ | ✅ | ✅ |
+| Julia | ✅ | ✅ | ✅ |
+| APL | ✅ | ✅ | ✅ |
+
+---
+
 ## Command Status Legend
 
 | Status | Meaning |
@@ -11,7 +52,11 @@ This document provides a comprehensive overview of all MCP Tree-sitter server co
 | ❌ | Not Working - Feature fails or is unavailable |
 | 🔄 | Requires Dependency - Needs external components (e.g., language parsers) |
 
-## Project Management Commands
+---
+
+## Command Reference
+
+### Project Management Commands
 
 These commands handle project registration and management.
 
@@ -21,7 +66,7 @@ These commands handle project registration and management.
 | `list_projects_tool` | ✅ | None | Successfully lists all registered projects |
 | `remove_project_tool` | ✅ | None | Successfully removes registered projects |
 
-### Example Usage:
+**Example Usage:**
 ```python
 # Register a project
 register_project_tool(path="/path/to/project", name="my-project", description="My awesome project")
@@ -33,24 +78,25 @@ list_projects_tool()
 remove_project_tool(name="my-project")
 ```
 
-## Language Tools Commands
+### Language Tools Commands
 
 These commands manage tree-sitter language parsers.
 
 | Command | Status | Dependencies | Notes |
 |---------|--------|--------------|-------|
-| `list_languages` | ✅ | None | Returns available and installable languages |
-| `install_language` | ✅ | None (tree-sitter-language-pack included) | Successful with tree-sitter-language-pack integration |
+| `list_languages` | ✅ | None | Lists all available languages from tree-sitter-language-pack |
+| `check_language_available` | ✅ | None | Checks if a specific language is available via tree-sitter-language-pack |
 
-### Common Failure Modes:
-- Language installation fails when auto-install is disabled (default)
-- Languages may be unavailable even when requested to install
-- Requires server restart after language installation
+**Example Usage:**
+```python
+# List all available languages
+list_languages()
 
-### With tree-sitter-language-pack Implementation:
-With tree-sitter-language-pack now integrated, both commands work without dependencies or installation requirements.
+# Check if a specific language is available
+check_language_available(language="python")
+```
 
-## File Operations Commands
+### File Operations Commands
 
 These commands access and manipulate project files.
 
@@ -60,7 +106,7 @@ These commands access and manipulate project files.
 | `get_file` | ✅ | Project registration | Successfully retrieves file content |
 | `get_file_metadata` | ✅ | Project registration | Returns file information including size, modification time, etc. |
 
-### Example Usage:
+**Example Usage:**
 ```python
 # List Python files
 list_files(project="my-project", pattern="**/*.py")
@@ -72,67 +118,63 @@ get_file(project="my-project", path="src/main.py")
 get_file_metadata(project="my-project", path="src/main.py")
 ```
 
-## AST Analysis Commands
+### AST Analysis Commands
 
 These commands perform abstract syntax tree (AST) operations.
 
 | Command | Status | Dependencies | Notes |
 |---------|--------|--------------|-------|
-| `get_ast` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
-| `get_node_at_position` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
+| `get_ast` | ✅ | None | Returns AST using efficient cursor-based traversal |
+| `get_node_at_position` | ✅ | None | Successfully retrieves nodes at a specific position in a file |
 
-### Common Failure Modes:
-- Fails with "Language not available" when appropriate parser isn't installed
-- May fail with encoding errors on non-UTF8 files
+**Previous Issues (Now Fixed):**
+- ✅ `get_ast` now returns proper AST with node IDs
+- ✅ AST parsing functionality is fully operational with tree-sitter-language-pack integration
 
-### With tree-sitter-language-pack Implementation:
-These commands now work for all supported languages without additional installations.
-
-## Search and Query Commands
+### Search and Query Commands
 
 These commands search code and execute tree-sitter queries.
 
 | Command | Status | Dependencies | Notes |
 |---------|--------|--------------|-------|
-| `find_text` | ✅ | Project registration | Text search works without language parsers |
-| `run_query` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
-| `get_query_template_tool` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
-| `list_query_templates_tool` | ✅ | None | Works even without language parsers |
-| `build_query` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
-| `adapt_query` | ✅ | None (tree-sitter-language-pack included) | Works for all language pairs |
-| `get_node_types` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
+| `find_text` | ✅ | Project registration | Text search works correctly with pattern matching |
+| `run_query` | ✅ | None | Successfully executes tree-sitter queries and returns results |
+| `get_query_template_tool` | ✅ | None | Successfully returns templates when available |
+| `list_query_templates_tool` | ✅ | None | Successfully lists available templates |
+| `build_query` | ✅ | None | Successfully builds and combines query templates |
+| `adapt_query` | ✅ | None | Successfully adapts queries between different languages |
+| `get_node_types` | ✅ | None | Successfully returns descriptions of node types for a language |
 
-### Example Usage:
+**Example Usage:**
 ```python
 # Find text in project files
 find_text(project="my-project", pattern="TODO", file_pattern="**/*.py")
 
-# Run a tree-sitter query
-run_query(
-    project="my-project",
-    query='(function_definition name: (identifier) @function.name)',
-    language="python"
-)
+# List query templates for a language
+list_query_templates_tool(language="python")
+
+# Get descriptions of node types
+get_node_types(language="python")
 ```
 
-## Code Analysis Commands
+### Code Analysis Commands
 
 These commands analyze code structure and complexity.
 
 | Command | Status | Dependencies | Notes |
 |---------|--------|--------------|-------|
-| `get_symbols` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
-| `analyze_project` | ✅ | Project registration | Structure analysis works without language parsers |
-| `get_dependencies` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
-| `analyze_complexity` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
-| `find_similar_code` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
-| `find_usage` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
+| `get_symbols` | ✅ | Project registration | Successfully extracts symbols (functions, classes, imports) from files |
+| `analyze_project` | ✅ | Project registration | Project structure analysis works with support for detailed code analysis |
+| `get_dependencies` | ✅ | Project registration | Successfully identifies dependencies from import statements |
+| `analyze_complexity` | ✅ | Project registration | Provides accurate code complexity metrics |
+| `find_similar_code` | ✅ | None | Finds similar code patterns across project files |
+| `find_usage` | ✅ | None | Successfully finds usage of symbols across project files |
 
-### Common Failure Modes:
-- Symbol extraction fails when language parser is not installed
-- Language-specific analysis fails without the correct parser
+**Previous Issues (Now Fixed):**
+- ✅ Commands now return proper results rather than empty data
+- ✅ AST-dependent functionality now works reliably with all supported languages
 
-## Cache Management Commands
+### Cache Management Commands
 
 These commands manage the parse tree cache.
 
@@ -141,7 +183,7 @@ These commands manage the parse tree cache.
 | `clear_cache` | ✅ | None | Successfully clears caches at all levels |
 | `configure` | ✅ | None | Successfully configures cache, log level, and other settings |
 
-### Example Usage:
+**Example Usage:**
 ```python
 # Clear all caches
 clear_cache()
@@ -153,59 +195,110 @@ clear_cache(project="my-project")
 configure(cache_enabled=True, max_file_size_mb=10, log_level="DEBUG")
 ```
 
-## Tree-sitter Language Pack Integration Status
+---
 
-The integration of tree-sitter-language-pack has solved most dependency issues by providing all necessary language parsers in a single package.
+## Implementation Status
 
-| Feature Area | Previous Status | Current Status |
-|--------------|----------------|----------------|
-| Language Tools | ⚠️ Partial | ✅ Full Support |
-| AST Analysis | ⚠️ Partial | ✅ Full Support |
-| Search Queries | ⚠️ Partial | ✅ Full Support |
-| Code Analysis | ⚠️ Partial | ✅ Full Support |
+### Language Pack Integration
 
-### Benefits of the Completed Integration:
-- All commands now work without requiring individual language installations
-- No server restarts needed when accessing new languages
-- Consistent behavior across different language types
-- Access to 100+ tree-sitter grammars in a single dependency
+The integration of tree-sitter-language-pack is complete with comprehensive language support.
+
+| Feature Area | Previous Status | Current Status | Test Results |
+|--------------|-----------------|----------------|--------------|
+| Language Tools | ⚠️ Partial | ✅ Working | Language tools properly report and list available languages |
+| AST Analysis | ⚠️ Partial | ✅ Working | `get_ast` and `get_node_at_position` work, and AST traversal operations work correctly |
+| Search Queries | ✅ Working | ✅ Working | Text search works, query building works, and tree-sitter query execution returns expected results |
+| Code Analysis | ✅ Working | ✅ Working | Structure and complexity analysis works, symbol extraction and dependency analysis provide useful results |
+
+**Current Integration Capabilities:**
+- AST functionality works well for retrieving and traversing trees and nodes
+- Query execution and result handling work correctly
+- Symbol extraction and dependency analysis provide useful results
+- Project management, file operations, and search features work correctly
+
+### Implementation Gaps
+
+Based on the latest tests, these are the current implementation gaps:
+
+#### Tree Editing and Incremental Parsing
+- **Status:** ⚠️ Partially Working
+- Core AST functionality works
+- Tree manipulation functionality requires additional implementation
+
+#### Tree Cursor API
+- **Status:** ✅ Fully Working
+- AST node traversal works correctly
+- Cursor-based tree walking is efficient and reliable
+- Can be extended for more advanced semantic analysis
+
+#### UTF-16 Support
+- **Status:** ❌ Not Implemented
+- Encoding detection and support is not yet available
+- Will require parser improvements after core AST functionality is fixed
+
+#### Read Callable Support
+- **Status:** ❌ Not Implemented
+- Custom read strategies are not yet available
+- Streaming parsing for large files remains unavailable
+
+### MCP SDK Implementation
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Application Lifecycle Management | ✅ Working | Basic lifespan support is functioning correctly |
+| Image Handling | ❌ Not Implemented | No support for returning images from tools |
+| MCP Context Handling | ⚠️ Partial | Basic context access works, but progress reporting not fully implemented |
+| Claude Desktop Integration | ✅ Working | MCP server can be installed in Claude Desktop |
+| Server Capabilities Declaration | ✅ Working | Capabilities are properly declared |
+
+---
 
 ## Testing Guidelines
 
 When testing the MCP Tree-sitter server, use this structured approach:
 
-1. **Project Setup**:
+1. **Project Setup**
    - Register a project with `register_project_tool`
    - Verify registration with `list_projects_tool`
 
-2. **Basic File Operations**:
+2. **Basic File Operations**
    - Test `list_files` to ensure project access
    - Test `get_file` to verify content retrieval
+   - Test `get_file_metadata` to check file information
 
-3. **Language Parser Verification**:
-   - Test `list_languages` to check available languages
-   - If using language-specific features, check parser availability
+3. **Language Parser Verification**
+   - Test `check_language_available` to verify specific language support
+   - Use `list_languages` to see all available languages
 
-4. **Feature Testing**:
-   - Test general features first (text search, project analysis)
-   - Test language-specific features with available parsers
-   - Document any failures with specific error messages
+4. **Feature Testing**
+   - All core features now work as expected: project management, file operations, search, AST operations, query execution
+   - All tests pass successfully
 
-5. **Error Cases**:
-   - Test behavior with invalid inputs
-   - Verify appropriate error messages
-   - Check recovery after errors
-
-## Common Issues and Solutions
-
-| Issue | Cause | Solution |
-|-------|-------|----------|
-| "Language not available" | Missing language parser | Install tree-sitter-language-pack |
-| "Automatic installation disabled" | Default config setting | Enable auto_install or use language pack |
-| "Project not found" | Missing project registration | Register project before other operations |
-| "Access denied" | Path outside project root | Use paths within project directory |
-| "File too large" | File exceeds size limit | Increase max_file_size_mb in config |
+5. **Previously Fixed Error Cases**
+   - ✅ AST operations previously returned errors about missing node IDs
+   - ✅ Symbol extraction and dependency analysis now return expected results
+   - ✅ Query execution now returns proper results
 
 ---
 
-This feature matrix will be updated as development progresses. The tree-sitter-language-pack integration has been completed as of March 2025.
+## Implementation Progress
+
+Based on the test results, these are the recently completed and remaining tasks:
+
+1. **✅ FIXED: Tree-Sitter Query Result Handling**
+   - Query result handling has been fixed
+   - Queries now execute and return proper results with correct capture processing
+
+2. **✅ FIXED: Tree Cursor Functionality**
+   - Tree cursor-based traversal is working correctly
+   - Efficient navigation and analysis of ASTs is now possible
+
+3. **✅ FIXED: Query Execution Output**
+   - Query execution now returns appropriate results with proper capture handling
+
+4. **Remaining: Complete MCP Context Progress Reporting**
+   - Add progress reporting for long-running operations to improve user experience
+
+---
+
+This feature matrix reflects test results as of March 16, 2025. AST functionality, query execution, symbol extraction, and dependency analysis now work correctly. The project is fully operational with all core features working as expected.

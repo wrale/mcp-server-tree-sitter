@@ -120,9 +120,7 @@ class ProjectRegistry:
                 cls._instance._instance_lock = threading.Lock()
             return cls._instance
 
-    def register_project(
-        self, name: str, path: str, description: Optional[str] = None
-    ) -> Project:
+    def register_project(self, name: str, path: str, description: Optional[str] = None) -> Project:
         """
         Register a new project.
 

@@ -129,9 +129,7 @@ class MCPContext:
                 logger.warning(f"Failed to send error message: {e}")
 
     @contextmanager
-    def progress_scope(
-        self, total: int, description: str
-    ) -> Generator[ProgressScope, None, None]:
+    def progress_scope(self, total: int, description: str) -> Generator[ProgressScope, None, None]:
         """
         Context manager for tracking progress of an operation.
 

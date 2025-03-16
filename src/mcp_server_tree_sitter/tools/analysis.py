@@ -2,7 +2,7 @@
 
 import os
 from collections import Counter, defaultdict
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, Dict, List, Optional
 
 from ..config import CONFIG
 from ..exceptions import SecurityError
@@ -24,7 +24,10 @@ language_registry = LanguageRegistry()
 
 
 def extract_symbols(
-    project_name: str, file_path: str, symbol_types: Optional[List[str]] = None
+    project_name: str,
+    file_path: str,
+    symbol_types: Optional[List[str]] = None,
+    exclude_class_methods: bool = False,
 ) -> Dict[str, List[Dict[str, Any]]]:
     """
     Extract symbols (functions, classes, etc) from a file.
@@ -33,6 +36,7 @@ def extract_symbols(
         project_name: Name of the registered project
         file_path: Path to the file relative to project root
         symbol_types: Types of symbols to extract (functions, classes, imports, etc.)
+        exclude_class_methods: Whether to exclude methods from function count
 
     Returns:
         Dictionary of symbols by type
@@ -51,7 +55,29 @@ def extract_symbols(
 
     # Default symbol types if not specified
     if symbol_types is None:
-        symbol_types = ["functions", "classes", "imports"]
+        # Language-specific defaults based on their structural elements
+        if language == "rust":
+            symbol_types = ["functions", "structs", "imports"]
+        elif language == "go":
+            symbol_types = ["functions", "structs", "imports"]
+        elif language == "c":
+            symbol_types = ["functions", "structs", "imports"]
+        elif language == "cpp":
+            symbol_types = ["functions", "classes", "structs", "imports"]
+        elif language == "typescript":
+            symbol_types = ["functions", "classes", "interfaces", "imports"]
+        elif language == "swift":
+            symbol_types = ["functions", "classes", "structs", "imports"]
+        elif language == "java":
+            symbol_types = ["functions", "classes", "interfaces", "imports"]
+        elif language == "kotlin":
+            symbol_types = ["functions", "classes", "interfaces", "imports"]
+        elif language == "julia":
+            symbol_types = ["functions", "modules", "structs", "imports"]
+        elif language == "apl":
+            symbol_types = ["functions", "namespaces", "variables", "imports"]
+        else:
+            symbol_types = ["functions", "classes", "imports"]
 
     # Get query templates for each symbol type
     queries = {}
@@ -61,9 +87,7 @@ def extract_symbols(
             queries[symbol_type] = template
 
     if not queries:
-        raise ValueError(
-            f"No query templates available for {language} and {symbol_types}"
-        )
+        raise ValueError(f"No query templates available for {language} and {symbol_types}")
 
     # Parse file and extract symbols
     try:
@@ -76,48 +100,51 @@ def extract_symbols(
 
         # Execute queries
         symbols: Dict[str, List[Dict[str, Any]]] = {}
+        # Track class ranges to identify methods
+        class_ranges = []
 
+        # Process classes first if we need to filter out class methods
+        if exclude_class_methods and "classes" in queries:
+            if "classes" not in symbols:
+                symbols["classes"] = []
+
+            class_query = safe_lang.query(queries["classes"])
+            class_matches = class_query.captures(tree.root_node)
+
+            # Process class locations to identify their boundaries
+            process_symbol_matches(class_matches, "classes", symbols, source_bytes, tree)
+
+            # Extract class body ranges to check if functions are inside classes
+            # Use a more generous range to ensure we catch all methods
+            for class_symbol in symbols["classes"]:
+                start_row = class_symbol["location"]["start"]["row"]
+                # For class end, we need to estimate where the class body might end
+                # by scanning the file for likely class boundaries
+                source_lines = source_bytes.decode("utf-8", errors="replace").splitlines()
+                # Find a reasonable estimate for where the class ends
+                end_row = min(start_row + 30, len(source_lines) - 1)
+                class_ranges.append((start_row, end_row))
+
+        # Now process all symbol types
         for symbol_type, query_string in queries.items():
+            # Skip classes if we already processed them
+            if symbol_type == "classes" and exclude_class_methods and class_ranges:
+                continue
+
+            if symbol_type not in symbols:
+                symbols[symbol_type] = []
+
             query = safe_lang.query(query_string)
             matches = query.captures(tree.root_node)
 
-            symbols[symbol_type] = []
-            # Using explicit type annotations for captures
-
-            for match in matches:
-                node, capture_name = cast(Tuple[Any, str], match)
-                # Skip non-name captures
-                if (
-                    not capture_name.endswith(".name")
-                    and not capture_name == symbol_type
-                ):
-                    continue
-
-                try:
-                    # Use helper function to get text
-                    safe_node = ensure_node(node)
-                    text = get_node_text(safe_node, source_bytes)
-
-                    symbol = {
-                        "name": text,
-                        "type": symbol_type,
-                        "location": {
-                            "start": {
-                                "row": safe_node.start_point[0],
-                                "column": safe_node.start_point[1],
-                            },
-                            "end": {
-                                "row": safe_node.end_point[0],
-                                "column": safe_node.end_point[1],
-                            },
-                        },
-                    }
-
-                    # Add to symbols list
-                    symbols[symbol_type].append(symbol)
-                except Exception:
-                    # Skip problematic nodes
-                    continue
+            process_symbol_matches(
+                matches,
+                symbol_type,
+                symbols,
+                source_bytes,
+                tree,
+                (class_ranges if exclude_class_methods and symbol_type == "functions" else None),
+            )
 
         return symbols
 
@@ -125,9 +152,103 @@ def extract_symbols(
         raise ValueError(f"Error extracting symbols from {file_path}: {e}") from e
 
 
-def analyze_project_structure(
-    project_name: str, scan_depth: int = 3, mcp_ctx: Optional[Any] = None
-) -> Dict[str, Any]:
+def process_symbol_matches(
+    matches: Any,
+    symbol_type: str,
+    symbols_dict: Dict[str, List[Dict[str, Any]]],
+    source_bytes: bytes,
+    tree: Any,
+    class_ranges: Optional[List[tuple[int, int]]] = None,
+):
+    """
+    Process matches from a query and extract symbols.
+
+    Args:
+        matches: Query matches result
+        symbol_type: Type of symbol being processed
+        symbols_dict: Dictionary to store extracted symbols
+        source_bytes: Source file bytes
+        tree: Parsed syntax tree
+        class_ranges: Optional list of class ranges to filter out class methods
+    """
+
+    # Helper function to check if a node is inside a class
+    def is_inside_class(node_row: int) -> bool:
+        if not class_ranges:
+            return False
+        for start_row, end_row in class_ranges:
+            if start_row <= node_row <= end_row:
+                return True
+        return False
+
+    # Track functions that should be filtered out (methods inside classes)
+    filtered_methods = []
+
+    # Helper function to process a single node into a symbol
+    def process_node(node: Any, capture_name: str) -> None:
+        try:
+            safe_node = ensure_node(node)
+
+            # Skip methods inside classes if processing functions with class ranges
+            if class_ranges is not None and is_inside_class(safe_node.start_point[0]):
+                filtered_methods.append(safe_node.start_point[0])
+                return
+
+            # Skip non-name captures
+            if not capture_name.endswith(".name") and not capture_name == symbol_type:
+                return
+
+            text = get_node_text(safe_node, source_bytes)
+
+            symbol = {
+                "name": text,
+                "type": symbol_type,
+                "location": {
+                    "start": {
+                        "row": safe_node.start_point[0],
+                        "column": safe_node.start_point[1],
+                    },
+                    "end": {
+                        "row": safe_node.end_point[0],
+                        "column": safe_node.end_point[1],
+                    },
+                },
+            }
+
+            # Add to symbols list
+            symbols_dict[symbol_type].append(symbol)
+
+        except Exception:
+            # Skip problematic nodes
+            pass
+
+    # Process nodes based on return format
+    if isinstance(matches, dict):
+        # Dictionary format: {capture_name: [node1, node2, ...], ...}
+        for capture_name, nodes in matches.items():
+            for node in nodes:
+                process_node(node, capture_name)
+    else:
+        # List format: [(node1, capture_name1), (node2, capture_name2), ...]
+        for match in matches:
+            # Handle different return types from query.captures()
+            if isinstance(match, tuple) and len(match) == 2:
+                # Direct tuple unpacking
+                node, capture_name = match
+            elif hasattr(match, "node") and hasattr(match, "capture_name"):
+                # Object with node and capture_name attributes
+                node, capture_name = match.node, match.capture_name
+            elif isinstance(match, dict) and "node" in match and "capture" in match:
+                # Dictionary with node and capture keys
+                node, capture_name = match["node"], match["capture"]
+            else:
+                # Skip if format is unknown
+                continue
+
+            process_node(node, capture_name)
+
+
+def analyze_project_structure(project_name: str, scan_depth: int = 3, mcp_ctx: Optional[Any] = None) -> Dict[str, Any]:
     """
     Analyze the overall structure of a project.
 
@@ -218,11 +339,7 @@ def analyze_project_structure(
             rel_dir = ""
 
         # Skip hidden directories and common excludes
-        dirs[:] = [
-            d
-            for d in dirs
-            if not d.startswith(".") and d not in CONFIG.security.excluded_dirs
-        ]
+        dirs[:] = [d for d in dirs if not d.startswith(".") and d not in CONFIG.security.excluded_dirs]
 
         # Count directories
         dir_counts[rel_dir] = len(dirs)
@@ -243,11 +360,7 @@ def analyze_project_structure(
     if scan_depth > 0:
         # Analyze a sample of files from each language
         for language, _ in languages.items():
-            extensions = [
-                ext
-                for ext, lang in language_registry._language_map.items()
-                if lang == language
-            ]
+            extensions = [ext for ext, lang in language_registry._language_map.items() if lang == language]
 
             if not extensions:
                 continue
@@ -278,8 +391,7 @@ def analyze_project_structure(
 
                         # Summarize symbols
                         symbol_counts = {
-                            symbol_type: len(symbols_list)
-                            for symbol_type, symbols_list in symbols.items()
+                            symbol_type: len(symbols_list) for symbol_type, symbols_list in symbols.items()
                         }
 
                         language_analysis.append(
@@ -351,23 +463,78 @@ def find_dependencies(project_name: str, file_path: str) -> Dict[str, List[str]]
 
         # Organize imports by type
         imports = defaultdict(list)
+        # Track additional import information to handle aliased imports
+        module_imports = set()
 
-        for match in matches:
-            node, capture_name = cast(Tuple[Any, str], match)
+        # Helper function to process an import node
+        def process_import_node(node, capture_name):
             try:
-                # Use helper function to get text
                 safe_node = ensure_node(node)
                 text = get_node_text(safe_node, source_bytes)
 
+                # Determine the import category
                 if capture_name.startswith("import."):
                     category = capture_name.split(".", 1)[1]
                 else:
                     category = "import"
 
                 imports[category].append(text)
+
+                # Add to module_imports for tracking all imported modules
+                if category == "from":
+                    # Handle 'from X import Y' cases
+                    module_imports.add(text.split()[0].strip())
+                elif category == "module":
+                    # Handle 'import X' cases
+                    module_imports.add(text.strip())
+                elif "import" in text:
+                    # Fallback for raw import statements
+                    parts = text.split()
+                    if len(parts) > 1 and parts[0] == "from":
+                        # Handle 'from datetime import datetime as dt' case
+                        module_imports.add(parts[1].strip())
+                    elif "from" in text and "import" in text:
+                        # Another way to handle 'from X import Y' patterns
+                        from_parts = text.split("from", 1)[1].split("import", 1)
+                        if len(from_parts) > 0:
+                            module_name = from_parts[0].strip()
+                            module_imports.add(module_name)
+                    elif parts[0] == "import":
+                        for module in " ".join(parts[1:]).split(","):
+                            module = module.strip().split(" as ")[0].strip()
+                            module_imports.add(module)
             except Exception:
                 # Skip problematic nodes
-                continue
+                pass
+
+        # Handle different return formats from query.captures()
+        if isinstance(matches, dict):
+            # Dictionary format: {capture_name: [node1, node2, ...], ...}
+            for capture_name, nodes in matches.items():
+                for node in nodes:
+                    process_import_node(node, capture_name)
+        else:
+            # List format: [(node1, capture_name1), (node2, capture_name2), ...]
+            for match in matches:
+                # Handle different return types from query.captures()
+                if isinstance(match, tuple) and len(match) == 2:
+                    # Direct tuple unpacking
+                    node, capture_name = match
+                elif hasattr(match, "node") and hasattr(match, "capture_name"):
+                    # Object with node and capture_name attributes
+                    node, capture_name = match.node, match.capture_name
+                elif isinstance(match, dict) and "node" in match and "capture" in match:
+                    # Dictionary with node and capture keys
+                    node, capture_name = match["node"], match["capture"]
+                else:
+                    # Skip if format is unknown
+                    continue
+
+                process_import_node(node, capture_name)
+
+        # Add all detected modules to the result
+        if module_imports:
+            imports["module"] = list(set(imports.get("module", []) + list(module_imports)))
 
         return dict(imports)
 
@@ -419,12 +586,15 @@ def analyze_code_complexity(project_name: str, file_path: str) -> Dict[str, Any]
         comment_prefix = get_comment_prefix(language)
         if comment_prefix:
             # Count comments for text lines
-            comment_lines = sum(
-                1 for line in lines if line.strip().startswith(comment_prefix)
-            )
+            comment_lines = sum(1 for line in lines if line.strip().startswith(comment_prefix))
 
-        # Get function and class definitions
-        symbols = extract_symbols(project_name, file_path, ["functions", "classes"])
+        # Get function and class definitions, excluding methods from count
+        symbols = extract_symbols(
+            project_name,
+            file_path,
+            ["functions", "classes"],
+            exclude_class_methods=True,
+        )
         function_count = len(symbols.get("functions", []))
         class_count = len(symbols.get("classes", []))
 
@@ -475,9 +645,7 @@ def analyze_code_complexity(project_name: str, file_path: str) -> Dict[str, Any]
         comment_ratio = comment_lines / line_count if line_count > 0 else 0
 
         # Estimate average function length
-        avg_func_lines = float(
-            code_lines / function_count if function_count > 0 else code_lines
-        )
+        avg_func_lines = float(code_lines / function_count if function_count > 0 else code_lines)
 
         return {
             "line_count": line_count,

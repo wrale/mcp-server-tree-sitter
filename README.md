@@ -6,10 +6,12 @@ A Model Context Protocol (MCP) server that provides code analysis capabilities u
 
 - 🔍 **Flexible Exploration**: Examine code at multiple levels of granularity
 - 🧠 **Context Management**: Provides just enough information without overwhelming the context window
-- 🌐 **Language Agnostic**: Supports multiple programming languages via tree-sitter parsers
-- 🌳 **Structure-Aware**: Uses AST-based understanding rather than just text
-- 🔎 **Searchable**: Find specific patterns across codebases
+- 🌐 **Language Agnostic**: Supports many programming languages including Python, JavaScript, TypeScript, Go, Rust, C, C++, Swift, Java, Kotlin, Julia, and APL via tree-sitter-language-pack
+- 🌳 **Structure-Aware**: Uses AST-based understanding with efficient cursor-based traversal
+- 🔎 **Searchable**: Find specific patterns using text search and tree-sitter queries
 - 🔄 **Caching**: Optimized performance through parse tree caching
+- 🔑 **Symbol Extraction**: Extract and analyze functions, classes, and other code symbols
+- 📊 **Dependency Analysis**: Identify and analyze code dependencies and relationships
 - 🧩 **State Persistence**: Maintains project registrations and cached data between invocations
 - 🔒 **Secure**: Built-in security boundaries and input validation
 
@@ -29,7 +31,7 @@ pip install mcp-server-tree-sitter
 ### Development Installation
 
 ```bash
-git clone https://github.com/organization/mcp-server-tree-sitter.git
+git clone https://github.com/wrale/mcp-server-tree-sitter.git
 cd mcp-server-tree-sitter
 pip install -e ".[dev,languages]"
 ```
@@ -226,7 +228,7 @@ The server provides the following MCP resources:
 The server provides tools for:
 
 - Project management: `register_project_tool`, `list_projects_tool`, `remove_project_tool`
-- Language management: `list_languages`, `install_language`
+- Language management: `list_languages`, `check_language_available`
 - File operations: `list_files`, `get_file`, `get_file_metadata`
 - AST analysis: `get_ast`, `get_node_at_position`
 - Code search: `find_text`, `run_query`

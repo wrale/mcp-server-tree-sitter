@@ -100,9 +100,7 @@ def get_file_content(
             # Handle line limiting for bytes (more complex)
             if max_lines is not None or start_line > 0:
                 lines = content.split(b"\n")
-                end_line = (
-                    min(start_line + max_lines, len(lines)) if max_lines else len(lines)
-                )
+                end_line = min(start_line + max_lines, len(lines)) if max_lines else len(lines)
                 content = b"\n".join(lines[start_line:end_line])
 
             return content  # type: ignore

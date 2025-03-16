@@ -7,9 +7,7 @@ from ..config import CONFIG
 from ..exceptions import SecurityError
 
 
-def validate_file_access(
-    file_path: Union[str, Path], project_root: Union[str, Path]
-) -> None:
+def validate_file_access(file_path: Union[str, Path], project_root: Union[str, Path]) -> None:
     """
     Validate a file can be safely accessed.
 
@@ -40,10 +38,7 @@ def validate_file_access(
             raise SecurityError(f"Access denied to excluded directory: {excluded}")
 
     # Check file extension if restriction is enabled
-    if (
-        CONFIG.security.allowed_extensions
-        and path_obj.suffix.lower()[1:] not in CONFIG.security.allowed_extensions
-    ):
+    if CONFIG.security.allowed_extensions and path_obj.suffix.lower()[1:] not in CONFIG.security.allowed_extensions:
         raise SecurityError(f"File type not allowed: {path_obj.suffix}")
 
     # Check file size if it exists
@@ -51,6 +46,5 @@ def validate_file_access(
         file_size_mb = normalized_path.stat().st_size / (1024 * 1024)
         if file_size_mb > CONFIG.security.max_file_size_mb:
             raise SecurityError(
-                f"File too large: {file_size_mb:.2f}MB exceeds "
-                f"limit of {CONFIG.security.max_file_size_mb}MB"
+                f"File too large: {file_size_mb:.2f}MB exceeds " f"limit of {CONFIG.security.max_file_size_mb}MB"
             )

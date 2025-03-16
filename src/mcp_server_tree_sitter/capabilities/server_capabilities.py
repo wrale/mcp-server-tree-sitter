@@ -117,9 +117,7 @@ def register_capabilities(mcp_server: Any) -> None:
             language_registry = LanguageRegistry()
             for language in language_registry.list_available_languages():
                 if language.startswith(current_word):
-                    suggestions.append(
-                        {"text": language, "description": f"Language: {language}"}
-                    )
+                    suggestions.append({"text": language, "description": f"Language: {language}"})
 
         # Config suggestions
         if current_word and "config" in text[:position].lower():

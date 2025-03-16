@@ -9,9 +9,7 @@ from ..models.project import ProjectRegistry
 project_registry = ProjectRegistry()
 
 
-def register_project(
-    path: str, name: Optional[str] = None, description: Optional[str] = None
-) -> Dict[str, Any]:
+def register_project(path: str, name: Optional[str] = None, description: Optional[str] = None) -> Dict[str, Any]:
     """
     Register a project for code analysis.
 

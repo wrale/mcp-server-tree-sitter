@@ -104,9 +104,7 @@ def configure(
 
 # Project Management Tools
 @mcp.tool()
-def register_project_tool(
-    path: str, name: Optional[str] = None, description: Optional[str] = None
-) -> Dict[str, Any]:
+def register_project_tool(path: str, name: Optional[str] = None, description: Optional[str] = None) -> Dict[str, Any]:
     """Register a project directory for code exploration.
 
     Args:
@@ -152,16 +150,15 @@ def list_languages() -> Dict[str, Any]:
         Information about available languages
     """
     available = language_registry.list_available_languages()
-    installable = language_registry.list_installable_languages()
 
     return {
         "available": available,
-        "installable": [name for name, _ in installable],
+        "installable": [],  # No separate installation needed with language-pack
     }
 
 
 @mcp.tool()
-def install_language(language: str) -> Dict[str, str]:
+def check_language_available(language: str) -> Dict[str, str]:
     """Check if a tree-sitter language parser is available.
 
     Args:
@@ -170,29 +167,15 @@ def install_language(language: str) -> Dict[str, str]:
     Returns:
         Success message
     """
-    # Check if the language is available
-    try:
-        if language in language_registry.list_available_languages():
-            return {
-                "status": "success",
-                "message": (
-                    f"Language '{language}' is available via "
-                    f"tree-sitter-language-pack"
-                ),
-            }
-
-        # Try to access the language to confirm it's available
-        language_registry.get_language(language)
+    if language_registry.is_language_available(language):
         return {
             "status": "success",
-            "message": (
-                f"Language '{language}' is available via " f"tree-sitter-language-pack"
-            ),
+            "message": f"Language '{language}' is available " f"via tree-sitter-language-pack",
         }
-    except Exception as e:
+    else:
         return {
             "status": "error",
-            "message": f"Language '{language}' is not available: {str(e)}",
+            "message": f"Language '{language}' is not available",
         }
 
 
@@ -218,9 +201,7 @@ def get_project_file_resource(project: str, file_path: str) -> str:
 @mcp.resource("project://{project}/file/{file_path}/lines/{start}-{end}")
 def get_file_lines_resource(project: str, file_path: str, start: int, end: int) -> str:
     """Get specific lines from a file."""
-    return get_file_content(
-        project, file_path, max_lines=end - start + 1, start_line=start
-    )
+    return get_file_content(project, file_path, max_lines=end - start + 1, start_line=start)
 
 
 # AST Resources
@@ -231,9 +212,7 @@ def get_syntax_tree_resource(project: str, file_path: str) -> Dict[str, Any]:
 
 
 @mcp.resource("project://{project}/ast/{file_path}/depth/{depth}")
-def get_syntax_tree_depth_resource(
-    project: str, file_path: str, depth: int
-) -> Dict[str, Any]:
+def get_syntax_tree_depth_resource(project: str, file_path: str, depth: int) -> Dict[str, Any]:
     """Get AST for a specific file with custom depth."""
     return get_file_ast(project, file_path, max_depth=depth)
 
@@ -261,9 +240,7 @@ def list_files(
 
 
 @mcp.tool()
-def get_file(
-    project: str, path: str, max_lines: Optional[int] = None, start_line: int = 0
-) -> str:
+def get_file(project: str, path: str, max_lines: Optional[int] = None, start_line: int = 0) -> str:
     """Get content of a file.
 
     Args:
@@ -294,9 +271,7 @@ def get_file_metadata(project: str, path: str) -> Dict[str, Any]:
 
 # AST Tools
 @mcp.tool()
-def get_ast(
-    project: str, path: str, max_depth: Optional[int] = None, include_text: bool = True
-) -> Dict[str, Any]:
+def get_ast(project: str, path: str, max_depth: Optional[int] = None, include_text: bool = True) -> Dict[str, Any]:
     """Get abstract syntax tree for a file.
 
     Args:
@@ -317,9 +292,7 @@ def get_ast(
 
 
 @mcp.tool()
-def get_node_at_position(
-    project: str, path: str, row: int, column: int
-) -> Optional[Dict[str, Any]]:
+def get_node_at_position(project: str, path: str, row: int, column: int) -> Optional[Dict[str, Any]]:
     """Find the AST node at a specific position.
 
     Args:
@@ -445,9 +418,7 @@ def list_query_templates_tool(language: Optional[str] = None) -> Dict[str, Any]:
 
 
 @mcp.tool()
-def build_query(
-    language: str, patterns: List[str], combine: str = "or"
-) -> Dict[str, str]:
+def build_query(language: str, patterns: List[str], combine: str = "or") -> Dict[str, str]:
     """Build a tree-sitter query from templates or patterns.
 
     Args:
@@ -518,9 +489,7 @@ def get_symbols(
 
 
 @mcp.tool()
-def analyze_project(
-    project: str, scan_depth: int = 3, ctx: Optional[Any] = None
-) -> Dict[str, Any]:
+def analyze_project(project: str, scan_depth: int = 3, ctx: Optional[Any] = None) -> Dict[str, Any]:
     """Analyze overall project structure.
 
     Args:
@@ -630,9 +599,7 @@ def find_usage(
 
 # Cache Management
 @mcp.tool()
-def clear_cache(
-    project: Optional[str] = None, file_path: Optional[str] = None
-) -> Dict[str, str]:
+def clear_cache(project: Optional[str] = None, file_path: Optional[str] = None) -> Dict[str, str]:
     """Clear the parse tree cache.
 
     Args:
@@ -801,23 +768,16 @@ def project_overview(project: str) -> str:
     try:
         analysis = analyze_project_structure(project)
 
-        languages_str = "\n".join(
-            f"- {lang}: {count} files" for lang, count in analysis["languages"].items()
-        )
+        languages_str = "\n".join(f"- {lang}: {count} files" for lang, count in analysis["languages"].items())
 
         entry_points_str = (
-            "\n".join(
-                f"- {entry['path']} ({entry['language']})"
-                for entry in analysis["entry_points"]
-            )
+            "\n".join(f"- {entry['path']} ({entry['language']})" for entry in analysis["entry_points"])
             if analysis["entry_points"]
             else "None detected"
         )
 
         build_files_str = (
-            "\n".join(
-                f"- {file['path']} ({file['type']})" for file in analysis["build_files"]
-            )
+            "\n".join(f"- {file['path']} ({file['type']})" for file in analysis["build_files"])
             if analysis["build_files"]
             else "None detected"
         )

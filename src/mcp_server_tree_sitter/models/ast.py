@@ -1,13 +1,19 @@
-"""AST representation models for MCP server."""
+"""AST representation models for MCP server.
+
+This module provides functions for converting tree-sitter AST nodes to dictionaries,
+finding nodes at specific positions, and other AST-related operations.
+"""
 
 from typing import Any, Dict, List, Optional, Tuple
 
 from ..utils.tree_sitter_helpers import (
-    cursor_walk_tree,
     get_node_text,
     walk_tree,
 )
-from ..utils.tree_sitter_types import Node, ensure_node
+from ..utils.tree_sitter_types import ensure_node
+
+# Import the cursor-based implementation
+from .ast_cursor import node_to_dict_cursor
 
 
 def node_to_dict(
@@ -18,8 +24,11 @@ def node_to_dict(
     max_depth: int = 5,
 ) -> Dict[str, Any]:
     """
-    Convert a tree-sitter node to a dictionary representation using cursor-based
-    traversal.
+    Convert a tree-sitter node to a dictionary representation.
+
+    This function now uses a cursor-based traversal approach for efficiency and
+    reliability, especially with large ASTs that could cause stack overflow with
+    recursive processing.
 
     Args:
         node: Tree-sitter Node object
@@ -31,115 +40,8 @@ def node_to_dict(
     Returns:
         Dictionary representation of the node
     """
-    safe_node = ensure_node(node)
-
-    # Dictionary to store all node information keyed by node id
-    nodes_dict: Dict[int, Dict[str, Any]] = {}
-    # Track parent-child relationships
-    children_map: Dict[int, List[int]] = {}
-    # Keep track of node paths
-    path_map: Dict[int, str] = {}
-
-    # Root node ID
-    root_id = id(safe_node)
-    path_map[root_id] = ""
-
-    def process_node(
-        node: Optional[Node], field_name: Optional[str], depth: int
-    ) -> bool:
-        if node is None:
-            return False
-
-        node_id = id(node)
-        parent_id = id(node.parent) if node.parent else None
-
-        # Skip if beyond max depth
-        if depth > max_depth:
-            if parent_id is not None and parent_id in nodes_dict:
-                # Store truncated info for parent
-                if parent_id not in children_map:
-                    children_map[parent_id] = []
-                children_map[parent_id].append(node_id)
-
-                nodes_dict[node_id] = {
-                    "type": node.type,
-                    "truncated": True,
-                    "children_count": len(node.children),
-                }
-
-                if parent_id in path_map:
-                    path = path_map[parent_id]
-                    child_path = f"{path}.{node.type}" if path else node.type
-                    path_map[node_id] = child_path
-                    nodes_dict[node_id]["path"] = child_path
-            return False
-
-        # Build node data
-        node_data = {
-            "type": node.type,
-            "start_point": {"row": node.start_point[0], "column": node.start_point[1]},
-            "end_point": {"row": node.end_point[0], "column": node.end_point[1]},
-            "start_byte": node.start_byte,
-            "end_byte": node.end_byte,
-            "named": node.is_named,
-            "children_count": len(node.children),
-        }
-
-        # Set path
-        if parent_id is not None and parent_id in path_map:
-            path = path_map[parent_id]
-            if field_name:
-                # Use field name if available
-                child_path = f"{path}.{field_name}" if path else field_name
-                node_data["field"] = field_name
-            else:
-                # Use node type otherwise
-                child_path = f"{path}.{node.type}" if path else node.type
-
-            path_map[node_id] = child_path
-            node_data["path"] = child_path
-
-        # Add text if source is available and requested
-        if source_bytes and include_text:
-            try:
-                node_data["text"] = get_node_text(node, source_bytes)
-            except Exception as e:
-                node_data["text_error"] = str(e)
-
-        # Store node data
-        nodes_dict[node_id] = node_data
-
-        # Track parent-child relationship for building the tree later
-        if node.parent and include_children:
-            parent_id = id(node.parent)
-            if parent_id not in children_map:
-                children_map[parent_id] = []
-            if node.is_named:  # Only include named nodes
-                children_map[parent_id].append(node_id)
-
-        return True
-
-    # Walk the tree using cursor
-    cursor_walk_tree(safe_node, process_node)
-
-    # Build the final tree from our dictionaries
-    def build_tree(node_id: int) -> Dict[str, Any]:
-        node_data = nodes_dict[node_id].copy()
-
-        # Add children if they exist
-        if (
-            include_children
-            and node_id in children_map
-            and len(children_map[node_id]) > 0
-        ):
-            node_data["children"] = [
-                build_tree(child_id) for child_id in children_map[node_id]
-            ]
-
-        return node_data
-
-    # Return the root node with all its children
-    return build_tree(root_id)
+    # Use the cursor-based implementation for improved reliability
+    return node_to_dict_cursor(node, source_bytes, include_children, include_text, max_depth)
 
 
 def summarize_node(node: Any, source_bytes: Optional[bytes] = None) -> Dict[str, Any]:
@@ -206,10 +108,7 @@ def find_node_at_position(root_node: Any, row: int, column: int) -> Optional[Any
 
     while cursor.goto_first_child():
         # If current node contains the point, it's better than the parent
-        if (
-            cursor.node is not None
-            and cursor.node.start_point <= point <= cursor.node.end_point
-        ):
+        if cursor.node is not None and cursor.node.start_point <= point <= cursor.node.end_point:
             current_best = cursor.node
             continue  # Continue to first child
 
@@ -220,10 +119,7 @@ def find_node_at_position(root_node: Any, row: int, column: int) -> Optional[Any
         # Try siblings
         found_in_sibling = False
         while cursor.goto_next_sibling():
-            if (
-                cursor.node is not None
-                and cursor.node.start_point <= point <= cursor.node.end_point
-            ):
+            if cursor.node is not None and cursor.node.start_point <= point <= cursor.node.end_point:
                 current_best = cursor.node
                 found_in_sibling = True
                 break

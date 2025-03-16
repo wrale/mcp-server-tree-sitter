@@ -68,9 +68,7 @@ def parse_source(parser: Parser, source: bytes) -> Tree:
     return ensure_tree(tree)
 
 
-def parse_source_incremental(
-    parser: Parser, source: bytes, old_tree: Optional[Tree] = None
-) -> Tree:
+def parse_source_incremental(parser: Parser, source: bytes, old_tree: Optional[Tree] = None) -> Tree:
     """
     Parse source code incrementally using a configured parser.
 
@@ -146,10 +144,7 @@ def get_changed_ranges(old_tree: Tree, new_tree: Tree) -> List[Dict[str, Any]]:
     old_root = safe_old_tree.root_node
     new_root = safe_new_tree.root_node
 
-    if (
-        old_root.start_byte != new_root.start_byte
-        or old_root.end_byte != new_root.end_byte
-    ):
+    if old_root.start_byte != new_root.start_byte or old_root.end_byte != new_root.end_byte:
         # Return the entire tree as changed
         return [
             {
@@ -198,9 +193,7 @@ def get_node_text(node: Node, source_bytes: bytes) -> str:
     """
     safe_node = ensure_node(node)
     try:
-        return source_bytes[safe_node.start_byte : safe_node.end_byte].decode(
-            "utf-8", errors="replace"
-        )
+        return source_bytes[safe_node.start_byte : safe_node.end_byte].decode("utf-8", errors="replace")
     except (IndexError, ValueError):
         return ""
 
@@ -220,9 +213,7 @@ def walk_tree(node: Node) -> TreeCursor:
     return ensure_cursor(cursor)
 
 
-def cursor_walk_tree(
-    node: Node, visit_fn: Callable[[Optional[Node], Optional[str], int], bool]
-) -> None:
+def cursor_walk_tree(node: Node, visit_fn: Callable[[Optional[Node], Optional[str], int], bool]) -> None:
     """
     Walk a tree using cursor for efficiency.
 
@@ -245,9 +236,7 @@ def cursor_walk_tree(
             # Get field name if available
             field_name = None
             if cursor.node and cursor.node.parent:
-                parent_field_names = getattr(
-                    cursor.node.parent, "children_by_field_name", {}
-                )
+                parent_field_names = getattr(cursor.node.parent, "children_by_field_name", {})
                 if hasattr(parent_field_names, "items"):
                     for name, nodes in parent_field_names.items():
                         if cursor.node in nodes:
@@ -318,9 +307,7 @@ def find_nodes_by_type(root_node: Node, node_type: str) -> List[Node]:
         List of matching nodes
     """
 
-    def collector(
-        node: Optional[Node], _field_name: Optional[str], _depth: int
-    ) -> Optional[Node]:
+    def collector(node: Optional[Node], _field_name: Optional[str], _depth: int) -> Optional[Node]:
         if node is None:
             return None
         if node.type == node_type:
@@ -330,9 +317,7 @@ def find_nodes_by_type(root_node: Node, node_type: str) -> List[Node]:
     return collect_with_cursor(root_node, collector)
 
 
-def get_node_descendants(
-    node: Optional[Node], max_depth: Optional[int] = None
-) -> List[Node]:
+def get_node_descendants(node: Optional[Node], max_depth: Optional[int] = None) -> List[Node]:
     """
     Get all descendants of a node.
 
@@ -363,9 +348,7 @@ def get_node_descendants(
     return descendants
 
 
-def parse_with_cached_tree(
-    file_path: Path, language: str, language_obj: Language
-) -> Tuple[Tree, bytes]:
+def parse_with_cached_tree(file_path: Path, language: str, language_obj: Language) -> Tuple[Tree, bytes]:
     """
     Parse a file with tree caching.
 

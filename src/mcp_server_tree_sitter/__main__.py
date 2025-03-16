@@ -8,9 +8,7 @@ from .config import load_config
 from .server import mcp
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -20,9 +18,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="MCP Tree-sitter Server")
     parser.add_argument("--config", help="Path to configuration file")
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
-    parser.add_argument(
-        "--disable-cache", action="store_true", help="Disable parse tree caching"
-    )
+    parser.add_argument("--disable-cache", action="store_true", help="Disable parse tree caching")
 
     args = parser.parse_args()
 
