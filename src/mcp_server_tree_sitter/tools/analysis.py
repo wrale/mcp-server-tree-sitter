@@ -36,7 +36,7 @@ def extract_symbols(
         project_name: Name of the registered project
         file_path: Path to the file relative to project root
         symbol_types: Types of symbols to extract (functions, classes, imports, etc.)
-        exclude_class_methods: Whether to exclude methods inside classes from function count
+        exclude_class_methods: Whether to exclude methods from function count
 
     Returns:
         Dictionary of symbols by type
@@ -87,9 +87,7 @@ def extract_symbols(
             queries[symbol_type] = template
 
     if not queries:
-        raise ValueError(
-            f"No query templates available for {language} and {symbol_types}"
-        )
+        raise ValueError(f"No query templates available for {language} and {symbol_types}")
 
     # Parse file and extract symbols
     try:
@@ -114,9 +112,7 @@ def extract_symbols(
             class_matches = class_query.captures(tree.root_node)
 
             # Process class locations to identify their boundaries
-            process_symbol_matches(
-                class_matches, "classes", symbols, source_bytes, tree
-            )
+            process_symbol_matches(class_matches, "classes", symbols, source_bytes, tree)
 
             # Extract class body ranges to check if functions are inside classes
             # Use a more generous range to ensure we catch all methods
@@ -124,10 +120,8 @@ def extract_symbols(
                 start_row = class_symbol["location"]["start"]["row"]
                 # For class end, we need to estimate where the class body might end
                 # by scanning the file for likely class boundaries
-                source_lines = source_bytes.decode(
-                    "utf-8", errors="replace"
-                ).splitlines()
-                # Find a reasonable estimate for where the class ends (30 lines is a conservative guess)
+                source_lines = source_bytes.decode("utf-8", errors="replace").splitlines()
+                # Find a reasonable estimate for where the class ends
                 end_row = min(start_row + 30, len(source_lines) - 1)
                 class_ranges.append((start_row, end_row))
 
@@ -149,11 +143,7 @@ def extract_symbols(
                 symbols,
                 source_bytes,
                 tree,
-                (
-                    class_ranges
-                    if exclude_class_methods and symbol_type == "functions"
-                    else None
-                ),
+                (class_ranges if exclude_class_methods and symbol_type == "functions" else None),
             )
 
         return symbols
@@ -163,7 +153,12 @@ def extract_symbols(
 
 
 def process_symbol_matches(
-    matches, symbol_type, symbols_dict, source_bytes, tree, class_ranges=None
+    matches: Any,
+    symbol_type: str,
+    symbols_dict: Dict[str, List[Dict[str, Any]]],
+    source_bytes: bytes,
+    tree: Any,
+    class_ranges: Optional[List[tuple[int, int]]] = None,
 ):
     """
     Process matches from a query and extract symbols.
@@ -178,7 +173,7 @@ def process_symbol_matches(
     """
 
     # Helper function to check if a node is inside a class
-    def is_inside_class(node_row):
+    def is_inside_class(node_row: int) -> bool:
         if not class_ranges:
             return False
         for start_row, end_row in class_ranges:
@@ -190,11 +185,11 @@ def process_symbol_matches(
     filtered_methods = []
 
     # Helper function to process a single node into a symbol
-    def process_node(node, capture_name):
+    def process_node(node: Any, capture_name: str) -> None:
         try:
             safe_node = ensure_node(node)
 
-            # Skip methods inside classes if we're processing functions and have class ranges
+            # Skip methods inside classes if processing functions with class ranges
             if class_ranges is not None and is_inside_class(safe_node.start_point[0]):
                 filtered_methods.append(safe_node.start_point[0])
                 return
@@ -253,9 +248,7 @@ def process_symbol_matches(
             process_node(node, capture_name)
 
 
-def analyze_project_structure(
-    project_name: str, scan_depth: int = 3, mcp_ctx: Optional[Any] = None
-) -> Dict[str, Any]:
+def analyze_project_structure(project_name: str, scan_depth: int = 3, mcp_ctx: Optional[Any] = None) -> Dict[str, Any]:
     """
     Analyze the overall structure of a project.
 
@@ -346,11 +339,7 @@ def analyze_project_structure(
             rel_dir = ""
 
         # Skip hidden directories and common excludes
-        dirs[:] = [
-            d
-            for d in dirs
-            if not d.startswith(".") and d not in CONFIG.security.excluded_dirs
-        ]
+        dirs[:] = [d for d in dirs if not d.startswith(".") and d not in CONFIG.security.excluded_dirs]
 
         # Count directories
         dir_counts[rel_dir] = len(dirs)
@@ -371,11 +360,7 @@ def analyze_project_structure(
     if scan_depth > 0:
         # Analyze a sample of files from each language
         for language, _ in languages.items():
-            extensions = [
-                ext
-                for ext, lang in language_registry._language_map.items()
-                if lang == language
-            ]
+            extensions = [ext for ext, lang in language_registry._language_map.items() if lang == language]
 
             if not extensions:
                 continue
@@ -406,8 +391,7 @@ def analyze_project_structure(
 
                         # Summarize symbols
                         symbol_counts = {
-                            symbol_type: len(symbols_list)
-                            for symbol_type, symbols_list in symbols.items()
+                            symbol_type: len(symbols_list) for symbol_type, symbols_list in symbols.items()
                         }
 
                         language_analysis.append(
@@ -550,9 +534,7 @@ def find_dependencies(project_name: str, file_path: str) -> Dict[str, List[str]]
 
         # Add all detected modules to the result
         if module_imports:
-            imports["module"] = list(
-                set(imports.get("module", []) + list(module_imports))
-            )
+            imports["module"] = list(set(imports.get("module", []) + list(module_imports)))
 
         return dict(imports)
 
@@ -604,11 +586,9 @@ def analyze_code_complexity(project_name: str, file_path: str) -> Dict[str, Any]
         comment_prefix = get_comment_prefix(language)
         if comment_prefix:
             # Count comments for text lines
-            comment_lines = sum(
-                1 for line in lines if line.strip().startswith(comment_prefix)
-            )
+            comment_lines = sum(1 for line in lines if line.strip().startswith(comment_prefix))
 
-        # Get function and class definitions, excluding class methods from function count
+        # Get function and class definitions, excluding methods from count
         symbols = extract_symbols(
             project_name,
             file_path,
@@ -665,9 +645,7 @@ def analyze_code_complexity(project_name: str, file_path: str) -> Dict[str, Any]
         comment_ratio = comment_lines / line_count if line_count > 0 else 0
 
         # Estimate average function length
-        avg_func_lines = float(
-            code_lines / function_count if function_count > 0 else code_lines
-        )
+        avg_func_lines = float(code_lines / function_count if function_count > 0 else code_lines)
 
         return {
             "line_count": line_count,

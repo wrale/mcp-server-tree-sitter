@@ -35,9 +35,7 @@ def mock_project(request):
         # Create a simple Python file for testing
         test_file = project_path / "test.py"
         with open(test_file, "w") as f:
-            f.write(
-                "import os\n\ndef hello():\n    print('Hello, world!')\n\nhello()\n"
-            )
+            f.write("import os\n\ndef hello():\n    print('Hello, world!')\n\nhello()\n")
 
         # Generate a unique project name based on the test name
         test_name = request.node.name
@@ -76,9 +74,7 @@ class TestQueryExecutionFailures:
         # After fixes, verify that the query executes without errors
         assert result is not None, "Query should execute without raising exceptions"
         # The query may now return actual results instead of empty list
-        assert isinstance(
-            result, list
-        ), "Query should return a list (empty or with results)"
+        assert isinstance(result, list), "Query should return a list (empty or with results)"
 
     def test_adapt_query_language_specific_syntax(self, mock_project):
         """Test adapt_query with language-specific syntax handling."""
@@ -143,28 +139,20 @@ class TestCodeSearchFailures:
     def test_find_similar_code_no_results(self, mock_project):
         """Test that find_similar_code executes without output but fails to return results."""
         # Execute find_similar_code with a snippet
-        result = find_similar_code(
-            project=mock_project["name"], snippet="print('Hello')", language="python"
-        )
+        result = find_similar_code(project=mock_project["name"], snippet="print('Hello')", language="python")
 
         # Verify the function executes but returns empty results
         assert result is not None, "find_similar_code should execute without exceptions"
-        assert (
-            isinstance(result, list) and len(result) == 0
-        ), "find_similar_code should return empty list"
+        assert isinstance(result, list) and len(result) == 0, "find_similar_code should return empty list"
 
     def test_find_usage_no_results(self, mock_project):
         """Test that find_usage executes without errors but doesn't return any results."""
         # Execute find_usage with a symbol that exists in the file
-        result = find_usage(
-            project=mock_project["name"], symbol="hello", language="python"
-        )
+        result = find_usage(project=mock_project["name"], symbol="hello", language="python")
 
         # Verify the function executes successfully
         assert result is not None, "find_usage should execute without exceptions"
-        assert isinstance(
-            result, list
-        ), "find_usage should return a list (empty or with results)"
+        assert isinstance(result, list), "find_usage should return a list (empty or with results)"
 
 
 @pytest.mark.parametrize(
@@ -212,17 +200,13 @@ def test_graceful_error_handling(mock_project, command_name, function, args):
         result = function(**args)
 
         # Verify the function doesn't raise an exception
-        assert (
-            result is not None
-        ), f"{command_name} should execute without raising exceptions"
+        assert result is not None, f"{command_name} should execute without raising exceptions"
 
         # For commands that return empty results, verify the structure
         if command_name in ["run_query", "find_similar_code", "find_usage"]:
             assert isinstance(result, list), f"{command_name} should return a list"
         elif command_name in ["get_symbols", "get_dependencies"]:
-            assert isinstance(
-                result, dict
-            ), f"{command_name} should return a dictionary"
+            assert isinstance(result, dict), f"{command_name} should return a dictionary"
 
     except Exception as e:
         pytest.fail(f"{command_name} failed with exception: {str(e)}")
@@ -234,9 +218,7 @@ class TestASTCursorOperations:
     def test_ast_cursor_limitations(self, mock_project):
         """Test limitations with advanced cursor operations."""
         # Get an AST for a file
-        ast_result = get_ast(
-            project=mock_project["name"], path="test.py", max_depth=5, include_text=True
-        )
+        ast_result = get_ast(project=mock_project["name"], path="test.py", max_depth=5, include_text=True)
 
         # Verify basic AST structure works
         assert "tree" in ast_result

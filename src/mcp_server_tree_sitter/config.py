@@ -20,18 +20,14 @@ class SecurityConfig(BaseModel):
     """Security settings."""
 
     max_file_size_mb: int = 5
-    excluded_dirs: list[str] = Field(
-        default_factory=lambda: [".git", "node_modules", "__pycache__"]
-    )
+    excluded_dirs: list[str] = Field(default_factory=lambda: [".git", "node_modules", "__pycache__"])
     allowed_extensions: Optional[list[str]] = None  # None means all extensions allowed
 
 
 class LanguageConfig(BaseModel):
     """Language-specific configuration."""
 
-    auto_install: bool = (
-        False  # DEPRECATED: No longer used with tree-sitter-language-pack
-    )
+    auto_install: bool = False  # DEPRECATED: No longer used with tree-sitter-language-pack
     default_max_depth: int = 5  # Default depth for AST traversal
     preferred_languages: list[str] = Field(default_factory=list)
 

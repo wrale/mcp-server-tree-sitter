@@ -46,7 +46,7 @@ def test_cursor_ast_implementation(test_project, diagnostic):
         # Get language
         registry = LanguageRegistry()
         language = registry.language_for_file(test_project["file"])
-        language_obj = registry.get_language(language)
+        _language_obj = registry.get_language(language)
 
         # Parse file
         file_path = test_project["path"] / test_project["file"]
@@ -58,9 +58,7 @@ def test_cursor_ast_implementation(test_project, diagnostic):
         # Add results to diagnostic data
         diagnostic.add_detail("cursor_ast_keys", list(cursor_ast.keys()))
         diagnostic.add_detail("cursor_ast_type", cursor_ast["type"])
-        diagnostic.add_detail(
-            "cursor_ast_children_count", cursor_ast.get("children_count", 0)
-        )
+        diagnostic.add_detail("cursor_ast_children_count", cursor_ast.get("children_count", 0))
 
         # Basic validation
         assert "id" in cursor_ast, "AST should include node ID"
@@ -73,13 +71,9 @@ def test_cursor_ast_implementation(test_project, diagnostic):
             function_node = cursor_ast["children"][0]
             diagnostic.add_detail("function_node_keys", list(function_node.keys()))
             diagnostic.add_detail("function_node_type", function_node["type"])
-            diagnostic.add_detail(
-                "function_node_children_count", function_node.get("children_count", 0)
-            )
+            diagnostic.add_detail("function_node_children_count", function_node.get("children_count", 0))
 
-            assert (
-                function_node["type"] == "function_definition"
-            ), "Expected function definition"
+            assert function_node["type"] == "function_definition", "Expected function definition"
 
             # Check if children are properly included
             assert "children" in function_node, "Function should have children"
@@ -87,9 +81,7 @@ def test_cursor_ast_implementation(test_project, diagnostic):
 
             # Verify text extraction works if available
             if "text" in function_node:
-                assert (
-                    "hello" in function_node["text"]
-                ), "Function text should contain 'hello'"
+                assert "hello" in function_node["text"], "Function text should contain 'hello'"
 
         # Success!
         diagnostic.add_detail("cursor_ast_success", True)
@@ -132,10 +124,10 @@ class Person:
     def __init__(self, name: str, age: int):
         self.name = name
         self.age = age
-    
+
     def greet(self) -> str:
         return f"Hello, my name is {self.name} and I'm {self.age} years old."
-    
+
     def celebrate_birthday(self) -> None:
         self.age += 1
         print(f"Happy Birthday! {self.name} is now {self.age}!")
@@ -144,7 +136,7 @@ class Employee(Person):
     def __init__(self, name: str, age: int, employee_id: str):
         super().__init__(name, age)
         self.employee_id = employee_id
-    
+
     def greet(self) -> str:
         return f"{super().greet()} I work here and my ID is {self.employee_id}."
 
@@ -158,11 +150,11 @@ if __name__ == "__main__":
     p1 = Person("Alice", 30)
     p2 = Person("Bob", 25)
     e1 = Employee("Charlie", 35, "E12345")
-    
+
     print(p1.greet())
     print(p2.greet())
     print(e1.greet())
-    
+
     results = process_people([p1, p2, e1])
     print(f"Results: {results}")
 """
@@ -171,7 +163,7 @@ if __name__ == "__main__":
         # Get language
         registry = LanguageRegistry()
         language = registry.language_for_file("large.py")
-        language_obj = registry.get_language(language)
+        _language_obj = registry.get_language(language)
 
         # Parse file
         tree, source_bytes = parse_file(large_file_path, language)
@@ -181,9 +173,7 @@ if __name__ == "__main__":
 
         # Add results to diagnostic data
         diagnostic.add_detail("large_ast_type", cursor_ast["type"])
-        diagnostic.add_detail(
-            "large_ast_children_count", cursor_ast.get("children_count", 0)
-        )
+        diagnostic.add_detail("large_ast_children_count", cursor_ast.get("children_count", 0))
 
         # Find class and function counts
         class_nodes = []

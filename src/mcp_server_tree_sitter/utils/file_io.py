@@ -117,9 +117,7 @@ def get_comment_prefix(language: str) -> Optional[str]:
     return comment_starters.get(language)
 
 
-def parse_file_with_encoding(
-    path: Union[str, Path], encoding: str = "utf-8"
-) -> Tuple[bytes, List[str]]:
+def parse_file_with_encoding(path: Union[str, Path], encoding: str = "utf-8") -> Tuple[bytes, List[str]]:
     """
     Parse a file with explicit encoding handling, returning both binary and text.
 
@@ -139,9 +137,7 @@ def parse_file_with_encoding(
     return binary_content, lines
 
 
-def read_file_lines(
-    path: Union[str, Path], start_line: int = 0, max_lines: Optional[int] = None
-) -> List[str]:
+def read_file_lines(path: Union[str, Path], start_line: int = 0, max_lines: Optional[int] = None) -> List[str]:
     """
     Read specific lines from a file.
 

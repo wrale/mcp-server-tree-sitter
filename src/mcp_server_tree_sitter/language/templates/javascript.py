@@ -18,7 +18,7 @@ TEMPLATES = {
     """,
     "imports": """
         (import_statement) @import
-        
+
         (import_statement
             source: (string) @import.source
             specifier: (_) @import.specifier) @import.full

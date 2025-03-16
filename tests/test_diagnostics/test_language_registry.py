@@ -41,9 +41,7 @@ def test_language_detection(diagnostic):
 
     # Check results with proper assertions
     for filename, expected in test_files.items():
-        assert (
-            registry.language_for_file(filename) == expected
-        ), f"Language detection failed for {filename}"
+        assert registry.language_for_file(filename) == expected, f"Language detection failed for {filename}"
 
 
 @pytest.mark.diagnostic
@@ -141,8 +139,6 @@ def test_language_detection_vs_listing(diagnostic):
 
     # For diagnostic purposes, not all assertions should fail
     # This checks if there are any available languages
-    successful_languages = [
-        lang for lang, result in results.items() if result.get("available", False)
-    ]
+    successful_languages = [lang for lang, result in results.items() if result.get("available", False)]
 
     assert len(successful_languages) > 0, "No languages could be successfully installed"

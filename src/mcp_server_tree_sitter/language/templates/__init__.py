@@ -1,19 +1,21 @@
 """Language-specific query templates collection."""
 
-from typing import Dict, Any
+from typing import Dict
 
-from . import python
-from . import javascript
-from . import typescript
-from . import go
-from . import rust
-from . import c
-from . import cpp
-from . import swift
-from . import java
-from . import kotlin
-from . import julia
-from . import apl
+from . import (
+    apl,
+    c,
+    cpp,
+    go,
+    java,
+    javascript,
+    julia,
+    kotlin,
+    python,
+    rust,
+    swift,
+    typescript,
+)
 
 # Combine all language templates
 QUERY_TEMPLATES: Dict[str, Dict[str, str]] = {

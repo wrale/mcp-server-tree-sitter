@@ -22,7 +22,7 @@ TEMPLATES = {
     """,
     "imports": """
         (preproc_include) @import
-        
+
         (preproc_include
             path: (string_literal) @import.system) @import.system
 

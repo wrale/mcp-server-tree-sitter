@@ -38,27 +38,19 @@ def test_cursor_based_ast():
         # Check function definition
         if cursor_ast["children"]:
             function_node = cursor_ast["children"][0]
-            assert (
-                function_node["type"] == "function_definition"
-            ), "Expected function definition"
+            assert function_node["type"] == "function_definition", "Expected function definition"
 
             # Check if children are properly included
             assert "children" in function_node, "Function should have children"
             assert function_node["children_count"] > 0, "Function should have children"
 
             # Verify some function components exist
-            function_children_types = [
-                child["type"] for child in function_node["children"]
-            ]
-            assert (
-                "identifier" in function_children_types
-            ), "Function should have identifier"
+            function_children_types = [child["type"] for child in function_node["children"]]
+            assert "identifier" in function_children_types, "Function should have identifier"
 
             # Verify text extraction works if available
             if "text" in function_node:
-                assert (
-                    "hello" in function_node["text"]
-                ), "Function text should contain 'hello'"
+                assert "hello" in function_node["text"], "Function text should contain 'hello'"
 
 
 if __name__ == "__main__":

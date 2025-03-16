@@ -25,16 +25,16 @@ TEMPLATES = {
     """,
     "imports": """
         (import_declaration) @import
-        
+
         (import_declaration
             (import_spec_list
                 (import_spec) @import.spec)) @import.list
-        
+
         (import_declaration
             (import_spec_list
                 (import_spec
                     path: (_) @import.path))) @import.path_list
-        
+
         (import_declaration
             (import_spec
                 path: (_) @import.path)) @import.single

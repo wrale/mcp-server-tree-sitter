@@ -25,9 +25,7 @@ def get_template(language: str, pattern: str) -> str:
     return pattern
 
 
-def build_compound_query(
-    language: str, patterns: List[str], combine: str = "or"
-) -> str:
+def build_compound_query(language: str, patterns: List[str], combine: str = "or") -> str:
     """
     Build a compound query from multiple patterns.
 

@@ -22,14 +22,10 @@ logger = logging.getLogger(__name__)
 class TreeCache:
     """Cache for parsed syntax trees."""
 
-    def __init__(
-        self, max_size_mb: Optional[int] = None, ttl_seconds: Optional[int] = None
-    ):
+    def __init__(self, max_size_mb: Optional[int] = None, ttl_seconds: Optional[int] = None):
         self.max_size_mb = max_size_mb or CONFIG.cache.max_size_mb
         self.ttl_seconds = ttl_seconds or CONFIG.cache.ttl_seconds
-        self.cache: Dict[str, Tuple[Any, bytes, float]] = (
-            {}
-        )  # (tree, source, timestamp)
+        self.cache: Dict[str, Tuple[Any, bytes, float]] = {}  # (tree, source, timestamp)
         self.lock = threading.RLock()
         self.current_size_bytes = 0
         # Track modified trees for incremental parsing
@@ -99,10 +95,7 @@ class TreeCache:
 
         # Check if adding this entry would exceed cache size limit
         if source_size > self.max_size_mb * 1024 * 1024:
-            logger.warning(
-                f"File too large to cache: {file_path} "
-                f"({source_size / (1024*1024):.2f}MB)"
-            )
+            logger.warning(f"File too large to cache: {file_path} " f"({source_size / (1024*1024):.2f}MB)")
             return
 
         with self.lock:
@@ -112,10 +105,7 @@ class TreeCache:
                 self.current_size_bytes -= len(old_source)
             else:
                 # If we need to make room for a new entry, remove oldest entries
-                if (
-                    self.current_size_bytes + source_size
-                    > self.max_size_mb * 1024 * 1024
-                ):
+                if self.current_size_bytes + source_size > self.max_size_mb * 1024 * 1024:
                     self._evict_entries(source_size)
 
             # Store the new entry
@@ -159,9 +149,7 @@ class TreeCache:
         except (FileNotFoundError, OSError):
             return False
 
-    def update_tree(
-        self, file_path: Path, language: str, tree: Tree, source: bytes
-    ) -> None:
+    def update_tree(self, file_path: Path, language: str, tree: Tree, source: bytes) -> None:
         """
         Update a cached tree after modification.
 
@@ -198,9 +186,7 @@ class TreeCache:
             required_bytes: Number of bytes to make room for
         """
         # Sort by timestamp (oldest first)
-        sorted_entries = sorted(
-            self.cache.items(), key=lambda item: item[1][2]  # Sort by timestamp
-        )
+        sorted_entries = sorted(self.cache.items(), key=lambda item: item[1][2])  # Sort by timestamp
 
         bytes_freed = 0
         for key, (_, source, _) in sorted_entries:
@@ -217,10 +203,7 @@ class TreeCache:
                 break
 
         # If cache is still too full, remove one more entry
-        if (
-            self.current_size_bytes + required_bytes > self.max_size_mb * 1024 * 1024
-            and self.cache
-        ):
+        if self.current_size_bytes + required_bytes > self.max_size_mb * 1024 * 1024 and self.cache:
             oldest_key = min(self.cache.keys(), key=lambda k: self.cache[k][2])
             _, source, _ = self.cache[oldest_key]
             self.current_size_bytes -= len(source)

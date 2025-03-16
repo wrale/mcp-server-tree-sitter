@@ -4,12 +4,12 @@ TEMPLATES = {
     "functions": """
         (function_definition
             name: (identifier) @function.name) @function.def
-            
+
         (function_definition
             name: (identifier) @function.name
             parameters: (parameter_list) @function.params
             body: (block) @function.body) @function.def
-            
+
         (short_function_definition
             name: (identifier) @function.name) @function.short_def
     """,
@@ -22,22 +22,22 @@ TEMPLATES = {
         (struct_definition
             name: (identifier) @struct.name
             body: (block) @struct.body) @struct.def
-            
+
         (mutable_struct_definition
             name: (identifier) @struct.name
             body: (block) @struct.body) @struct.mutable_def
     """,
     "imports": """
         (import_statement) @import
-        
+
         (import_statement
             name: (identifier) @import.name) @import.simple
-            
+
         (using_statement) @using
-        
+
         (using_statement
             name: (identifier) @using.name) @using.simple
-            
+
         (import_statement
             name: (dot_expression) @import.qualified) @import.qualified
     """,

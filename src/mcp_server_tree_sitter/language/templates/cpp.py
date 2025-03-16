@@ -30,7 +30,7 @@ TEMPLATES = {
     """,
     "imports": """
         (preproc_include) @import
-        
+
         (preproc_include
             path: (string_literal) @import.path) @import.user
 
@@ -42,7 +42,7 @@ TEMPLATES = {
     """,
     "templates": """
         (template_declaration) @template.def
-        
+
         (template_declaration
             declaration: (class_specifier
                 name: (type_identifier) @template.class)) @template.class_def

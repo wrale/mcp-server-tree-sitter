@@ -227,9 +227,7 @@ def query_code(
                             break
 
                         try:
-                            text = source_bytes[node.start_byte : node.end_byte].decode(
-                                "utf-8", errors="replace"
-                            )
+                            text = source_bytes[node.start_byte : node.end_byte].decode("utf-8", errors="replace")
                         except Exception:
                             text = "<binary data>"
 
@@ -260,11 +258,7 @@ def query_code(
                     elif hasattr(match, "node") and hasattr(match, "capture_name"):
                         # Object with node and capture_name attributes
                         node, capture_name = match.node, match.capture_name
-                    elif (
-                        isinstance(match, dict)
-                        and "node" in match
-                        and "capture" in match
-                    ):
+                    elif isinstance(match, dict) and "node" in match and "capture" in match:
                         # Dictionary with node and capture keys
                         node, capture_name = match["node"], match["capture"]
                     else:
@@ -276,9 +270,7 @@ def query_code(
                         break
 
                     try:
-                        text = source_bytes[node.start_byte : node.end_byte].decode(
-                            "utf-8", errors="replace"
-                        )
+                        text = source_bytes[node.start_byte : node.end_byte].decode("utf-8", errors="replace")
                     except Exception:
                         text = "<binary data>"
 
@@ -304,11 +296,7 @@ def query_code(
             raise QueryError("Language is required when file_path is not provided")
 
         # Find all matching files for the language
-        extensions = [
-            (ext, lang)
-            for ext, lang in language_registry._language_map.items()
-            if lang == language
-        ]
+        extensions = [(ext, lang) for ext, lang in language_registry._language_map.items() if lang == language]
 
         if not extensions:
             raise QueryError(f"No file extensions found for language {language}")
@@ -322,11 +310,7 @@ def query_code(
                     query_string,
                     rel_path,
                     language,
-                    max_results=(
-                        max_results
-                        if max_results is None
-                        else max_results - len(results)
-                    ),
+                    max_results=(max_results if max_results is None else max_results - len(results)),
                     include_snippets=include_snippets,
                 )
                 return file_results

@@ -63,9 +63,7 @@ def test_get_ast_functionality(test_project, diagnostic):
 
         # Check that the tree doesn't contain an error
         if isinstance(ast_result["tree"], dict) and "error" in ast_result["tree"]:
-            raise AssertionError(
-                f"AST tree contains an error: {ast_result['tree']['error']}"
-            )
+            raise AssertionError(f"AST tree contains an error: {ast_result['tree']['error']}")
 
     except Exception as e:
         # Record the error in diagnostics
@@ -124,9 +122,7 @@ def test_direct_parsing(test_project, diagnostic):
                         "type": root.type,
                         "start_byte": root.start_byte,
                         "end_byte": root.end_byte,
-                        "child_count": (
-                            len(root.children) if hasattr(root, "children") else -1
-                        ),
+                        "child_count": (len(root.children) if hasattr(root, "children") else -1),
                     }
                     diagnostic.add_detail("root_node", root_info)
 
@@ -149,18 +145,14 @@ def test_direct_parsing(test_project, diagnostic):
 
                         # Check for error in node dictionary
                         if "error" in node_dict:
-                            raise AssertionError(
-                                f"node_dict contains an error: {node_dict['error']}"
-                            )
+                            raise AssertionError(f"node_dict contains an error: {node_dict['error']}")
 
                     except Exception as e:
                         diagnostic.add_error("NodeToDictError", str(e))
                         pytest.fail(f"node_to_dict failed: {e}")
 
                 else:
-                    diagnostic.add_error(
-                        "NoRootNodeError", "Tree has no root_node attribute"
-                    )
+                    diagnostic.add_error("NoRootNodeError", "Tree has no root_node attribute")
                     pytest.fail("Tree has no root_node attribute")
 
             except Exception as e:

@@ -32,9 +32,7 @@ def test_tree_sitter_import(diagnostic):
             diagnostic.add_error("ParserCreationError", str(e))
 
         # Verify the basic components are available
-        assert hasattr(
-            tree_sitter, "Language"
-        ), "tree_sitter should have Language class"
+        assert hasattr(tree_sitter, "Language"), "tree_sitter should have Language class"
         assert hasattr(tree_sitter, "Parser"), "tree_sitter should have Parser class"
         assert hasattr(tree_sitter, "Tree"), "tree_sitter should have Tree class"
         assert hasattr(tree_sitter, "Node"), "tree_sitter should have Node class"
@@ -119,16 +117,10 @@ def test_language_binding_available(diagnostic):
         diagnostic.add_detail("language_results", language_results)
 
         # Check that at least some languages are available
-        successful_languages = [
-            lang
-            for lang, result in language_results.items()
-            if result.get("status") == "success"
-        ]
+        successful_languages = [lang for lang, result in language_results.items() if result.get("status") == "success"]
 
         if not successful_languages:
-            diagnostic.add_error(
-                "NoLanguagesAvailable", "None of the test languages are available"
-            )
+            diagnostic.add_error("NoLanguagesAvailable", "None of the test languages are available")
 
         assert len(successful_languages) > 0, "No languages are available"
 

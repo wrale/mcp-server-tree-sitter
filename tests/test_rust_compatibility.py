@@ -8,8 +8,8 @@ import pytest
 
 from mcp_server_tree_sitter.server import (
     get_ast,
-    get_symbols,
     get_dependencies,
+    get_symbols,
     register_project_tool,
     run_query,
 )
@@ -24,7 +24,8 @@ def rust_project(request):
         # Create a simple Rust file
         main_rs = project_path / "main.rs"
         with open(main_rs, "w") as f:
-            f.write('''
+            f.write(
+                """
 use std::io;
 use std::collections::HashMap;
 
@@ -68,12 +69,14 @@ fn main() {
     let ages = calculate_ages(&people);
     println!("Ages: {:?}", ages);
 }
-''')
+"""
+            )
 
         # Create a library file
         lib_rs = project_path / "lib.rs"
         with open(lib_rs, "w") as f:
-            f.write('''
+            f.write(
+                """
 use std::fs;
 use std::fs::File;
 use std::io::{self, Read, Write};
@@ -118,7 +121,8 @@ pub fn list_files(dir: &str) -> Result<Vec<String>, io::Error> {
     }
     Ok(files)
 }
-''')
+"""
+            )
 
         # Generate a unique project name based on the test name
         test_name = request.node.name
@@ -133,7 +137,11 @@ pub fn list_files(dir: &str) -> Result<Vec<String>, io::Error> {
             project_name = f"rust_test_project_{unique_id}_{int(time.time())}"
             register_project_tool(path=str(project_path), name=project_name)
 
-        yield {"name": project_name, "path": str(project_path), "files": ["main.rs", "lib.rs"]}
+        yield {
+            "name": project_name,
+            "path": str(project_path),
+            "files": ["main.rs", "lib.rs"],
+        }
 
 
 def test_rust_ast_parsing(rust_project):
@@ -288,7 +296,8 @@ def test_rust_trait_and_macro_handling(rust_project):
     # Create a file with traits and macros
     trait_file = Path(rust_project["path"]) / "traits.rs"
     with open(trait_file, "w") as f:
-        f.write('''
+        f.write(
+            """
 pub trait Display {
     fn display(&self) -> String;
 }
@@ -326,7 +335,8 @@ fn main() {
     let v = create_value!(2.5, 3.0);
     println!("{}: {}", v.display(), v.calculate());
 }
-''')
+"""
+        )
 
     # Get AST for this file
     ast_result = get_ast(

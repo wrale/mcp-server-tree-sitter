@@ -27,9 +27,7 @@ def test_list_available_languages():
 
     # Assert that we find at least some of our expected languages
     for lang in expected_languages:
-        assert (
-            lang in available_languages
-        ), f"Expected language {lang} not in available languages"
+        assert lang in available_languages, f"Expected language {lang} not in available languages"
 
 
 def test_language_api_consistency():
@@ -55,30 +53,22 @@ def test_language_api_consistency():
         is_listed = lang in available_languages
 
         # Both methods should return the same result
-        assert (
-            is_available == is_listed
-        ), f"Inconsistency for {lang}: available={is_available}, listed={is_listed}"
+        assert is_available == is_listed, f"Inconsistency for {lang}: available={is_available}, listed={is_listed}"
 
 
 def test_server_language_tools():
     """Test the server language tools."""
     # Test list_languages
     languages_result = list_languages()
-    assert (
-        "available" in languages_result
-    ), "Missing 'available' key in list_languages result"
-    assert isinstance(
-        languages_result["available"], list
-    ), "'available' should be a list"
+    assert "available" in languages_result, "Missing 'available' key in list_languages result"
+    assert isinstance(languages_result["available"], list), "'available' should be a list"
     assert len(languages_result["available"]) > 0, "No languages available"
 
     # Test each language with check_language_available
     for lang in ["python", "javascript", "typescript"]:
         result = check_language_available(lang)
         assert result["status"] == "success", f"Language {lang} should be available"
-        assert (
-            "message" in result
-        ), "Missing 'message' key in check_language_available result"
+        assert "message" in result, "Missing 'message' key in check_language_available result"
 
 
 if __name__ == "__main__":

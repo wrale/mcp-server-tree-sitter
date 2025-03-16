@@ -40,7 +40,7 @@ class Person:
     def __init__(self, name: str, age: int):
         self.name = name
         self.age = age
-    
+
     def greet(self) -> str:
         return f"Hello, my name is {self.name} and I'm {self.age} years old."
 
@@ -48,7 +48,7 @@ class Employee(Person):
     def __init__(self, name: str, age: int, employee_id: str):
         super().__init__(name, age)
         self.employee_id = employee_id
-    
+
     def greet(self) -> str:
         basic_greeting = super().greet()
         return f"{basic_greeting} I am employee {self.employee_id}."
@@ -69,13 +69,13 @@ def calculate_age(birthdate: dt) -> int:
 if __name__ == "__main__":
     p = Person("Alice", 30)
     e = Employee("Bob", 25, "E12345")
-    
+
     print(p.greet())
     print(e.greet())
-    
+
     data = process_data(["apple", "banana", "cherry"])
     print(data)
-    
+
     bob_birthday = dt(1998, 5, 15)
     bob_age = calculate_age(bob_birthday)
     print(f"Bob's age is {bob_age}")
@@ -116,12 +116,12 @@ def generate_random_data(count: int) -> List[Dict[str, Any]]:
 class FileHandler:
     def __init__(self, base_path: str):
         self.base_path = Path(base_path)
-        
+
     def save_data(self, data: Dict[str, Any], filename: str) -> str:
         file_path = self.base_path / filename
         save_json(data, str(file_path))
         return str(file_path)
-        
+
     def load_data(self, filename: str) -> Dict[str, Any]:
         file_path = self.base_path / filename
         return load_json(str(file_path))
@@ -159,10 +159,8 @@ def test_symbol_extraction_diagnostics(test_project):
     from mcp_server_tree_sitter.models.project import ProjectRegistry
     from mcp_server_tree_sitter.tools.analysis import extract_symbols
 
-    project = ProjectRegistry().get_project(test_project["name"])
-    symbols_excluding_methods = extract_symbols(
-        test_project["name"], "test.py", exclude_class_methods=True
-    )
+    _project = ProjectRegistry().get_project(test_project["name"])
+    symbols_excluding_methods = extract_symbols(test_project["name"], "test.py", exclude_class_methods=True)
 
     # Verify the result structure
     assert "functions" in symbols, "Result should contain 'functions' key"
@@ -182,36 +180,23 @@ def test_symbol_extraction_diagnostics(test_project):
     expected_import_count = 4  # os, sys, typing, datetime
 
     # Verify extracted symbols
-    if (
-        symbols_excluding_methods["functions"]
-        and len(symbols_excluding_methods["functions"]) > 0
-    ):
+    if symbols_excluding_methods["functions"] and len(symbols_excluding_methods["functions"]) > 0:
         # Instead of checking exact counts, just verify we found the main functions
         function_names = [f["name"] for f in symbols_excluding_methods["functions"]]
-        assert (
-            "process_data" in function_names
-        ), "Expected to find 'process_data' function"
-        assert (
-            "calculate_age" in function_names
-        ), "Expected to find 'calculate_age' function"
+        assert "process_data" in function_names, "Expected to find 'process_data' function"
+        assert "calculate_age" in function_names, "Expected to find 'calculate_age' function"
     else:
-        print(
-            f"KNOWN ISSUE: Expected {expected_function_count} functions, but got empty list"
-        )
+        print(f"KNOWN ISSUE: Expected {expected_function_count} functions, but got empty list")
 
     if symbols["classes"] and len(symbols["classes"]) > 0:
         assert len(symbols["classes"]) == expected_class_count
     else:
-        print(
-            f"KNOWN ISSUE: Expected {expected_class_count} classes, but got empty list"
-        )
+        print(f"KNOWN ISSUE: Expected {expected_class_count} classes, but got empty list")
 
     if symbols["imports"] and len(symbols["imports"]) > 0:
         assert len(symbols["imports"]) == expected_import_count
     else:
-        print(
-            f"KNOWN ISSUE: Expected {expected_import_count} imports, but got empty list"
-        )
+        print(f"KNOWN ISSUE: Expected {expected_import_count} imports, but got empty list")
 
     # Now check the second file to ensure results are consistent
     symbols_utils = get_symbols(project=test_project["name"], file_path="utils.py")
@@ -240,24 +225,16 @@ def test_dependency_analysis_diagnostics(test_project):
         if "module" in dependencies:
             # Modify test to be more flexible with datetime imports
             for dep in ["os", "sys", "typing"]:
-                assert any(
-                    dep in mod for mod in dependencies["module"]
-                ), f"Expected dependency '{dep}' not found"
+                assert any(dep in mod for mod in dependencies["module"]), f"Expected dependency '{dep}' not found"
         else:
             # Otherwise check in the entire dependencies dictionary
             for dep in expected_dependencies:
-                assert dep in str(
-                    dependencies
-                ), f"Expected dependency '{dep}' not found"
+                assert dep in str(dependencies), f"Expected dependency '{dep}' not found"
     else:
-        print(
-            f"KNOWN ISSUE: Expected dependencies {expected_dependencies}, but got empty result"
-        )
+        print(f"KNOWN ISSUE: Expected dependencies {expected_dependencies}, but got empty result")
 
     # Check the second file for consistency
-    dependencies_utils = get_dependencies(
-        project=test_project["name"], file_path="utils.py"
-    )
+    dependencies_utils = get_dependencies(project=test_project["name"], file_path="utils.py")
 
     print("\nDependency analysis results for utils.py:")
     print(f"Dependencies: {dependencies_utils}")
@@ -302,9 +279,7 @@ def test_symbol_extraction_with_ast_access(test_project):
                                 "name": child.get("text"),
                                 "path": path,
                                 "node_id": node.get("id"),
-                                "text": node.get("text", "").split("\n")[0][
-                                    :50
-                                ],  # First line, truncated
+                                "text": node.get("text", "").split("\n")[0][:50],  # First line, truncated
                             }
                         )
                         break
@@ -320,9 +295,7 @@ def test_symbol_extraction_with_ast_access(test_project):
                                 "name": child.get("text"),
                                 "path": path,
                                 "node_id": node.get("id"),
-                                "text": node.get("text", "").split("\n")[0][
-                                    :50
-                                ],  # First line, truncated
+                                "text": node.get("text", "").split("\n")[0][:50],  # First line, truncated
                             }
                         )
                         break
@@ -369,9 +342,7 @@ def test_symbol_extraction_with_ast_access(test_project):
     symbols = get_symbols(project=test_project["name"], file_path="test.py")
 
     print("\nComparison with get_symbols:")
-    print(
-        f"Manual functions: {len(functions)}, get_symbols: {len(symbols['functions'])}"
-    )
+    print(f"Manual functions: {len(functions)}, get_symbols: {len(symbols['functions'])}")
     print(f"Manual classes: {len(classes)}, get_symbols: {len(symbols['classes'])}")
     print(f"Manual imports: {len(imports)}, get_symbols: {len(symbols['imports'])}")
 
@@ -409,7 +380,7 @@ def test_query_based_symbol_extraction(test_project):
 
         # Define queries for different symbol types
         function_query = """
-            (function_definition 
+            (function_definition
                 name: (identifier) @function.name
                 parameters: (parameters) @function.params
                 body: (block) @function.body
@@ -427,7 +398,7 @@ def test_query_based_symbol_extraction(test_project):
             (import_statement
                 name: (dotted_name) @import.module
             ) @import
-            
+
             (import_from_statement
                 module_name: (dotted_name) @import.from
                 name: (dotted_name) @import.item
@@ -456,11 +427,7 @@ def test_query_based_symbol_extraction(test_project):
                 for capture_name, nodes in captures.items():
                     if capture_name == target_type:
                         for node in nodes:
-                            name = (
-                                node.text.decode("utf-8")
-                                if hasattr(node.text, "decode")
-                                else str(node.text)
-                            )
+                            name = node.text.decode("utf-8") if hasattr(node.text, "decode") else str(node.text)
                             result_dict[name] = {
                                 "name": name,
                                 "start": node.start_point,
@@ -479,21 +446,13 @@ def test_query_based_symbol_extraction(test_project):
                                 continue  # Skip if unexpected tuple size
                         elif hasattr(item, "node") and hasattr(item, "capture_name"):
                             node, capture_name = item.node, item.capture_name
-                        elif (
-                            isinstance(item, dict)
-                            and "node" in item
-                            and "capture" in item
-                        ):
+                        elif isinstance(item, dict) and "node" in item and "capture" in item:
                             node, capture_name = item["node"], item["capture"]
                         else:
                             continue  # Skip if format unknown
 
                         if capture_name == target_type:
-                            name = (
-                                node.text.decode("utf-8")
-                                if hasattr(node.text, "decode")
-                                else str(node.text)
-                            )
+                            name = node.text.decode("utf-8") if hasattr(node.text, "decode") else str(node.text)
                             result_dict[name] = {
                                 "name": name,
                                 "start": node.start_point,
@@ -514,11 +473,7 @@ def test_query_based_symbol_extraction(test_project):
                 for capture_name, nodes in captures.items():
                     if capture_name in ("import.module", "import.from", "import.item"):
                         for node in nodes:
-                            name = (
-                                node.text.decode("utf-8")
-                                if hasattr(node.text, "decode")
-                                else str(node.text)
-                            )
+                            name = node.text.decode("utf-8") if hasattr(node.text, "decode") else str(node.text)
                             imports[name] = {
                                 "name": name,
                                 "type": capture_name,
@@ -538,11 +493,7 @@ def test_query_based_symbol_extraction(test_project):
                                 continue  # Skip if unexpected tuple size
                         elif hasattr(item, "node") and hasattr(item, "capture_name"):
                             node, capture_name = item.node, item.capture_name
-                        elif (
-                            isinstance(item, dict)
-                            and "node" in item
-                            and "capture" in item
-                        ):
+                        elif isinstance(item, dict) and "node" in item and "capture" in item:
                             node, capture_name = item["node"], item["capture"]
                         else:
                             continue  # Skip if format unknown
@@ -552,11 +503,7 @@ def test_query_based_symbol_extraction(test_project):
                             "import.from",
                             "import.item",
                         ):
-                            name = (
-                                node.text.decode("utf-8")
-                                if hasattr(node.text, "decode")
-                                else str(node.text)
-                            )
+                            name = node.text.decode("utf-8") if hasattr(node.text, "decode") else str(node.text)
                             imports[name] = {
                                 "name": name,
                                 "type": capture_name,
@@ -579,9 +526,7 @@ def test_query_based_symbol_extraction(test_project):
         symbols = get_symbols(project=test_project["name"], file_path="test.py")
 
         print("\nComparison with get_symbols:")
-        print(
-            f"Query functions: {len(functions)}, get_symbols: {len(symbols['functions'])}"
-        )
+        print(f"Query functions: {len(functions)}, get_symbols: {len(symbols['functions'])}")
         print(f"Query classes: {len(classes)}, get_symbols: {len(symbols['classes'])}")
         print(f"Query imports: {len(imports)}, get_symbols: {len(symbols['imports'])}")
 
@@ -607,9 +552,7 @@ def test_debug_file_saving(test_project):
     os.makedirs(debug_dir, exist_ok=True)
 
     # Get AST and symbol information
-    ast_result = get_ast(
-        project=test_project["name"], path="test.py", max_depth=10, include_text=True
-    )
+    ast_result = get_ast(project=test_project["name"], path="test.py", max_depth=10, include_text=True)
 
     symbols = get_symbols(project=test_project["name"], file_path="test.py")
 

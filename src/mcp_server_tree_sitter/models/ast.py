@@ -26,8 +26,9 @@ def node_to_dict(
     """
     Convert a tree-sitter node to a dictionary representation.
 
-    This function now uses a cursor-based traversal approach for efficiency and reliability,
-    especially with large ASTs that could cause stack overflow with recursive processing.
+    This function now uses a cursor-based traversal approach for efficiency and
+    reliability, especially with large ASTs that could cause stack overflow with
+    recursive processing.
 
     Args:
         node: Tree-sitter Node object
@@ -40,9 +41,7 @@ def node_to_dict(
         Dictionary representation of the node
     """
     # Use the cursor-based implementation for improved reliability
-    return node_to_dict_cursor(
-        node, source_bytes, include_children, include_text, max_depth
-    )
+    return node_to_dict_cursor(node, source_bytes, include_children, include_text, max_depth)
 
 
 def summarize_node(node: Any, source_bytes: Optional[bytes] = None) -> Dict[str, Any]:
@@ -109,10 +108,7 @@ def find_node_at_position(root_node: Any, row: int, column: int) -> Optional[Any
 
     while cursor.goto_first_child():
         # If current node contains the point, it's better than the parent
-        if (
-            cursor.node is not None
-            and cursor.node.start_point <= point <= cursor.node.end_point
-        ):
+        if cursor.node is not None and cursor.node.start_point <= point <= cursor.node.end_point:
             current_best = cursor.node
             continue  # Continue to first child
 
@@ -123,10 +119,7 @@ def find_node_at_position(root_node: Any, row: int, column: int) -> Optional[Any
         # Try siblings
         found_in_sibling = False
         while cursor.goto_next_sibling():
-            if (
-                cursor.node is not None
-                and cursor.node.start_point <= point <= cursor.node.end_point
-            ):
+            if cursor.node is not None and cursor.node.start_point <= point <= cursor.node.end_point:
                 current_best = cursor.node
                 found_in_sibling = True
                 break

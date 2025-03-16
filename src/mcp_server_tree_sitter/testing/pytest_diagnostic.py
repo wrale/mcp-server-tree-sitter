@@ -30,9 +30,7 @@ class DiagnosticData:
         self.errors: List[Dict[str, Any]] = []
         self.artifacts: Dict[str, Any] = {}
 
-    def add_error(
-        self, error_type: str, message: str, tb: Optional[str] = None
-    ) -> None:
+    def add_error(self, error_type: str, message: str, tb: Optional[str] = None) -> None:
         """Add an error to the diagnostic data."""
         error_info = {
             "type": error_type,
@@ -90,9 +88,7 @@ def diagnostic(request: Any) -> Generator[DiagnosticData, None, None]:
 def pytest_configure(config: Any) -> None:
     """Set up the plugin when pytest starts."""
     # Register additional markers
-    config.addinivalue_line(
-        "markers", "diagnostic: mark test as producing diagnostic information"
-    )
+    config.addinivalue_line("markers", "diagnostic: mark test as producing diagnostic information")
 
 
 def pytest_runtest_protocol(item: Any, nextitem: Any) -> Optional[bool]:
@@ -113,16 +109,12 @@ def pytest_runtest_teardown(item: Any) -> None:
     pass
 
 
-def pytest_terminal_summary(
-    terminalreporter: Any, exitstatus: Any, config: Any
-) -> None:
+def pytest_terminal_summary(terminalreporter: Any, exitstatus: Any, config: Any) -> None:
     """Add diagnostic summary to the terminal output."""
     if _DIAGNOSTICS:
         terminalreporter.write_sep("=", "Diagnostic Summary")
         error_count = sum(1 for d in _DIAGNOSTICS.values() if d.status == "error")
-        terminalreporter.write_line(
-            f"Collected {len(_DIAGNOSTICS)} diagnostics, {error_count} with errors"
-        )
+        terminalreporter.write_line(f"Collected {len(_DIAGNOSTICS)} diagnostics, {error_count} with errors")
 
         # If there are errors, show details
         if error_count:
@@ -131,9 +123,7 @@ def pytest_terminal_summary(
                 if diag.status == "error":
                     terminalreporter.write_line(f"- {test_id}")
                     for i, error in enumerate(diag.errors):
-                        terminalreporter.write_line(
-                            f"  Error {i+1}: {error['type']}: {error['message']}"
-                        )
+                        terminalreporter.write_line(f"  Error {i+1}: {error['type']}: {error['message']}")
 
 
 def pytest_sessionfinish(session: Any, exitstatus: Any) -> None:
@@ -155,14 +145,8 @@ def pytest_sessionfinish(session: Any, exitstatus: Any) -> None:
                 "diagnostics": diagnostics_dict,
                 "summary": {
                     "total": len(diagnostics_dict),
-                    "errors": sum(
-                        1 for d in diagnostics_dict.values() if d["status"] == "error"
-                    ),
-                    "completed": sum(
-                        1
-                        for d in diagnostics_dict.values()
-                        if d["status"] == "completed"
-                    ),
+                    "errors": sum(1 for d in diagnostics_dict.values() if d["status"] == "error"),
+                    "completed": sum(1 for d in diagnostics_dict.values() if d["status"] == "completed"),
                 },
             },
             f,

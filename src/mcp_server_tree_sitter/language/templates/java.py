@@ -6,7 +6,7 @@ TEMPLATES = {
             name: (identifier) @function.name
             parameters: (formal_parameters) @function.params
             body: (block) @function.body) @function.def
-            
+
         (constructor_declaration
             name: (identifier) @constructor.name
             parameters: (formal_parameters) @constructor.params
@@ -24,21 +24,21 @@ TEMPLATES = {
     """,
     "imports": """
         (import_declaration) @import
-        
+
         (import_declaration
             name: (qualified_name) @import.name) @import.qualified
-            
+
         (import_declaration
             name: (qualified_name
                 name: (identifier) @import.class)) @import.class
-                
+
         (import_declaration
             asterisk: "*") @import.wildcard
     """,
     "annotations": """
         (annotation
             name: (identifier) @annotation.name) @annotation
-            
+
         (annotation_type_declaration
             name: (identifier) @annotation.type_name) @annotation.type
     """,

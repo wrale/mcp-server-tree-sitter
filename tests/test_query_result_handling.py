@@ -32,7 +32,7 @@ class Person:
     def __init__(self, name: str, age: int):
         self.name = name
         self.age = age
-    
+
     def greet(self) -> str:
         return f"Hello, my name is {self.name} and I'm {self.age} years old."
 
@@ -45,7 +45,7 @@ def process_data(items: List[str]) -> Dict[str, int]:
 if __name__ == "__main__":
     p = Person("Alice", 30)
     print(p.greet())
-    
+
     data = process_data(["apple", "banana", "cherry"])
     print(data)
 """
@@ -131,9 +131,7 @@ def test_query_result_capture_types(test_project, query_string, expected_capture
     # Now that we've fixed the query execution, we'll check if we got results
     # but we won't enforce the expected count since that was based on the old broken behavior
     if result and len(result) > 0:
-        print(
-            f"SUCCESS: Query returned {len(result)} results, expected around {expected_capture_count}"
-        )
+        print(f"SUCCESS: Query returned {len(result)} results, expected around {expected_capture_count}")
     else:
         print(f"QUERY RETURNED NO RESULTS, expected around {expected_capture_count}")
         # We're now making the test pass regardless, since we're focusing on
@@ -150,7 +148,7 @@ def test_direct_query_with_language_pack():
         from tree_sitter_language_pack import get_language, get_parser
 
         # Get language directly from language pack instead of registry
-        language = get_language("python")
+        _language = get_language("python")
 
         # Parse the code
         parser = get_parser("python")
@@ -173,11 +171,7 @@ def test_direct_query_with_language_pack():
                 # Look for the identifier (function name) among child nodes
                 for subchild in child.children:
                     if subchild.type == "identifier":
-                        name_text = (
-                            subchild.text.decode("utf-8")
-                            if hasattr(subchild.text, "decode")
-                            else subchild.text
-                        )
+                        name_text = subchild.text.decode("utf-8") if hasattr(subchild.text, "decode") else subchild.text
                         print(f"Function name: {name_text}")
 
         # Assert we found a function in the parsed tree
@@ -276,9 +270,7 @@ def test_query_result_structure_transformation():
     assert len(mcp_results) == 2, "Should have 2 transformed results"
     assert mcp_results[0]["capture"] == "name", "First capture should be 'name'"
     assert mcp_results[0]["text"] == "hello", "First capture should have text 'hello'"
-    assert (
-        mcp_results[1]["capture"] == "function"
-    ), "Second capture should be 'function'"
+    assert mcp_results[1]["capture"] == "function", "Second capture should be 'function'"
 
     # Diagnostic information
     print(f"Transformed results: {mcp_results}")

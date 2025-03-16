@@ -81,9 +81,7 @@ def node_to_dict_cursor(
     current_depth = 0
 
     # Process a node and add it to node_map
-    def process_node(
-        current_node: Node, parent_data: Dict[str, Any], depth: int
-    ) -> Dict[str, Any]:
+    def process_node(current_node: Node, parent_data: Dict[str, Any], depth: int) -> Dict[str, Any]:
         node_id = get_node_id(current_node)
 
         # Return existing node data if already processed

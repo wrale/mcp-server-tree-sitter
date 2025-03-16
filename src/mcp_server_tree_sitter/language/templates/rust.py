@@ -19,15 +19,15 @@ TEMPLATES = {
     """,
     "imports": """
         (use_declaration) @import
-        
+
         (use_declaration
             (identifier) @import.name) @import.direct
-        
+
         (use_declaration
             (scoped_identifier
                 path: (_) @import.path
                 name: (identifier) @import.name)) @import.scoped
-                
+
         (use_declaration
             (scoped_use_list
                 path: (_) @import.path)) @import.list
