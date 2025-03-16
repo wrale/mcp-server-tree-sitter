@@ -197,7 +197,9 @@ def get_project_file_resource(project: str, file_path: str) -> str:
 @mcp.resource("project://{project}/file/{file_path}/lines/{start}-{end}")
 def get_file_lines_resource(project: str, file_path: str, start: int, end: int) -> str:
     """Get specific lines from a file."""
-    return get_file_content(project, file_path, max_lines=end - start + 1, start_line=start)
+    return get_file_content(
+        project, file_path, max_lines=end - start + 1, start_line=start
+    )
 
 
 # AST Resources

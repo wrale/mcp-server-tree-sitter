@@ -101,11 +101,20 @@ class Project:
 
 
 class ProjectRegistry:
-    """Manages projects for code analysis."""
+    """Manages projects for code analysis. Implements singleton pattern."""
 
-    def __init__(self):
-        self.projects: Dict[str, Project] = {}
-        self.lock = threading.Lock()
+    # Class-level instance for singleton pattern
+    _instance = None
+    _lock = threading.RLock()
+
+    def __new__(cls):
+        """Ensure only one instance exists."""
+        with cls._lock:
+            if cls._instance is None:
+                cls._instance = super(ProjectRegistry, cls).__new__(cls)
+                cls._instance.projects = {}
+                cls._instance.lock = threading.Lock()
+            return cls._instance
 
     def register_project(
         self, name: str, path: str, description: str = None
