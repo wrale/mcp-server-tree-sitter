@@ -60,10 +60,12 @@ def test_get_ast_functionality(test_project, diagnostic):
         assert "tree" in ast_result, "AST result should contain a tree"
         assert "file" in ast_result, "AST result should contain file info"
         assert "language" in ast_result, "AST result should contain language info"
-        
+
         # Check that the tree doesn't contain an error
         if isinstance(ast_result["tree"], dict) and "error" in ast_result["tree"]:
-            raise AssertionError(f"AST tree contains an error: {ast_result['tree']['error']}")
+            raise AssertionError(
+                f"AST tree contains an error: {ast_result['tree']['error']}"
+            )
 
     except Exception as e:
         # Record the error in diagnostics
@@ -144,10 +146,12 @@ def test_direct_parsing(test_project, diagnostic):
                         assert (
                             "children" in node_dict or "truncated" in node_dict
                         ), "node_dict should contain children or be truncated"
-                        
+
                         # Check for error in node dictionary
                         if "error" in node_dict:
-                            raise AssertionError(f"node_dict contains an error: {node_dict['error']}")
+                            raise AssertionError(
+                                f"node_dict contains an error: {node_dict['error']}"
+                            )
 
                     except Exception as e:
                         diagnostic.add_error("NodeToDictError", str(e))

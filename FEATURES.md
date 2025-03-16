@@ -79,8 +79,8 @@ These commands perform abstract syntax tree (AST) operations.
 
 | Command | Status | Dependencies | Notes |
 |---------|--------|--------------|-------|
-| `get_ast` | ❌ | None | Returns error with node ID not found in nodes_dict |
-| `get_node_at_position` | ❌ | None | Not fully tested but likely fails due to AST parsing issues |
+| `get_ast` | ✅ | None | Returns AST using efficient cursor-based traversal |
+| `get_node_at_position` | ✅ | None | Successfully retrieves nodes at a specific position in a file |
 
 ### Common Failure Modes:
 - `get_ast` returns error about missing node IDs rather than a usable AST
@@ -93,12 +93,12 @@ These commands search code and execute tree-sitter queries.
 | Command | Status | Dependencies | Notes |
 |---------|--------|--------------|-------|
 | `find_text` | ✅ | Project registration | Text search works correctly with pattern matching |
-| `run_query` | ❌ | None | Executes without output but fails to return results |
+| `run_query` | ❌ | None | Executes without errors but returns no results |
 | `get_query_template_tool` | ✅ | None | Successfully returns templates when available |
 | `list_query_templates_tool` | ✅ | None | Successfully lists available templates |
-| `build_query` | ❌ | None | Not fully tested but likely fails due to AST parsing issues |
-| `adapt_query` | ❌ | None | Not fully tested but likely fails due to AST parsing issues |
-| `get_node_types` | ⚠️ | None | Not fully tested but likely works as it doesn't depend on parsing |
+| `build_query` | ✅ | None | Successfully builds and combines query templates |
+| `adapt_query` | ❌ | None | Not fully tested; likely has issues with language-specific syntax |
+| `get_node_types` | ✅ | None | Successfully returns descriptions of node types for a language |
 
 ### Example Usage:
 ```python
@@ -118,12 +118,12 @@ These commands analyze code structure and complexity.
 
 | Command | Status | Dependencies | Notes |
 |---------|--------|--------------|-------|
-| `get_symbols` | ⚠️ | Project registration | Returns empty lists for symbols instead of failing |
+| `get_symbols` | ❌ | Project registration | Returns empty symbol lists regardless of file content |
 | `analyze_project` | ✅ | Project registration | Project structure analysis works, but detailed code analysis is limited |
-| `get_dependencies` | ⚠️ | Project registration | Returns empty results instead of failing |
+| `get_dependencies` | ❌ | Project registration | Returns empty results regardless of import statements |
 | `analyze_complexity` | ✅ | Project registration | Works but may have limited accuracy due to AST issues |
 | `find_similar_code` | ❌ | None | Executes without output but fails to return results |
-| `find_usage` | ❌ | None | Executes without output but fails to return results |
+| `find_usage` | ❌ | None | Executes without errors but doesn't return any results |
 
 ### Common Failure Modes:
 - Several commands return empty results rather than failing with errors
@@ -157,15 +157,15 @@ The integration of tree-sitter-language-pack appears to be partially complete, b
 | Feature Area | Previous Status | Current Status | Test Results |
 |--------------|-----------------|----------------|--------------|
 | Language Tools | ⚠️ Partial | ✅ Working | Language tools properly report and list available languages |
-| AST Analysis | ⚠️ Partial | ❌ Not Working | `get_ast` fails with node ID errors, showing issues with AST building |
-| Search Queries | ⚠️ Partial | ⚠️ Partial | Text search works but tree-sitter queries run without returning results |
-| Code Analysis | ⚠️ Partial | ⚠️ Partial | Basic structure analysis works, but symbol extraction and AST-dependent features return empty results |
+| AST Analysis | ⚠️ Partial | ⚠️ Partial | `get_ast` and `get_node_at_position` work, but more complex AST operations have issues |
+| Search Queries | ⚠️ Partial | ⚠️ Partial | Text search works, query building works, but tree-sitter query execution returns no results |
+| Code Analysis | ⚠️ Partial | ⚠️ Partial | Basic structure and complexity analysis works, but symbol extraction and dependency analysis return empty results |
 
 ### Current Integration Issues:
-- AST parsing returns errors about missing node IDs
-- Query execution completes but doesn't return proper results
-- Analysis functions run but return empty or limited results
-- Project management and file operations function correctly
+- AST core functionality works for retrieving trees and nodes, but has limitations
+- Query execution completes without errors but doesn't return any results
+- Symbol extraction and dependency analysis return empty results regardless of content
+- Project management, file operations, and basic AST features work correctly
 
 ## Implementation Gaps Analysis
 
@@ -177,9 +177,9 @@ Based on the latest tests, these are the current implementation gaps:
 - Tree manipulation functionality is currently non-operational
 
 ### ⚠️ Partial: Tree Cursor API
-- Status: ❌ Not Working
-- AST node traversal is not functioning correctly
-- Core cursor-based tree walking is needed for most advanced functionality
+- Status: ✅ Working
+- Basic AST node traversal works, but more advanced cursor operations have issues
+- Core cursor-based tree walking works, but semantic analysis is limited
 
 ### ❌ Missing: UTF-16 Support
 - Status: ❌ Not Implemented
@@ -231,7 +231,7 @@ When testing the MCP Tree-sitter server, use this structured approach:
 
 Based on the testing results, these are the most critical next steps:
 
-1. **Fix AST Node Dictionary Building**: The core issue preventing most functionality appears to be in the AST node dictionary construction. Error "Node ID not found in nodes_dict" indicates a tracking issue during AST creation.
+1. **Fix Tree-Sitter Query Result Handling**: The core issue appears to be in query result handling. Queries execute without errors but don't return any results, suggesting an issue with capture or result processing.
 
 2. **Implement Tree Cursor Functionality**: This is a prerequisite for most advanced features and depends on fixing the core AST handling.
 
@@ -241,4 +241,4 @@ Based on the testing results, these are the most critical next steps:
 
 ---
 
-This feature matrix reflects test results as of March 16, 2025. While basic functionality works, AST-dependent features need implementation fixes to become fully operational.
+This feature matrix reflects test results as of March 16, 2025. Basic AST functionality and query building work, but query execution and more advanced analysis features need additional implementation fixes to become fully operational.

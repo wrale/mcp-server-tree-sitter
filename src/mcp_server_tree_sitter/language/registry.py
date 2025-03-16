@@ -4,7 +4,7 @@ import logging
 import threading
 from typing import Any, Dict, List, Optional, Tuple
 
-from tree_sitter_language_pack import get_binding, get_language, get_parser
+from tree_sitter_language_pack import get_language, get_parser
 
 from ..cache.parser_cache import get_cached_parser
 from ..config import CONFIG
@@ -109,19 +109,38 @@ class LanguageRegistry:
         """
         # Start with loaded languages
         available = set(self.languages.keys())
-        
+
         # Add all mappable languages from our extension map
         # These correspond to the languages available in tree-sitter-language-pack
         available.update(set(self._language_map.values()))
-        
+
         # Add frequently used languages that might not be in the map
         common_languages = [
-            "python", "javascript", "typescript", "java", "c", "cpp", "go", "rust",
-            "ruby", "php", "swift", "kotlin", "scala", "bash", "html", "css", "json",
-            "yaml", "markdown", "c_sharp", "objective_c", "xml"
+            "python",
+            "javascript",
+            "typescript",
+            "java",
+            "c",
+            "cpp",
+            "go",
+            "rust",
+            "ruby",
+            "php",
+            "swift",
+            "kotlin",
+            "scala",
+            "bash",
+            "html",
+            "css",
+            "json",
+            "yaml",
+            "markdown",
+            "c_sharp",
+            "objective_c",
+            "xml",
         ]
         available.update(common_languages)
-        
+
         # Return as a sorted list
         return sorted(available)
 

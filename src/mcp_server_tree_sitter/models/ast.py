@@ -1,13 +1,19 @@
-"""AST representation models for MCP server."""
+"""AST representation models for MCP server.
+
+This module provides functions for converting tree-sitter AST nodes to dictionaries,
+finding nodes at specific positions, and other AST-related operations.
+"""
 
 from typing import Any, Dict, List, Optional, Tuple
 
 from ..utils.tree_sitter_helpers import (
-    cursor_walk_tree,
     get_node_text,
     walk_tree,
 )
-from ..utils.tree_sitter_types import Node, ensure_node
+from ..utils.tree_sitter_types import ensure_node
+
+# Import the cursor-based implementation
+from .ast_cursor import node_to_dict_cursor
 
 
 def node_to_dict(
@@ -18,8 +24,10 @@ def node_to_dict(
     max_depth: int = 5,
 ) -> Dict[str, Any]:
     """
-    Convert a tree-sitter node to a dictionary representation using a simplified approach
-    that avoids the cursor-based traversal issues.
+    Convert a tree-sitter node to a dictionary representation.
+
+    This function now uses a cursor-based traversal approach for efficiency and reliability,
+    especially with large ASTs that could cause stack overflow with recursive processing.
 
     Args:
         node: Tree-sitter Node object
@@ -31,53 +39,10 @@ def node_to_dict(
     Returns:
         Dictionary representation of the node
     """
-    safe_node = ensure_node(node)
-
-    # Simple recursive approach to build the tree directly
-    def build_node_dict(node: Node, depth: int = 0) -> Dict[str, Any]:
-        if node is None:
-            return {"type": "none", "children": []}
-
-        # Build basic node data
-        node_data = {
-            "type": node.type,
-            "start_point": {"row": node.start_point[0], "column": node.start_point[1]},
-            "end_point": {"row": node.end_point[0], "column": node.end_point[1]},
-            "start_byte": node.start_byte,
-            "end_byte": node.end_byte,
-            "named": node.is_named,
-        }
-
-        # Add text if source is available and requested
-        if source_bytes and include_text:
-            try:
-                node_data["text"] = get_node_text(node, source_bytes)
-            except Exception as e:
-                node_data["text_error"] = str(e)
-
-        # Handle children recursively if needed and within depth limit
-        if include_children and depth < max_depth:
-            if hasattr(node, "children") and node.children:
-                children = []
-                for child in node.children:
-                    children.append(build_node_dict(child, depth + 1))
-                
-                if children:
-                    node_data["children"] = children
-                    node_data["children_count"] = len(children)
-        elif depth >= max_depth and hasattr(node, "children") and node.children:
-            # Mark as truncated at max depth
-            node_data["truncated"] = True
-            node_data["children_count"] = len(node.children)
-        else:
-            # Empty children list for leaf nodes or when include_children is False
-            node_data["children"] = []
-            node_data["children_count"] = 0
-
-        return node_data
-
-    # Start building from the root node
-    return build_node_dict(safe_node)
+    # Use the cursor-based implementation for improved reliability
+    return node_to_dict_cursor(
+        node, source_bytes, include_children, include_text, max_depth
+    )
 
 
 def summarize_node(node: Any, source_bytes: Optional[bytes] = None) -> Dict[str, Any]:
