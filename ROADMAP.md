@@ -10,9 +10,12 @@ CRITICAL: When a task is done, update this document to mark it done. However, yo
 - ✅ Fix linting issues identified by ruff
 - ✅ Improve exception handling using proper `from` clause
 - ✅ Remove unused variables and improve code organization
+- [ ] Add mcp server start flag(s) for enabling (allow list approach) and disabling (block list approach) a list of features. Only one approach may be applied at a time. The default should be minimal allowed, for now. Add meta features such as stable, wip, advanced, basic
+- [ ] Add mcp server start flag(s) for ensuring language packs are installed beforehand.
+- [ ] Add mcp server start flag(s) for ensuring project is configured beforehand.
 - [ ] Achieve 100% type hinting coverage (and ensure this is enforced by our linting)
 - [ ] Improve docstring coverage and quality (Don't thrash on updating docs that are already good) (HOLD pending other work)
-- [ ] Split files until the longest file is less than 500 lines (unless that breaks functionality, in which case do not)
+- [ ] Split files until the longest .py file is less than 500 lines (unless that breaks functionality, in which case do not)
 
 ### Testing
 - [ ] Increase unit test coverage to 100% and begin enforcing that in pre-commit and CI
