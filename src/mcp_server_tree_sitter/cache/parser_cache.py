@@ -262,5 +262,16 @@ def get_cached_parser(language: Any) -> Parser:
     """Get a cached parser for a language."""
     parser = Parser()
     safe_language = ensure_language(language)
-    parser.set_language(safe_language)
+
+    # Try both set_language and language methods
+    try:
+        parser.set_language(safe_language)  # type: ignore
+    except AttributeError:
+        if hasattr(parser, "language"):
+            # Use the language method if available
+            parser.language = safe_language  # type: ignore
+        else:
+            # Fallback to setting the attribute directly
+            parser.language = safe_language  # type: ignore
+
     return ensure_parser(parser)

@@ -2,7 +2,7 @@
 
 import os
 from collections import Counter, defaultdict
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 from ..config import CONFIG
 from ..exceptions import SecurityError
@@ -82,7 +82,10 @@ def extract_symbols(
             matches = query.captures(tree.root_node)
 
             symbols[symbol_type] = []
-            for node, capture_name in matches:
+            # Using explicit type annotations for captures
+
+            for match in matches:
+                node, capture_name = cast(Tuple[Any, str], match)
                 # Skip non-name captures
                 if (
                     not capture_name.endswith(".name")
@@ -349,7 +352,8 @@ def find_dependencies(project_name: str, file_path: str) -> Dict[str, List[str]]
         # Organize imports by type
         imports = defaultdict(list)
 
-        for node, capture_name in matches:
+        for match in matches:
+            node, capture_name = cast(Tuple[Any, str], match)
             try:
                 # Use helper function to get text
                 safe_node = ensure_node(node)

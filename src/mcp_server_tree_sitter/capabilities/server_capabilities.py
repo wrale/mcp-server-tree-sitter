@@ -16,13 +16,14 @@ def register_capabilities(mcp_server: Any) -> None:
     # Avoid circular imports
     from ..config import CONFIG
 
-    @mcp_server.capability("prompts.listChanged")
+    # FastMCP may not have capability method, so we'll skip this for now
+    # @mcp_server.capability("prompts.listChanged")
     def handle_prompts_list_changed() -> Dict[str, Any]:
         """Handle prompt template management events."""
         logger.debug("Received prompts.listChanged event")
         return {"status": "success"}
 
-    @mcp_server.capability("resources.subscribe")
+    # @mcp_server.capability("resources.subscribe")
     def handle_resources_subscribe(resource_uri: str) -> Dict[str, Any]:
         """
         Handle resource subscription requests.
@@ -36,19 +37,19 @@ def register_capabilities(mcp_server: Any) -> None:
         logger.debug(f"Received subscription request for {resource_uri}")
         return {"status": "success", "resource": resource_uri}
 
-    @mcp_server.capability("resources.listChanged")
+    # @mcp_server.capability("resources.listChanged")
     def handle_resources_list_changed() -> Dict[str, Any]:
         """Handle resource discovery events."""
         logger.debug("Received resources.listChanged event")
         return {"status": "success"}
 
-    @mcp_server.capability("tools.listChanged")
+    # @mcp_server.capability("tools.listChanged")
     def handle_tools_list_changed() -> Dict[str, Any]:
         """Handle tool discovery events."""
         logger.debug("Received tools.listChanged event")
         return {"status": "success"}
 
-    @mcp_server.capability("logging")
+    # @mcp_server.capability("logging")
     def handle_logging(level: str, message: str) -> Dict[str, Any]:
         """
         Handle logging configuration.
@@ -72,7 +73,7 @@ def register_capabilities(mcp_server: Any) -> None:
 
         return {"status": "success"}
 
-    @mcp_server.capability("completion")
+    # @mcp_server.capability("completion")
     def handle_completion(text: str, position: int) -> Dict[str, Any]:
         """
         Handle argument completion suggestions.

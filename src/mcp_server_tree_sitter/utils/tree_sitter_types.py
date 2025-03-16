@@ -19,6 +19,7 @@ class ParserProtocol(Protocol):
     """Protocol for Tree-sitter Parser class."""
 
     def set_language(self, language: Any) -> None: ...
+    def language(self, language: Any) -> None: ...  # Alternative name for set_language
     def parse(self, bytes_input: bytes) -> Any: ...
 
 
@@ -110,6 +111,10 @@ except ImportError:
             """Dummy set_language method."""
             pass
 
+        def language(self, language: Any) -> None:
+            """Dummy language method (alternative to set_language)."""
+            pass
+
         def parse(self, bytes_input: bytes) -> Any:
             """Dummy parse method."""
             return None
@@ -192,12 +197,12 @@ except ImportError:
             return DummyNode()
 
     # Export dummy types for type checking
-# Declare union types for both real and dummy implementations
-Language = DummyLanguage  # type: ignore
-Parser = DummyParser  # type: ignore
-Tree = DummyTree  # type: ignore
-Node = DummyNode  # type: ignore
-TreeCursor = DummyTreeCursor  # type: ignore
+    # Declare dummy types for when tree-sitter is not available
+    Language = DummyLanguage  # type: ignore
+    Parser = DummyParser  # type: ignore
+    Tree = DummyTree  # type: ignore
+    Node = DummyNode  # type: ignore
+    TreeCursor = DummyTreeCursor  # type: ignore
 
 
 # Helper function to safely cast to tree-sitter types

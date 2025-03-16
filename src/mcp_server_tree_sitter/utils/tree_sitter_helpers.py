@@ -37,7 +37,18 @@ def create_parser(language_obj: Any) -> Parser:
     """
     parser = Parser()
     safe_language = ensure_language(language_obj)
-    parser.set_language(safe_language)
+
+    # Try both set_language and language methods
+    try:
+        parser.set_language(safe_language)  # type: ignore
+    except AttributeError:
+        if hasattr(parser, "language"):
+            # Use the language method if available
+            parser.language = safe_language  # type: ignore
+        else:
+            # Fallback to setting the attribute directly
+            parser.language = safe_language  # type: ignore
+
     return ensure_parser(parser)
 
 
@@ -210,7 +221,7 @@ def walk_tree(node: Node) -> TreeCursor:
 
 
 def cursor_walk_tree(
-    node: Node, visit_fn: Callable[[Node, Optional[str], int], bool]
+    node: Node, visit_fn: Callable[[Optional[Node], Optional[str], int], bool]
 ) -> None:
     """
     Walk a tree using cursor for efficiency.
@@ -233,11 +244,15 @@ def cursor_walk_tree(
         while True:
             # Get field name if available
             field_name = None
-            if cursor.node.parent:
-                for name, nodes in cursor.node.parent.children_by_field_name.items():
-                    if cursor.node in nodes:
-                        field_name = name
-                        break
+            if cursor.node and cursor.node.parent:
+                parent_field_names = getattr(
+                    cursor.node.parent, "children_by_field_name", {}
+                )
+                if hasattr(parent_field_names, "items"):
+                    for name, nodes in parent_field_names.items():
+                        if cursor.node in nodes:
+                            field_name = name
+                            break
 
             if visit_fn(cursor.node, field_name, depth):
                 # Visit children
@@ -263,7 +278,8 @@ def cursor_walk_tree(
 
 
 def collect_with_cursor(
-    node: Node, collector_fn: Callable[[Node, Optional[str], int], Optional[T]]
+    node: Node,
+    collector_fn: Callable[[Optional[Node], Optional[str], int], Optional[T]],
 ) -> List[T]:
     """
     Collect items from a tree using cursor traversal.
@@ -278,7 +294,9 @@ def collect_with_cursor(
     """
     items: List[T] = []
 
-    def visit(node: Node, field_name: Optional[str], depth: int) -> bool:
+    def visit(node: Optional[Node], field_name: Optional[str], depth: int) -> bool:
+        if node is None:
+            return False
         item = collector_fn(node, field_name, depth)
         if item is not None:
             items.append(item)
@@ -301,8 +319,10 @@ def find_nodes_by_type(root_node: Node, node_type: str) -> List[Node]:
     """
 
     def collector(
-        node: Node, _field_name: Optional[str], _depth: int
+        node: Optional[Node], _field_name: Optional[str], _depth: int
     ) -> Optional[Node]:
+        if node is None:
+            return None
         if node.type == node_type:
             return node
         return None
@@ -310,7 +330,9 @@ def find_nodes_by_type(root_node: Node, node_type: str) -> List[Node]:
     return collect_with_cursor(root_node, collector)
 
 
-def get_node_descendants(node: Node, max_depth: Optional[int] = None) -> List[Node]:
+def get_node_descendants(
+    node: Optional[Node], max_depth: Optional[int] = None
+) -> List[Node]:
     """
     Get all descendants of a node.
 
@@ -323,7 +345,12 @@ def get_node_descendants(node: Node, max_depth: Optional[int] = None) -> List[No
     """
     descendants: List[Node] = []
 
-    def visit(node: Node, _field_name: Optional[str], depth: int) -> bool:
+    if node is None:
+        return descendants
+
+    def visit(node: Optional[Node], _field_name: Optional[str], depth: int) -> bool:
+        if node is None:
+            return False
         if max_depth is not None and depth > max_depth:
             return False  # Skip children
 
