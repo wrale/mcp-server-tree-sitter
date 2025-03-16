@@ -40,15 +40,15 @@ These commands manage tree-sitter language parsers.
 | Command | Status | Dependencies | Notes |
 |---------|--------|--------------|-------|
 | `list_languages` | ✅ | None | Returns available and installable languages |
-| `install_language` | ❌/🔄 | Language parsers or tree-sitter-language-pack | Without tree-sitter-language-pack, fails with "Automatic installation disabled" |
+| `install_language` | ✅ | None (tree-sitter-language-pack included) | Successful with tree-sitter-language-pack integration |
 
 ### Common Failure Modes:
 - Language installation fails when auto-install is disabled (default)
 - Languages may be unavailable even when requested to install
 - Requires server restart after language installation
 
-### After tree-sitter-language-pack Implementation:
-Once tree-sitter-language-pack is implemented, both commands should work without dependencies or installation requirements.
+### With tree-sitter-language-pack Implementation:
+With tree-sitter-language-pack now integrated, both commands work without dependencies or installation requirements.
 
 ## File Operations Commands
 
@@ -78,15 +78,15 @@ These commands perform abstract syntax tree (AST) operations.
 
 | Command | Status | Dependencies | Notes |
 |---------|--------|--------------|-------|
-| `get_ast` | 🔄 | Language parser for file type | Requires correct language parser to be installed |
-| `get_node_at_position` | 🔄 | Language parser for file type | Requires correct language parser to be installed |
+| `get_ast` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
+| `get_node_at_position` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
 
 ### Common Failure Modes:
 - Fails with "Language not available" when appropriate parser isn't installed
 - May fail with encoding errors on non-UTF8 files
 
-### After tree-sitter-language-pack Implementation:
-These commands should work for all supported languages without additional installations.
+### With tree-sitter-language-pack Implementation:
+These commands now work for all supported languages without additional installations.
 
 ## Search and Query Commands
 
@@ -95,12 +95,12 @@ These commands search code and execute tree-sitter queries.
 | Command | Status | Dependencies | Notes |
 |---------|--------|--------------|-------|
 | `find_text` | ✅ | Project registration | Text search works without language parsers |
-| `run_query` | 🔄 | Language parser for file type | Requires language parser to be installed |
-| `get_query_template_tool` | 🔄 | Language parser for file type | Requires language parser to be installed |
+| `run_query` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
+| `get_query_template_tool` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
 | `list_query_templates_tool` | ✅ | None | Works even without language parsers |
-| `build_query` | 🔄 | Language parser for specific language | Requires language parser to be installed |
-| `adapt_query` | 🔄 | Language parsers for both languages | Requires language parsers to be installed |
-| `get_node_types` | 🔄 | Language parser for specific language | Requires language parser to be installed |
+| `build_query` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
+| `adapt_query` | ✅ | None (tree-sitter-language-pack included) | Works for all language pairs |
+| `get_node_types` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
 
 ### Example Usage:
 ```python
@@ -121,12 +121,12 @@ These commands analyze code structure and complexity.
 
 | Command | Status | Dependencies | Notes |
 |---------|--------|--------------|-------|
-| `get_symbols` | 🔄 | Language parser for file type | Fails with "Language not available" when parser isn't installed |
+| `get_symbols` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
 | `analyze_project` | ✅ | Project registration | Structure analysis works without language parsers |
-| `get_dependencies` | 🔄 | Language parser for file type | Requires language parser to be installed |
-| `analyze_complexity` | 🔄 | Language parser for file type | Requires language parser to be installed |
-| `find_similar_code` | 🔄 | Language parser for file type | Requires language parser to be installed |
-| `find_usage` | 🔄 | Language parser for file type | Requires language parser to be installed |
+| `get_dependencies` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
+| `analyze_complexity` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
+| `find_similar_code` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
+| `find_usage` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
 
 ### Common Failure Modes:
 - Symbol extraction fails when language parser is not installed
@@ -155,17 +155,17 @@ configure(cache_enabled=True, max_file_size_mb=10, log_level="DEBUG")
 
 ## Tree-sitter Language Pack Integration Status
 
-The integration of tree-sitter-language-pack will solve most dependency issues by providing all necessary language parsers in a single package.
+The integration of tree-sitter-language-pack has solved most dependency issues by providing all necessary language parsers in a single package.
 
-| Feature Area | Current Status | After Integration |
-|--------------|----------------|-------------------|
+| Feature Area | Previous Status | Current Status |
+|--------------|----------------|----------------|
 | Language Tools | ⚠️ Partial | ✅ Full Support |
 | AST Analysis | ⚠️ Partial | ✅ Full Support |
 | Search Queries | ⚠️ Partial | ✅ Full Support |
 | Code Analysis | ⚠️ Partial | ✅ Full Support |
 
-### Benefits of Integration:
-- All commands will work without requiring individual language installations
+### Benefits of the Completed Integration:
+- All commands now work without requiring individual language installations
 - No server restarts needed when accessing new languages
 - Consistent behavior across different language types
 - Access to 100+ tree-sitter grammars in a single dependency
@@ -208,4 +208,4 @@ When testing the MCP Tree-sitter server, use this structured approach:
 
 ---
 
-This feature matrix will be updated as development progresses and as the tree-sitter-language-pack integration is completed.
+This feature matrix will be updated as development progresses. The tree-sitter-language-pack integration has been completed as of March 2025.
