@@ -3,7 +3,9 @@
 import tempfile
 
 from mcp_server_tree_sitter.models.project import ProjectRegistry
-from mcp_server_tree_sitter.persistent_server import mcp
+from mcp_server_tree_sitter.server import (
+    mcp,
+)  # Was previously importing from persistent_server
 
 # Use the actual project registry for persistence tests
 project_registry = ProjectRegistry()

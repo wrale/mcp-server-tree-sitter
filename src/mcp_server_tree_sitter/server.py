@@ -1,4 +1,8 @@
-"""MCP server implementation for Tree-sitter."""
+"""MCP server implementation for Tree-sitter with state persistence.
+
+This server maintains state between invocations through singleton patterns,
+allowing projects to remain registered throughout the server's lifetime.
+"""
 
 from typing import Any, Dict, List
 
@@ -35,10 +39,10 @@ from .tools.query_builder import (
 )
 from .tools.search import query_code, search_text
 
-# Create server instance
+# Create server instance - this single instance will maintain state across calls
 mcp = FastMCP("tree_sitter")
 
-# Initialize language registry
+# Initialize language registry - uses singleton pattern for persistence
 language_registry = LanguageRegistry()
 
 
