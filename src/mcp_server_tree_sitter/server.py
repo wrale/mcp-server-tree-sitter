@@ -1,10 +1,15 @@
-"""MCP server implementation for Tree-sitter."""
+"""MCP server implementation for Tree-sitter with state persistence.
 
-from typing import Any, Dict, List
+This server maintains state between invocations through singleton patterns,
+allowing projects to remain registered throughout the server's lifetime.
+"""
+
+from typing import Any, Dict, List, Optional
 
 from mcp.server.fastmcp import FastMCP
 
 from .cache.parser_cache import tree_cache
+from .capabilities import register_capabilities
 from .config import CONFIG, load_config
 from .language.query_templates import list_query_templates
 from .language.registry import LanguageRegistry
@@ -35,20 +40,23 @@ from .tools.query_builder import (
 )
 from .tools.search import query_code, search_text
 
-# Create server instance
-mcp = FastMCP("Tree-Sitter Code Explorer")
+# Create server instance - this single instance will maintain state across calls
+mcp = FastMCP("tree_sitter")
 
-# Initialize language registry
+# Register server capabilities
+register_capabilities(mcp)
+
+# Initialize language registry - uses singleton pattern for persistence
 language_registry = LanguageRegistry()
 
 
 # Configuration
 @mcp.tool()
 def configure(
-    config_path: str = None,
-    cache_enabled: bool = None,
-    max_file_size_mb: int = None,
-    log_level: str = None,
+    config_path: Optional[str] = None,
+    cache_enabled: Optional[bool] = None,
+    max_file_size_mb: Optional[int] = None,
+    log_level: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Configure the server.
 
@@ -97,7 +105,7 @@ def configure(
 # Project Management Tools
 @mcp.tool()
 def register_project_tool(
-    path: str, name: str = None, description: str = None
+    path: str, name: Optional[str] = None, description: Optional[str] = None
 ) -> Dict[str, Any]:
     """Register a project directory for code exploration.
 
@@ -154,25 +162,38 @@ def list_languages() -> Dict[str, Any]:
 
 @mcp.tool()
 def install_language(language: str) -> Dict[str, str]:
-    """Install a tree-sitter language parser.
+    """Check if a tree-sitter language parser is available.
 
     Args:
-        language: Language to install
+        language: Language to check
 
     Returns:
         Success message
     """
-    if language in language_registry.list_available_languages():
+    # Check if the language is available
+    try:
+        if language in language_registry.list_available_languages():
+            return {
+                "status": "success",
+                "message": (
+                    f"Language '{language}' is available via "
+                    f"tree-sitter-language-pack"
+                ),
+            }
+
+        # Try to access the language to confirm it's available
+        language_registry.get_language(language)
         return {
             "status": "success",
-            "message": f"Language '{language}' is already installed",
+            "message": (
+                f"Language '{language}' is available via " f"tree-sitter-language-pack"
+            ),
         }
-
-    language_registry.install_language(language)
-    return {
-        "status": "success",
-        "message": f"Language '{language}' installed successfully",
-    }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Language '{language}' is not available: {str(e)}",
+        }
 
 
 # File Resources
@@ -221,9 +242,9 @@ def get_syntax_tree_depth_resource(
 @mcp.tool()
 def list_files(
     project: str,
-    pattern: str = None,
-    max_depth: int = None,
-    extensions: List[str] = None,
+    pattern: Optional[str] = None,
+    max_depth: Optional[int] = None,
+    extensions: Optional[List[str]] = None,
 ) -> List[str]:
     """List files in a project.
 
@@ -241,7 +262,7 @@ def list_files(
 
 @mcp.tool()
 def get_file(
-    project: str, path: str, max_lines: int = None, start_line: int = 0
+    project: str, path: str, max_lines: Optional[int] = None, start_line: int = 0
 ) -> str:
     """Get content of a file.
 
@@ -274,7 +295,7 @@ def get_file_metadata(project: str, path: str) -> Dict[str, Any]:
 # AST Tools
 @mcp.tool()
 def get_ast(
-    project: str, path: str, max_depth: int = None, include_text: bool = True
+    project: str, path: str, max_depth: Optional[int] = None, include_text: bool = True
 ) -> Dict[str, Any]:
     """Get abstract syntax tree for a file.
 
@@ -298,7 +319,7 @@ def get_ast(
 @mcp.tool()
 def get_node_at_position(
     project: str, path: str, row: int, column: int
-) -> Dict[str, Any]:
+) -> Optional[Dict[str, Any]]:
     """Find the AST node at a specific position.
 
     Args:
@@ -331,7 +352,7 @@ def get_node_at_position(
 def find_text(
     project: str,
     pattern: str,
-    file_pattern: str = None,
+    file_pattern: Optional[str] = None,
     max_results: int = 100,
     case_sensitive: bool = False,
     whole_word: bool = False,
@@ -369,8 +390,8 @@ def find_text(
 def run_query(
     project: str,
     query: str,
-    file_path: str = None,
-    language: str = None,
+    file_path: Optional[str] = None,
+    language: Optional[str] = None,
     max_results: int = 100,
 ) -> List[Dict[str, Any]]:
     """Run a tree-sitter query on project files.
@@ -411,7 +432,7 @@ def get_query_template_tool(language: str, template_name: str) -> Dict[str, Any]
 
 
 @mcp.tool()
-def list_query_templates_tool(language: str = None) -> Dict[str, Any]:
+def list_query_templates_tool(language: Optional[str] = None) -> Dict[str, Any]:
     """List available query templates.
 
     Args:
@@ -481,7 +502,7 @@ def get_node_types(language: str) -> Dict[str, str]:
 # Analysis Tools
 @mcp.tool()
 def get_symbols(
-    project: str, file_path: str, symbol_types: List[str] = None
+    project: str, file_path: str, symbol_types: Optional[List[str]] = None
 ) -> Dict[str, List[Dict[str, Any]]]:
     """Extract symbols from a file.
 
@@ -497,7 +518,9 @@ def get_symbols(
 
 
 @mcp.tool()
-def analyze_project(project: str, scan_depth: int = 3) -> Dict[str, Any]:
+def analyze_project(
+    project: str, scan_depth: int = 3, ctx: Optional[Any] = None
+) -> Dict[str, Any]:
     """Analyze overall project structure.
 
     Args:
@@ -507,7 +530,7 @@ def analyze_project(project: str, scan_depth: int = 3) -> Dict[str, Any]:
     Returns:
         Project analysis
     """
-    return analyze_project_structure(project, scan_depth)
+    return analyze_project_structure(project, scan_depth, ctx)
 
 
 @mcp.tool()
@@ -542,7 +565,7 @@ def analyze_complexity(project: str, file_path: str) -> Dict[str, Any]:
 def find_similar_code(
     project: str,
     snippet: str,
-    language: str = None,
+    language: Optional[str] = None,
     threshold: float = 0.8,
     max_results: int = 10,
 ) -> List[Dict[str, Any]]:
@@ -571,7 +594,10 @@ def find_similar_code(
 
 @mcp.tool()
 def find_usage(
-    project: str, symbol: str, file_path: str = None, language: str = None
+    project: str,
+    symbol: str,
+    file_path: Optional[str] = None,
+    language: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     """Find usage of a symbol.
 
@@ -604,7 +630,9 @@ def find_usage(
 
 # Cache Management
 @mcp.tool()
-def clear_cache(project: str = None, file_path: str = None) -> Dict[str, str]:
+def clear_cache(
+    project: Optional[str] = None, file_path: Optional[str] = None
+) -> Dict[str, str]:
     """Clear the parse tree cache.
 
     Args:
@@ -676,7 +704,7 @@ def code_review(project: str, file_path: str) -> str:
 
 
 @mcp.prompt()
-def explain_code(project: str, file_path: str, focus: str = None) -> str:
+def explain_code(project: str, file_path: str, focus: Optional[str] = None) -> str:
     """Create a prompt for explaining a code file"""
     content = get_file_content(project, file_path)
     language = language_registry.language_for_file(file_path)
@@ -822,7 +850,7 @@ def project_overview(project: str) -> str:
     """
 
 
-def main():
+def main() -> None:
     """Run the server"""
     # Load configuration
     load_config()

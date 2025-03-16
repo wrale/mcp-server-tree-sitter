@@ -10,25 +10,33 @@ CRITICAL: When a task is done, update this document to mark it done. However, yo
 - ✅ Fix linting issues identified by ruff
 - ✅ Improve exception handling using proper `from` clause
 - ✅ Remove unused variables and improve code organization
+- ✅ Implement TreeCursor API support with proper type handling
+- ✅ Add incremental parsing support
+- ✅ Add MCP Progress Reporting
+- ✅ Add Server Capabilities Declaration
+- [ ] Add mcp server start flag(s) for enabling (allow list approach) and disabling (block list approach) a list of features. Only one approach may be applied at a time. The default should be minimal allowed, for now. Add meta features such as stable, wip, advanced, basic
+- 🔄 [WIP] Add mcp server start flag(s) for ensuring language packs are installed beforehand.
+- [ ] Add mcp server start flag(s) for ensuring project is configured beforehand.
 - [ ] Achieve 100% type hinting coverage (and ensure this is enforced by our linting)
 - [ ] Improve docstring coverage and quality (Don't thrash on updating docs that are already good) (HOLD pending other work)
-- [ ] Split files until the longest file is less than 500 lines (unless that breaks functionality, in which case do not)
+- [ ] Split files until the longest .py file is less than 500 lines (unless that breaks functionality, in which case do not)
 
 ### Testing
+- 🔄 [WIP] Create tests for context utilities, incremental parsing, and cursor traversal
 - [ ] Increase unit test coverage to 100% and begin enforcing that in pre-commit and CI
 - [ ] Add integration tests for MCP server functionality (HOLD pending other work)
 - [ ] Create automated testing workflow with GitHub Actions (unit, integration, static, etc) (HOLD pending other work)
 
 ### Documentation (HOLD)
 - ✅ Create CONTRIBUTING.md with developer guidelines
-- [ ] Create a docs/user-guide.md with more examples and clearer installation instructions. Link to it from README.md
+- 🔄 [WIP] Create a docs/user-guide.md with more examples and clearer installation instructions. Link to it from README.md
 - [ ] Add detailed API documentation in docs/api-guide.md
-- [ ] Create usage tutorials and examples -- focus only on Claude Desktop for now.
+- 🔄 [WIP] Create usage tutorials and examples -- focus only on Claude Desktop for now.
 
 ## Medium-term Goals (HOLD)
 
 ### Feature Improvements
-- [ ] Add support for more tree-sitter languages by implementing https://github.com/Goldziher/tree-sitter-language-pack/
+- ✅ Add support for more tree-sitter languages by implementing https://github.com/Goldziher/tree-sitter-language-pack/
 - [ ] Improve query building tools with more sophisticated matching options (HOLD because we could cripple the codebase with complexity)
 - [ ] Implement more advanced code analysis metrics (HOLD because we could cripple the codebase with complexity)
 - [ ] Enhance caching system with better invalidation strategy (HOLD because we could cripple the codebase with complexity)
@@ -36,7 +44,7 @@ CRITICAL: When a task is done, update this document to mark it done. However, yo
 ### User Experience
 - [ ] Create a web-based UI for visualizing ASTs and running queries (HOLD because Claude's experience is more important)
 - [ ] Add CLI commands for common operations (HOLD because Claude runs commands by a different channel)
-- [ ] Implement progress reporting for long-running operations (HOLD because we could cripple the codebase with complexity)
+- [✅] Implement progress reporting for long-running operations
 - [ ] Add configuration presets for different use cases (HOLD because we could cripple the codebase with complexity)
 
 ### Security
@@ -60,6 +68,30 @@ CRITICAL: When a task is done, update this document to mark it done. However, yo
 - [ ] Optimize for large codebases (> 1M LOC) (HOLD because we need stability first)
 - [ ] Implement distributed analysis for very large projects (HOLD because we need stability first)
 - [ ] Add streaming responses for large result sets (HOLD because we need stability first)
+
+## Completed Implementations
+
+### MCP Context Handling
+- Added `utils/context/mcp_context.py` with progress tracking capabilities
+- Implemented `MCPContext` class with progress reporting
+- Created `ProgressScope` for structured operation tracking
+- Added context information passing to analysis tools
+
+### TreeCursor API Support
+- Enhanced `utils/tree_sitter_types.py` with TreeCursor protocol
+- Added efficient cursor-based tree traversal in `utils/tree_sitter_helpers.py`
+- Implemented collector pattern using cursors to efficiently find nodes
+
+### Incremental Parsing
+- Added support for tree editing in `utils/tree_sitter_helpers.py`
+- Enhanced cache to track tree modifications in `cache/parser_cache.py`
+- Implemented changed_ranges detection for optimization
+
+### Server Capabilities Declaration
+- Created `capabilities/server_capabilities.py` for capability declaration
+- Implemented required MCP server capabilities
+- Added support for completion suggestions
+- Added structured logging integration
 
 ## Features and Ideas
 

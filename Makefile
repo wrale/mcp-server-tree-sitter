@@ -44,6 +44,9 @@ lint:
 	$(UV) run ruff check $(PACKAGE_PATH) tests/
 	$(UV) run mypy $(PACKAGE_PATH)
 
+mypy:
+	$(UV) run mypy $(PACKAGE_PATH)
+
 .PHONY: format
 format:
 	$(UV) run black $(PACKAGE_PATH) tests/
@@ -76,7 +79,7 @@ mcp-run:
 
 .PHONY: mcp-install
 mcp-install:
-	$(UV) run mcp install $(PACKAGE).server:mcp --name "Code Explorer"
+	$(UV) run mcp install $(PACKAGE).server:mcp --name "tree_sitter"
 
 # Example targets
 .PHONY: run-example-basic

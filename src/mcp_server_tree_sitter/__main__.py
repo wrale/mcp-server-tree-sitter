@@ -5,7 +5,7 @@ import logging
 import sys
 
 from .config import load_config
-from .persistent_server import mcp
+from .server import mcp
 
 # Configure logging
 logging.basicConfig(
@@ -14,7 +14,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def main():
+def main() -> int:
     """Run the server with optional arguments."""
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="MCP Tree-sitter Server")
@@ -41,7 +41,7 @@ def main():
 
     # Run the server
     try:
-        logger.info("Starting MCP Tree-sitter Server (persistent version)")
+        logger.info("Starting MCP Tree-sitter Server (with state persistence)")
         mcp.run()
     except KeyboardInterrupt:
         logger.info("Server stopped by user")

@@ -1,7 +1,7 @@
 """AST resource functions for tree-sitter."""
 
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional, Tuple
 
 from ..cache.parser_cache import tree_cache
 from ..config import CONFIG
@@ -15,7 +15,7 @@ project_registry = ProjectRegistry()
 language_registry = LanguageRegistry()
 
 
-def parse_file(file_path: Path, language: str) -> Any:
+def parse_file(file_path: Path, language: str) -> Tuple[Any, bytes]:
     """
     Parse a file using tree-sitter.
 
@@ -52,7 +52,10 @@ def parse_file(file_path: Path, language: str) -> Any:
 
 
 def get_file_ast(
-    project_name: str, file_path: str, max_depth: int = None, include_text: bool = True
+    project_name: str,
+    file_path: str,
+    max_depth: Optional[int] = None,
+    include_text: bool = True,
 ) -> Dict[str, Any]:
     """
     Get the AST for a file.

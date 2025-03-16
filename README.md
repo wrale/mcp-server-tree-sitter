@@ -10,6 +10,7 @@ A Model Context Protocol (MCP) server that provides code analysis capabilities u
 - 🌳 **Structure-Aware**: Uses AST-based understanding rather than just text
 - 🔎 **Searchable**: Find specific patterns across codebases
 - 🔄 **Caching**: Optimized performance through parse tree caching
+- 🧩 **State Persistence**: Maintains project registrations and cached data between invocations
 - 🔒 **Secure**: Built-in security boundaries and input validation
 
 ## Installation
@@ -44,7 +45,7 @@ You can make the server available in Claude Desktop either through the MCP CLI o
 Register the server with Claude Desktop:
 
 ```bash
-mcp install mcp_server_tree_sitter.server:mcp --name "Code Explorer"
+mcp install mcp_server_tree_sitter.server:mcp --name "tree_sitter"
 ```
 
 #### Manual Configuration
@@ -62,7 +63,7 @@ Alternatively, you can manually configure Claude Desktop:
    ```json
    {
        "mcpServers": {
-           "Code Explorer": {
+           "tree_sitter": {
                "command": "python",
                "args": [
                    "-m",
@@ -78,7 +79,7 @@ Alternatively, you can manually configure Claude Desktop:
    ```json
    {
        "mcpServers": {
-           "Code Explorer": {
+           "tree_sitter": {
                "command": "uv",
                "args": [
                    "--directory",
@@ -96,7 +97,16 @@ Alternatively, you can manually configure Claude Desktop:
 
 3. Save the file and restart Claude Desktop.
 
-The MCP tools icon (hammer) will appear in Claude Desktop's interface once you have properly configured at least one MCP server. You can then access the Code Explorer's functionality by clicking on this icon.
+The MCP tools icon (hammer) will appear in Claude Desktop's interface once you have properly configured at least one MCP server. You can then access the `tree_sitter` server's functionality by clicking on this icon.
+
+## State Persistence
+
+The MCP Tree-sitter Server maintains state between invocations. This means:
+- Projects stay registered until explicitly removed or the server is restarted
+- Parse trees are cached according to configuration settings
+- Language information is retained throughout the server's lifetime
+
+This persistence is maintained in-memory during the server's lifetime using singleton patterns for key components.
 
 ### Running as a standalone server
 

@@ -1,6 +1,6 @@
 """Project management tools for MCP server."""
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from ..exceptions import ProjectError
 from ..models.project import ProjectRegistry
@@ -10,7 +10,7 @@ project_registry = ProjectRegistry()
 
 
 def register_project(
-    path: str, name: str = None, description: str = None
+    path: str, name: Optional[str] = None, description: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Register a project for code analysis.

@@ -23,10 +23,10 @@ The easiest way to use the MCP Tree-sitter Server is to install it in Claude Des
 ### Installing in Claude Desktop
 
 ```bash
-mcp install mcp_server_tree_sitter.server:mcp --name "Code Explorer"
+mcp install mcp_server_tree_sitter.server:mcp --name "tree_sitter"
 ```
 
-This will make the server available in Claude Desktop as "Code Explorer".
+This will make the server available in Claude Desktop as "tree_sitter".
 
 ### Basic Usage with Claude
 
@@ -34,7 +34,7 @@ Once installed, you can use the server by asking Claude to analyze code. Here's 
 
 1. **Register a Project**:
    ```
-   Claude, please register a project at /path/to/my/project using the Code Explorer.
+   Claude, please register a project at /path/to/my/project using the tree_sitter MCP command.
    ```
 
 2. **Explore Files**:

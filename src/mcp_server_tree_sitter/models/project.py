@@ -4,7 +4,7 @@ import os
 import threading
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List, Optional, Set
 
 from ..exceptions import ProjectError
 from ..utils.path import get_project_root, normalize_path
@@ -13,7 +13,7 @@ from ..utils.path import get_project_root, normalize_path
 class Project:
     """Represents a project for code analysis."""
 
-    def __init__(self, name: str, path: Path, description: str = None):
+    def __init__(self, name: str, path: Path, description: Optional[str] = None):
         self.name = name
         self.root_path = path
         self.description = description
@@ -31,7 +31,7 @@ class Project:
             "last_scan_time": self.last_scan_time,
         }
 
-    def scan_files(self, language_registry, force: bool = False) -> Dict[str, int]:
+    def scan_files(self, language_registry: Any, force: bool = False) -> Dict[str, int]:
         """
         Scan project files and identify languages.
 
@@ -74,7 +74,7 @@ class Project:
                     scanned.add(rel_path)
 
             self.languages = languages
-            self.last_scan_time = time.time()
+            self.last_scan_time = int(time.time())
             return languages
 
     def get_file_path(self, relative_path: str) -> Path:
@@ -105,19 +105,23 @@ class ProjectRegistry:
 
     # Class-level instance for singleton pattern
     _instance = None
-    _lock = threading.RLock()
+    _class_lock = threading.RLock()
 
-    def __new__(cls):
+    # Instance variables - declare here for mypy
+    projects: Dict[str, Project]
+    _instance_lock: threading.Lock
+
+    def __new__(cls) -> "ProjectRegistry":
         """Ensure only one instance exists."""
-        with cls._lock:
+        with cls._class_lock:
             if cls._instance is None:
                 cls._instance = super(ProjectRegistry, cls).__new__(cls)
                 cls._instance.projects = {}
-                cls._instance.lock = threading.Lock()
+                cls._instance._instance_lock = threading.Lock()
             return cls._instance
 
     def register_project(
-        self, name: str, path: str, description: str = None
+        self, name: str, path: str, description: Optional[str] = None
     ) -> Project:
         """
         Register a new project.
@@ -133,7 +137,7 @@ class ProjectRegistry:
         Raises:
             ProjectError: If project already exists or path is invalid
         """
-        with self.lock:
+        with self._instance_lock:
             if name in self.projects:
                 raise ProjectError(f"Project '{name}' already exists")
 
@@ -165,7 +169,7 @@ class ProjectRegistry:
         Raises:
             ProjectError: If project doesn't exist
         """
-        with self.lock:
+        with self._instance_lock:
             if name not in self.projects:
                 raise ProjectError(f"Project '{name}' not found")
             return self.projects[name]
@@ -177,7 +181,7 @@ class ProjectRegistry:
         Returns:
             List of project dictionaries
         """
-        with self.lock:
+        with self._instance_lock:
             return [project.to_dict() for project in self.projects.values()]
 
     def remove_project(self, name: str) -> None:
@@ -190,7 +194,7 @@ class ProjectRegistry:
         Raises:
             ProjectError: If project doesn't exist
         """
-        with self.lock:
+        with self._instance_lock:
             if name not in self.projects:
                 raise ProjectError(f"Project '{name}' not found")
             del self.projects[name]

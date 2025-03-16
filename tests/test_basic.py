@@ -64,12 +64,10 @@ def test_language_registry():
     languages = registry.list_available_languages()
     assert isinstance(languages, list)
 
-    # Test installable languages
+    # Test installable languages (should be empty now with language-pack)
     installable = registry.list_installable_languages()
     assert isinstance(installable, list)
-
-    # Test getting package name
-    assert registry.get_package_name("python") == "tree-sitter-python"
+    assert len(installable) == 0  # No languages need to be separately installed
 
 
 if __name__ == "__main__":

@@ -156,7 +156,7 @@ def get_query_template(language: str, template_name: str) -> Optional[str]:
     return None
 
 
-def list_query_templates(language: str = None) -> Dict[str, Any]:
+def list_query_templates(language: Optional[str] = None) -> Dict[str, Any]:
     """
     List available query templates.
 

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mcp-server-tree-sitter"
-version = "0.1.0"
+version = "0.2.0"
 description = "MCP Server for Tree-sitter code analysis"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -24,6 +24,7 @@ classifiers = [
 dependencies = [
     "mcp[cli]>=0.12.0",
     "tree-sitter>=0.20.0",
+    "tree-sitter-language-pack>=0.6.1",
     "pyyaml>=6.0",
     "pydantic>=2.0.0",
 ]
@@ -36,18 +37,14 @@ dev = [
     "ruff>=0.0.262",
     "mypy>=1.2.0",
 ]
-# Common tree-sitter language parsers
+# Language support (now included via tree-sitter-language-pack)
 languages = [
-    "tree-sitter-python>=0.20.0",
-    "tree-sitter-javascript>=0.20.0",
-    "tree-sitter-typescript>=0.20.0",
-    "tree-sitter-go>=0.19.0",
-    "tree-sitter-rust>=0.20.0",
+    # No individual languages needed as tree-sitter-language-pack provides all
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/organization/mcp-server-tree-sitter"
-"Bug Tracker" = "https://github.com/organization/mcp-server-tree-sitter/issues"
+"Homepage" = "https://github.com/wrale/mcp-server-tree-sitter"
+"Bug Tracker" = "https://github.com/wrale/mcp-server-tree-sitter/issues"
 
 [project.scripts]
 mcp-ts = "mcp_server_tree_sitter.server:main"

@@ -3,7 +3,9 @@
 import tempfile
 
 from mcp_server_tree_sitter.models.project import ProjectRegistry
-from mcp_server_tree_sitter.persistent_server import mcp
+from mcp_server_tree_sitter.server import (
+    mcp,
+)  # Was previously importing from persistent_server
 
 # Use the actual project registry for persistence tests
 project_registry = ProjectRegistry()
@@ -13,7 +15,7 @@ def test_persistent_mcp_instance():
     """Test that the persistent MCP instance works properly."""
     # Simply check that the instance exists
     assert mcp is not None
-    assert mcp.name == "Tree-Sitter Code Explorer"
+    assert mcp.name == "tree_sitter"
 
 
 def test_persistent_project_registration():

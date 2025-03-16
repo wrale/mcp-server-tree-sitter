@@ -2,7 +2,8 @@
 
 import concurrent.futures
 import re
-from typing import Any, Dict, List
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from ..cache.parser_cache import tree_cache
 from ..config import CONFIG
@@ -18,8 +19,8 @@ language_registry = LanguageRegistry()
 def search_text(
     project_name: str,
     pattern: str,
-    file_pattern: str = None,
-    max_results: int = None,
+    file_pattern: Optional[str] = None,
+    max_results: Optional[int] = None,
     case_sensitive: bool = False,
     whole_word: bool = False,
     use_regex: bool = False,
@@ -47,7 +48,7 @@ def search_text(
     project = project_registry.get_project(project_name)
     root = project.root_path
 
-    results = []
+    results: List[Dict[str, Any]] = []
     pattern_obj = None
 
     # Prepare the pattern
@@ -69,7 +70,7 @@ def search_text(
     file_pattern = file_pattern or "**/*"
 
     # Process files in parallel
-    def process_file(file_path):
+    def process_file(file_path: Path) -> List[Dict[str, Any]]:
         file_results = []
         try:
             validate_file_access(file_path, root)
@@ -82,7 +83,8 @@ def search_text(
 
                 if pattern_obj:
                     # Using regex pattern
-                    match = pattern_obj.search(line)
+                    match_result = pattern_obj.search(line)
+                    match = bool(match_result)
                 elif case_sensitive:
                     # Simple case-sensitive search
                     match = pattern in line
@@ -146,9 +148,9 @@ def search_text(
 def query_code(
     project_name: str,
     query_string: str,
-    file_path: str = None,
-    language: str = None,
-    max_results: int = None,
+    file_path: Optional[str] = None,
+    language: Optional[str] = None,
+    max_results: Optional[int] = None,
     include_snippets: bool = True,
 ) -> List[Dict[str, Any]]:
     """
@@ -170,9 +172,9 @@ def query_code(
 
     project = project_registry.get_project(project_name)
     root = project.root_path
-    results = []
+    results: List[Dict[str, Any]] = []
 
-    if file_path:
+    if file_path is not None:
         # Query a specific file
         abs_path = project.get_file_path(file_path)
 
@@ -183,12 +185,15 @@ def query_code(
 
         # Detect language if not provided
         if not language:
-            language = language_registry.language_for_file(file_path)
+            detected_language = language_registry.language_for_file(file_path)
+            if detected_language:
+                language = detected_language
             if not language:
                 raise QueryError(f"Could not detect language for {file_path}")
 
         try:
             # Check if we have a cached tree
+            assert language is not None  # For type checking
             cached = tree_cache.get(abs_path, language)
             if cached:
                 tree, source_bytes = cached
@@ -197,13 +202,16 @@ def query_code(
                 with open(abs_path, "rb") as f:
                     source_bytes = f.read()
 
+                assert language is not None  # For type checking
                 parser = language_registry.get_parser(language)
                 tree = parser.parse(source_bytes)
 
                 # Cache the tree
+                assert language is not None  # For type checking
                 tree_cache.put(abs_path, language, tree, source_bytes)
 
             # Execute query
+            assert language is not None  # For type checking
             lang = language_registry.get_language(language)
             query = lang.query(query_string)
 
@@ -252,7 +260,7 @@ def query_code(
             raise QueryError(f"No file extensions found for language {language}")
 
         # Process files in parallel
-        def process_file(rel_path):
+        def process_file(rel_path: str) -> List[Dict[str, Any]]:
             try:
                 # Use single-file version of query_code
                 file_results = query_code(
