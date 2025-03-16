@@ -4,7 +4,7 @@ from mcp_server_tree_sitter.language.registry import LanguageRegistry
 from mcp_server_tree_sitter.server import check_language_available, list_languages
 
 
-def test_list_available_languages():
+def test_list_available_languages() -> None:
     """Test that list_available_languages returns languages correctly."""
     registry = LanguageRegistry()
 
@@ -30,7 +30,7 @@ def test_list_available_languages():
         assert lang in available_languages, f"Expected language {lang} not in available languages"
 
 
-def test_language_api_consistency():
+def test_language_api_consistency() -> None:
     """Test consistency between language detection and language listing."""
     registry = LanguageRegistry()
 
@@ -56,7 +56,7 @@ def test_language_api_consistency():
         assert is_available == is_listed, f"Inconsistency for {lang}: available={is_available}, listed={is_listed}"
 
 
-def test_server_language_tools():
+def test_server_language_tools() -> None:
     """Test the server language tools."""
     # Test list_languages
     languages_result = list_languages()

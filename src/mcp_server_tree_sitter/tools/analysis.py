@@ -2,7 +2,7 @@
 
 import os
 from collections import Counter, defaultdict
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from ..config import CONFIG
 from ..exceptions import SecurityError
@@ -158,8 +158,8 @@ def process_symbol_matches(
     symbols_dict: Dict[str, List[Dict[str, Any]]],
     source_bytes: bytes,
     tree: Any,
-    class_ranges: Optional[List[tuple[int, int]]] = None,
-):
+    class_ranges: Optional[List[Tuple[int, int]]] = None,
+) -> None:
     """
     Process matches from a query and extract symbols.
 
@@ -182,7 +182,7 @@ def process_symbol_matches(
         return False
 
     # Track functions that should be filtered out (methods inside classes)
-    filtered_methods = []
+    filtered_methods: List[int] = []
 
     # Helper function to process a single node into a symbol
     def process_node(node: Any, capture_name: str) -> None:
@@ -255,6 +255,7 @@ def analyze_project_structure(project_name: str, scan_depth: int = 3, mcp_ctx: O
     Args:
         project_name: Name of the registered project
         scan_depth: Depth to scan for detailed analysis (higher is slower)
+        mcp_ctx: Optional MCP context for progress reporting
 
     Returns:
         Project structure analysis
@@ -464,10 +465,10 @@ def find_dependencies(project_name: str, file_path: str) -> Dict[str, List[str]]
         # Organize imports by type
         imports = defaultdict(list)
         # Track additional import information to handle aliased imports
-        module_imports = set()
+        module_imports: Set[str] = set()
 
         # Helper function to process an import node
-        def process_import_node(node, capture_name):
+        def process_import_node(node: Any, capture_name: str) -> None:
             try:
                 safe_node = ensure_node(node)
                 text = get_node_text(safe_node, source_bytes)

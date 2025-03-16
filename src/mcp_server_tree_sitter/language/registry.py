@@ -199,7 +199,7 @@ class LanguageRegistry:
                 return language
             except Exception as e:
                 raise LanguageNotFoundError(
-                    f"Language {language_name} not available via " f"tree-sitter-language-pack: {e}"
+                    f"Language {language_name} not available via tree-sitter-language-pack: {e}"
                 ) from e
 
     def get_parser(self, language_name: str) -> Parser:

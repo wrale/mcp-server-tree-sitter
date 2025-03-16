@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mcp-server-tree-sitter"
-version = "0.3.0"
+version = "0.3.1"
 description = "MCP Server for Tree-sitter code analysis"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -33,7 +33,6 @@ dependencies = [
 dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
-    "black>=23.1.0",
     "ruff>=0.0.262",
     "mypy>=1.2.0",
 ]
@@ -72,8 +71,13 @@ disallow_incomplete_defs = true
 module = "tree_sitter.*"
 ignore_missing_imports = true
 
-[tool.black]
-line-length = 120
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = false
+warn_return_any = false
+warn_no_return = false
 
 [tool.ruff]
 line-length = 120

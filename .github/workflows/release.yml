@@ -1,0 +1,83 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+    
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+    
+    - name: Install development dependencies
+      run: |
+        uv venv
+        source .venv/bin/activate
+        uv pip install -e ".[dev]"
+    
+    - name: Run comprehensive tests
+      run: |
+        source .venv/bin/activate
+        # Run linting and formatting
+        ruff check .
+        ruff format . --check
+        mypy src/mcp_server_tree_sitter
+        
+        # Run all tests (regular + diagnostics)
+        pytest tests
+        pytest tests/test_diagnostics/ -v
+      env:
+        PYTHONPATH: ${{ github.workspace }}/src
+
+    - name: Ensure diagnostic results directory exists
+      if: always()
+      run: mkdir -p diagnostic_results
+
+    - name: Create placeholder if needed
+      if: always()
+      run: |
+        if [ -z "$(ls -A diagnostic_results 2>/dev/null)" ]; then
+          echo '{"info": "No diagnostic results generated"}' > diagnostic_results/placeholder.json
+        fi
+
+    - name: Archive diagnostic results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: diagnostic-results-release
+        path: diagnostic_results/
+        retention-days: 7
+        if-no-files-found: warn
+
+    - name: Install build dependencies
+      run: |
+        source .venv/bin/activate
+        uv pip install build twine
+
+    - name: Build package
+      run: |
+        source .venv/bin/activate
+        python -m build
+    
+    - name: Test wheel
+      run: |
+        python -m pip install dist/*.whl
+        mcp-ts --help
+
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1

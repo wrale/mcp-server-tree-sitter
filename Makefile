@@ -49,17 +49,17 @@ test-all: test test-diagnostics
 # Linting and formatting targets
 .PHONY: lint
 lint:
-	$(UV) run ruff check $(PACKAGE_PATH) tests/
-	$(UV) run mypy $(PACKAGE_PATH)
+	$(UV) run ruff check .
+	$(UV) run mypy .
 
 .PHONY: mypy
 mypy:
-	$(UV) run mypy $(PACKAGE_PATH)
+	$(UV) run mypy .
 
 .PHONY: format
 format:
-	$(UV) run black $(PACKAGE_PATH) tests/
-	$(UV) run ruff check --fix $(PACKAGE_PATH) tests/
+	$(UV) run ruff format .
+	$(UV) run ruff check --fix .
 
 # Cleaning targets
 .PHONY: clean
@@ -116,7 +116,7 @@ help:
 	@echo "  test-all              : Run both normal tests and diagnostic tests"
 	@echo "  clean                 : Clean build artifacts and test results"
 	@echo "  lint                  : Run linting checks"
-	@echo "  format                : Format code"
+	@echo "  format                : Format code using ruff"
 	@echo "  build                 : Build distribution packages"
 	@echo "  run                   : Run the server directly"
 	@echo "  mcp-dev               : Run the server with MCP Inspector"

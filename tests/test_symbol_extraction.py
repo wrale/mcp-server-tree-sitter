@@ -9,6 +9,7 @@ import json
 import os
 import tempfile
 from pathlib import Path
+from typing import Any, Dict, Generator
 
 import pytest
 
@@ -21,7 +22,7 @@ from mcp_server_tree_sitter.server import (
 
 
 @pytest.fixture
-def test_project(request):
+def test_project(request) -> Generator[Dict[str, Any], None, None]:
     """Create a test project with Python files containing known symbols and imports."""
     with tempfile.TemporaryDirectory() as temp_dir:
         project_path = Path(temp_dir)
@@ -150,7 +151,7 @@ class FileHandler:
         }
 
 
-def test_symbol_extraction_diagnostics(test_project):
+def test_symbol_extraction_diagnostics(test_project) -> None:
     """Test symbol extraction to diagnose specific issues in the implementation."""
     # Get symbols from first file, excluding class methods
     symbols = get_symbols(project=test_project["name"], file_path="test.py")
@@ -207,7 +208,7 @@ def test_symbol_extraction_diagnostics(test_project):
     print(f"Imports: {symbols_utils['imports']}")
 
 
-def test_dependency_analysis_diagnostics(test_project):
+def test_dependency_analysis_diagnostics(test_project) -> None:
     """Test dependency analysis to diagnose specific issues in the implementation."""
     # Get dependencies from the first file
     dependencies = get_dependencies(project=test_project["name"], file_path="test.py")
@@ -240,7 +241,7 @@ def test_dependency_analysis_diagnostics(test_project):
     print(f"Dependencies: {dependencies_utils}")
 
 
-def test_symbol_extraction_with_ast_access(test_project):
+def test_symbol_extraction_with_ast_access(test_project) -> None:
     """Test symbol extraction with direct AST access to identify where processing breaks."""
     # Get the AST for the file
     ast_result = get_ast(
@@ -261,7 +262,7 @@ def test_symbol_extraction_with_ast_access(test_project):
     classes = []
     imports = []
 
-    def extract_symbols_manually(node, path=()):
+    def extract_symbols_manually(node, path=()) -> None:
         """Recursively extract symbols from the AST."""
         if not isinstance(node, dict):
             return
@@ -347,7 +348,7 @@ def test_symbol_extraction_with_ast_access(test_project):
     print(f"Manual imports: {len(imports)}, get_symbols: {len(symbols['imports'])}")
 
 
-def test_query_based_symbol_extraction(test_project):
+def test_query_based_symbol_extraction(test_project) -> None:
     """
     Test symbol extraction using direct tree-sitter queries to identify issues.
 
@@ -365,9 +366,10 @@ def test_query_based_symbol_extraction(test_project):
         # Create a parser
         parser = Parser()
         try:
-            parser.set_language(language_obj)
-        except AttributeError:
-            # Fallback to property assignment if set_language() doesn't exist
+            # Try set_language method first
+            parser.set_language(language_obj)  # type: ignore
+        except (AttributeError, TypeError):
+            # Fall back to setting language property
             parser.language = language_obj
 
         # Read the file content
@@ -415,12 +417,12 @@ def test_query_based_symbol_extraction(test_project):
         import_captures = imports_q.captures(tree.root_node)
 
         # Process and extract unique symbols
-        functions = {}
-        classes = {}
-        imports = {}
+        functions: Dict[str, Dict[str, Any]] = {}
+        classes: Dict[str, Dict[str, Any]] = {}
+        imports: Dict[str, Dict[str, Any]] = {}
 
         # Helper function to process captures with different formats
-        def process_capture(captures, target_type, result_dict):
+        def process_capture(captures, target_type, result_dict) -> None:
             # Check if it's returning a dictionary format
             if isinstance(captures, dict):
                 # Dictionary format: {capture_name: [node1, node2, ...], ...}
@@ -466,7 +468,7 @@ def test_query_based_symbol_extraction(test_project):
         process_capture(class_captures, "class.name", classes)
 
         # For imports, use a separate function since the comparison is different
-        def process_import_capture(captures):
+        def process_import_capture(captures) -> None:
             # Check if it's returning a dictionary format
             if isinstance(captures, dict):
                 # Dictionary format: {capture_name: [node1, node2, ...], ...}
@@ -545,7 +547,7 @@ def test_query_based_symbol_extraction(test_project):
         pytest.fail(f"Direct query execution failed: {str(e)}")
 
 
-def test_debug_file_saving(test_project):
+def test_debug_file_saving(test_project) -> None:
     """Save debug information to files for further analysis."""
     # Create a debug directory
     debug_dir = os.path.join(test_project["path"], "debug")

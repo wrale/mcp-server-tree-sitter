@@ -7,7 +7,7 @@ from mcp_server_tree_sitter.models.project import ProjectRegistry
 from mcp_server_tree_sitter.tools.project import project_registry, register_project
 
 
-def test_project_registry_singleton():
+def test_project_registry_singleton() -> None:
     """Test that project_registry is a singleton that persists."""
     # Clear any existing projects to start fresh
     project_registry.projects.clear()
@@ -32,7 +32,7 @@ def test_project_registry_singleton():
         assert project_name in new_registry.projects
 
 
-def test_mcp_tool_persistence():
+def test_mcp_tool_persistence() -> None:
     """Test that projects persist using the project functions."""
     # Clear any existing projects to start fresh
     project_registry.projects.clear()
@@ -50,7 +50,7 @@ def test_mcp_tool_persistence():
         assert project.name == project_name
 
 
-def test_project_registry_threads():
+def test_project_registry_threads() -> None:
     """Test that project registry works correctly across threads."""
     # Clear any existing projects to start fresh
     project_registry.projects.clear()
@@ -59,7 +59,7 @@ def test_project_registry_threads():
         project_name = "thread_test"
 
         # Function to run in a thread
-        def thread_func():
+        def thread_func() -> None:
             # This should use the same registry instance
             registry = ProjectRegistry()
             registry.register_project(f"{project_name}_thread", temp_dir)
@@ -77,7 +77,7 @@ def test_project_registry_threads():
         assert f"{project_name}_thread" in project_registry.projects
 
 
-def test_server_lifecycle():
+def test_server_lifecycle() -> None:
     """Test that project registry survives server "restarts"."""
     # Clear any existing projects to start fresh
     project_registry.projects.clear()
@@ -107,7 +107,7 @@ def test_server_lifecycle():
         assert project_name in new_registry.projects
 
 
-def test_project_persistence_in_mcp_server():
+def test_project_persistence_in_mcp_server() -> None:
     """Test that project registry survives server \"restarts\"."""
     # Clear any existing projects to start fresh
     project_registry.projects.clear()

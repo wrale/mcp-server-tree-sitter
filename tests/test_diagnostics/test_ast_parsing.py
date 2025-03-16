@@ -2,6 +2,7 @@
 
 import tempfile
 from pathlib import Path
+from typing import Any, Dict, Generator
 
 import pytest
 
@@ -13,7 +14,7 @@ from mcp_server_tree_sitter.server import get_ast
 
 
 @pytest.fixture
-def test_project():
+def test_project() -> Generator[Dict[str, Any], None, None]:
     """Create a temporary test project with a sample file."""
     # Set up a temporary directory
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -37,7 +38,7 @@ def test_project():
 
 
 @pytest.mark.diagnostic
-def test_get_ast_functionality(test_project, diagnostic):
+def test_get_ast_functionality(test_project, diagnostic) -> None:
     """Test the get_ast MCP tool functionality."""
     # Add test details to diagnostic data
     diagnostic.add_detail("project", test_project["name"])
@@ -83,7 +84,7 @@ def test_get_ast_functionality(test_project, diagnostic):
 
 
 @pytest.mark.diagnostic
-def test_direct_parsing(test_project, diagnostic):
+def test_direct_parsing(test_project, diagnostic) -> None:
     """Test lower-level parse_file function to isolate issues."""
     file_path = test_project["path"] / test_project["file"]
     diagnostic.add_detail("file_path", str(file_path))
@@ -92,6 +93,7 @@ def test_direct_parsing(test_project, diagnostic):
         # Get language
         registry = LanguageRegistry()
         language = registry.language_for_file(test_project["file"])
+        assert language is not None, "Could not detect language for file"
         language_obj = None
 
         try:
@@ -106,7 +108,7 @@ def test_direct_parsing(test_project, diagnostic):
         # Try direct parsing if language is loaded
         if language_obj:
             try:
-                tree, source_bytes = parse_file(file_path, language)
+                tree, source_bytes = parse_file(file_path, language) if language is not None else (None, None)
 
                 parsing_info = {
                     "status": "success",
@@ -139,9 +141,9 @@ def test_direct_parsing(test_project, diagnostic):
 
                         # Assert dictionary structure
                         assert "type" in node_dict, "node_dict should contain type"
-                        assert (
-                            "children" in node_dict or "truncated" in node_dict
-                        ), "node_dict should contain children or be truncated"
+                        assert "children" in node_dict or "truncated" in node_dict, (
+                            "node_dict should contain children or be truncated"
+                        )
 
                         # Check for error in node dictionary
                         if "error" in node_dict:

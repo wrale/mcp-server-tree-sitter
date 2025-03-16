@@ -1,0 +1,114 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+        install-method: ["uv", "uvx"]
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+    - name: Install dependencies with uv
+      if: matrix.install-method == 'uv'
+      run: |
+        uv venv
+        source .venv/bin/activate
+        uv pip install -e ".[dev]"
+        which ruff
+        which python
+
+    - name: Install globally with uvx (system-wide)
+      if: matrix.install-method == 'uvx'
+      run: |
+        python -m pip install -e ".[dev]"
+        which ruff
+        which python
+
+    - name: Run checks and tests (uv)
+      if: matrix.install-method == 'uv'
+      run: |
+        source .venv/bin/activate
+        # Linting and formatting
+        ruff check .
+        ruff format . --check
+        mypy src/mcp_server_tree_sitter
+        # Run all tests including diagnostics
+        pytest tests
+        pytest tests/test_diagnostics/ -v
+      env:
+        PYTHONPATH: ${{ github.workspace }}/src
+
+    - name: Run checks and tests (system)
+      if: matrix.install-method == 'uvx'
+      run: |
+        # Linting and formatting
+        ruff check .
+        ruff format . --check
+        mypy src/mcp_server_tree_sitter
+        # Run all tests including diagnostics
+        pytest tests
+        pytest tests/test_diagnostics/ -v
+      env:
+        PYTHONPATH: ${{ github.workspace }}/src
+    
+    - name: Ensure diagnostic results directory exists
+      if: always()
+      run: mkdir -p diagnostic_results
+
+    - name: Create placeholder if needed
+      if: always()
+      run: |
+        if [ -z "$(ls -A diagnostic_results 2>/dev/null)" ]; then
+          echo '{"info": "No diagnostic results generated"}' > diagnostic_results/placeholder.json
+        fi
+
+    - name: Archive diagnostic results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: diagnostic-results-${{ matrix.install-method }}
+        path: diagnostic_results/
+        retention-days: 7
+        if-no-files-found: warn
+
+  verify-uvx:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+    
+    - name: Install build dependencies
+      run: |
+        python -m pip install build
+        python -m pip install uv
+
+    - name: Build package
+      run: python -m build
+
+    - name: Install and verify
+      run: |
+        python -m pip install dist/*.whl
+        mcp-ts --help

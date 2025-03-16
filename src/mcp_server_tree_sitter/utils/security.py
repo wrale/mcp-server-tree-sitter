@@ -46,5 +46,5 @@ def validate_file_access(file_path: Union[str, Path], project_root: Union[str, P
         file_size_mb = normalized_path.stat().st_size / (1024 * 1024)
         if file_size_mb > CONFIG.security.max_file_size_mb:
             raise SecurityError(
-                f"File too large: {file_size_mb:.2f}MB exceeds " f"limit of {CONFIG.security.max_file_size_mb}MB"
+                f"File too large: {file_size_mb:.2f}MB exceeds limit of {CONFIG.security.max_file_size_mb}MB"
             )

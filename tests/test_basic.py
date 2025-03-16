@@ -7,7 +7,7 @@ from mcp_server_tree_sitter.language.registry import LanguageRegistry
 from mcp_server_tree_sitter.models.project import ProjectRegistry
 
 
-def test_config_default():
+def test_config_default() -> None:
     """Test that default configuration is loaded."""
     # Reset to default
     load_config()
@@ -19,7 +19,7 @@ def test_config_default():
     assert ".git" in CONFIG.security.excluded_dirs
 
 
-def test_project_registry():
+def test_project_registry() -> None:
     """Test project registry functionality."""
     registry = ProjectRegistry()
 
@@ -51,7 +51,7 @@ def test_project_registry():
         assert len(registry.projects) == 0
 
 
-def test_language_registry():
+def test_language_registry() -> None:
     """Test language registry functionality."""
     registry = LanguageRegistry()
 

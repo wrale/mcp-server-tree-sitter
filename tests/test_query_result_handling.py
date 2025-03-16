@@ -7,6 +7,7 @@ identified as a critical next step in FEATURES.md.
 
 import tempfile
 from pathlib import Path
+from typing import Any, Dict, Generator, List
 
 import pytest
 
@@ -14,7 +15,7 @@ from mcp_server_tree_sitter.server import register_project_tool, run_query
 
 
 @pytest.fixture
-def test_project(request):
+def test_project(request) -> Generator[Dict[str, Any], None, None]:
     """Create a test project with Python files containing known constructs."""
     with tempfile.TemporaryDirectory() as temp_dir:
         project_path = Path(temp_dir)
@@ -69,7 +70,7 @@ if __name__ == "__main__":
         yield {"name": project_name, "path": str(project_path), "file": "test.py"}
 
 
-def test_query_capture_processing_diagnostics(test_project):
+def test_query_capture_processing_diagnostics(test_project) -> None:
     """Diagnostics test for query capture processing to identify specific issues."""
     # Simple query to find function definitions
     query = "(function_definition name: (identifier) @function.name) @function.def"
@@ -114,7 +115,7 @@ def test_query_capture_processing_diagnostics(test_project):
         ),  # print, greet, process_data, len
     ],
 )
-def test_query_result_capture_types(test_project, query_string, expected_capture_count):
+def test_query_result_capture_types(test_project, query_string, expected_capture_count) -> None:
     """Test different types of query captures to diagnose result handling issues."""
     # Run the query
     result = run_query(
@@ -138,7 +139,7 @@ def test_query_result_capture_types(test_project, query_string, expected_capture
         # query execution working rather than exact result counts
 
 
-def test_direct_query_with_language_pack():
+def test_direct_query_with_language_pack() -> None:
     """Test direct query execution using the tree-sitter-language-pack to isolate issues."""
     # Create a test string
     python_code = "def hello(): print('world')"
@@ -171,7 +172,11 @@ def test_direct_query_with_language_pack():
                 # Look for the identifier (function name) among child nodes
                 for subchild in child.children:
                     if subchild.type == "identifier":
-                        name_text = subchild.text.decode("utf-8") if hasattr(subchild.text, "decode") else subchild.text
+                        name_text = (
+                            subchild.text.decode("utf-8")
+                            if hasattr(subchild, "text") and subchild.text is not None
+                            else str(subchild.text)
+                        )
                         print(f"Function name: {name_text}")
 
         # Assert we found a function in the parsed tree
@@ -217,13 +222,13 @@ def test_direct_query_with_language_pack():
         pytest.fail(f"Test failed with error: {str(e)}")
 
 
-def test_query_result_structure_transformation():
+def test_query_result_structure_transformation() -> None:
     """Test the transformation of native tree-sitter query results to MCP format."""
     # Mock the native tree-sitter query result structure
     # This helps diagnose if the issue is in result transformation
 
     # Create a function to transform mock tree-sitter query results to expected MCP format
-    def transform_query_results(ts_results):
+    def transform_query_results(ts_results) -> List[Dict[str, Any]]:
         """Transform tree-sitter query results to MCP format."""
         # Implement a simplified version of what the actual transformation might be
         mcp_results = []

@@ -11,14 +11,14 @@ from mcp_server_tree_sitter.server import (
 project_registry = ProjectRegistry()
 
 
-def test_persistent_mcp_instance():
+def test_persistent_mcp_instance() -> None:
     """Test that the persistent MCP instance works properly."""
     # Simply check that the instance exists
     assert mcp is not None
     assert mcp.name == "tree_sitter"
 
 
-def test_persistent_project_registration():
+def test_persistent_project_registration() -> None:
     """Test that project registration persists across different functions."""
     # Clear any existing projects
     project_registry.projects.clear()
@@ -43,7 +43,7 @@ def test_persistent_project_registration():
         assert any(p["name"] == project_name for p in projects)
 
 
-def test_project_registry_singleton():
+def test_project_registry_singleton() -> None:
     """Test that project_registry is a singleton that persists."""
     # Check singleton behavior
     registry1 = ProjectRegistry()
