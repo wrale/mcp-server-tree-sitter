@@ -115,7 +115,9 @@ class LanguageRegistry:
         # Add languages available in tree-sitter-language-pack
         try:
             # Get all language names from the language pack binding
-            binding = get_binding()
+            # Type ignore required because tree-sitter-language-pack has restrictive
+            # literal types but supports dynamic language names at runtime
+            binding = get_binding()  # type: ignore
             if hasattr(binding, "get_all_language_names"):
                 # Use the language pack's API if available
                 available.extend(binding.get_all_language_names())
@@ -124,7 +126,8 @@ class LanguageRegistry:
                 for lang in self._language_map.values():
                     if lang not in available:
                         try:
-                            get_language(lang)
+                            # Type ignore required for dynamic language access pattern
+                            get_language(lang)  # type: ignore
                             available.append(lang)
                         except Exception:
                             pass
@@ -146,7 +149,8 @@ class LanguageRegistry:
 
     def install_language(self, language_name: str) -> bool:
         """
-        No longer needed with tree-sitter-language-pack but maintained for compatibility.
+        No longer needed with tree-sitter-language-pack but maintained for
+        compatibility.
 
         Args:
             language_name: Language identifier
@@ -163,7 +167,8 @@ class LanguageRegistry:
             return True
         except Exception as e:
             raise LanguageNotFoundError(
-                f"Language {language_name} not available in tree-sitter-language-pack: {e}"
+                f"Language {language_name} not available in tree-sitter-language-pack: "
+                f"{e}"
             ) from e
 
     def get_language(
@@ -188,7 +193,9 @@ class LanguageRegistry:
 
             try:
                 # Get language from language pack
-                language_obj = get_language(language_name)
+                # Type ignore: language_name is dynamic but tree-sitter-language-pack
+                # types expect a Literal with specific language names
+                language_obj = get_language(language_name)  # type: ignore
 
                 # Cast to our Language type for type safety
                 language = ensure_language(language_obj)
@@ -196,7 +203,8 @@ class LanguageRegistry:
                 return language
             except Exception as e:
                 raise LanguageNotFoundError(
-                    f"Language {language_name} not available via tree-sitter-language-pack: {e}"
+                    f"Language {language_name} not available via "
+                    f"tree-sitter-language-pack: {e}"
                 ) from e
 
     def get_parser(self, language_name: str) -> Parser:
@@ -211,7 +219,9 @@ class LanguageRegistry:
         """
         try:
             # Try to get a parser directly from the language pack
-            parser = get_parser(language_name)
+            # Type ignore: language_name is dynamic but tree-sitter-language-pack
+            # types expect a Literal with specific language names
+            parser = get_parser(language_name)  # type: ignore
             return parser
         except Exception:
             # Fall back to older method

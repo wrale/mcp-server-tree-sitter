@@ -175,14 +175,19 @@ def install_language(language: str) -> Dict[str, str]:
         if language in language_registry.list_available_languages():
             return {
                 "status": "success",
-                "message": f"Language '{language}' is available via tree-sitter-language-pack",
+                "message": (
+                    f"Language '{language}' is available via "
+                    f"tree-sitter-language-pack"
+                ),
             }
 
         # Try to access the language to confirm it's available
         language_registry.get_language(language)
         return {
             "status": "success",
-            "message": f"Language '{language}' is available via tree-sitter-language-pack",
+            "message": (
+                f"Language '{language}' is available via " f"tree-sitter-language-pack"
+            ),
         }
     except Exception as e:
         return {

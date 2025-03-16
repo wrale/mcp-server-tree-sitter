@@ -131,5 +131,3 @@ With two major improvements now complete (tree-sitter-language-pack integration 
 The remaining tasks focus on enhancing testing coverage, improving Claude Desktop integration, and updating documentation to reflect the new improved patterns.
 
 Once the remaining steps are completed, this document will be deprecated, and we can move on to the additional feature improvements outlined in the ROADMAP.md document.
-
-> Note: The implementation details of tree-sitter-language-pack integration and cursor-based AST traversal have been documented in the git history. The IMPLEMENTATION-NOTES.md document has been deprecated as its contents have been incorporated into this document.
