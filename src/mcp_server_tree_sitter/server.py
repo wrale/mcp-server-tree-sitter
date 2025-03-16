@@ -188,31 +188,31 @@ def get_project_files_filtered_resource(project: str, pattern: str) -> List[str]
     return list_project_files(project, pattern)
 
 
-@mcp.resource("project://{project}/file/{path:path}")
-def get_project_file_resource(project: str, path: str) -> str:
+@mcp.resource("project://{project}/file/{file_path}")
+def get_project_file_resource(project: str, file_path: str) -> str:
     """Get content of a specific file."""
-    return get_file_content(project, path)
+    return get_file_content(project, file_path)
 
 
-@mcp.resource("project://{project}/file/{path:path}/lines/{start}-{end}")
-def get_file_lines_resource(project: str, path: str, start: int, end: int) -> str:
+@mcp.resource("project://{project}/file/{file_path}/lines/{start}-{end}")
+def get_file_lines_resource(project: str, file_path: str, start: int, end: int) -> str:
     """Get specific lines from a file."""
-    return get_file_content(project, path, max_lines=end - start + 1, start_line=start)
+    return get_file_content(project, file_path, max_lines=end - start + 1, start_line=start)
 
 
 # AST Resources
-@mcp.resource("project://{project}/ast/{path:path}")
-def get_syntax_tree_resource(project: str, path: str) -> Dict[str, Any]:
+@mcp.resource("project://{project}/ast/{file_path}")
+def get_syntax_tree_resource(project: str, file_path: str) -> Dict[str, Any]:
     """Get AST for a specific file."""
-    return get_file_ast(project, path, max_depth=CONFIG.language.default_max_depth)
+    return get_file_ast(project, file_path, max_depth=CONFIG.language.default_max_depth)
 
 
-@mcp.resource("project://{project}/ast/{path:path}/depth/{depth}")
+@mcp.resource("project://{project}/ast/{file_path}/depth/{depth}")
 def get_syntax_tree_depth_resource(
-    project: str, path: str, depth: int
+    project: str, file_path: str, depth: int
 ) -> Dict[str, Any]:
     """Get AST for a specific file with custom depth."""
-    return get_file_ast(project, path, max_depth=depth)
+    return get_file_ast(project, file_path, max_depth=depth)
 
 
 # File Tools
