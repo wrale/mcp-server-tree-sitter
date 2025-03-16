@@ -1,0 +1,76 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mcp-server-tree-sitter"
+version = "0.1.0"
+description = "MCP Server for Tree-sitter code analysis"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Wrale LTD", email = "contact@wrale.com"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "mcp[cli]>=0.12.0",
+    "tree-sitter>=0.20.0",
+    "pyyaml>=6.0",
+    "pydantic>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.1.0",
+    "ruff>=0.0.262",
+    "mypy>=1.2.0",
+]
+# Common tree-sitter language parsers
+languages = [
+    "tree-sitter-python>=0.20.0",
+    "tree-sitter-javascript>=0.20.0",
+    "tree-sitter-typescript>=0.20.0",
+    "tree-sitter-go>=0.19.0",
+    "tree-sitter-rust>=0.20.0",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/organization/mcp-server-tree-sitter"
+"Bug Tracker" = "https://github.com/organization/mcp-server-tree-sitter/issues"
+
+[project.scripts]
+mcp-ts = "mcp_server_tree_sitter.server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mcp_server_tree_sitter"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+
+[[tool.mypy.overrides]]
+module = "tree_sitter.*"
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+select = ["E", "F", "I", "W", "B"]
