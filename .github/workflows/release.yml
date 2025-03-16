@@ -77,7 +77,7 @@ jobs:
     - name: Test wheel
       run: |
         python -m pip install dist/*.whl
-        mcp-ts --help
+        mcp-server-tree-sitter --help
 
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
