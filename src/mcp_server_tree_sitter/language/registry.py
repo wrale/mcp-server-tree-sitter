@@ -9,26 +9,19 @@ from typing import Any, Dict, List, Optional, Tuple
 from ..cache.parser_cache import get_cached_parser
 from ..config import CONFIG
 from ..exceptions import LanguageInstallError, LanguageNotFoundError
+from ..utils.tree_sitter_types import (
+    Language,
+    Parser,
+    ensure_language,
+)
 
+# Try to import pkg_resources for package discovery
 try:
     import pkg_resources  # type: ignore
-    from tree_sitter import Language as TSLanguage
-    from tree_sitter import Parser as TSParser
+
+    HAS_PKG_RESOURCES = True
 except ImportError:
-    # For type checking and module importing without tree-sitter installed
-    pkg_resources = None
-
-    class TSLanguage:
-        pass
-
-    class TSParser:
-        def set_language(self, language: Any) -> None:
-            pass
-
-
-# Type aliases for better readability
-Language = TSLanguage
-Parser = TSParser
+    HAS_PKG_RESOURCES = False
 
 logger = logging.getLogger(__name__)
 
@@ -139,8 +132,8 @@ class LanguageRegistry:
         # Check currently loaded languages
         available.extend(self.languages.keys())
 
-        # Look for installed packages
-        if pkg_resources:
+        # Look for installed packages if pkg_resources is available
+        if HAS_PKG_RESOURCES:
             for package in pkg_resources.working_set:
                 if package.key.startswith("tree-sitter-"):
                     lang_name = package.key[len("tree-sitter-") :].replace("-", "_")
@@ -228,9 +221,12 @@ class LanguageRegistry:
                 # Import tree-sitter language module
                 module_name = f"tree_sitter_{language_name}"
                 module = importlib.import_module(module_name)
-                language = TSLanguage(module.language())
-                self.languages[language_name] = language
-                return language
+
+                # Use Language class from our types module
+                language = Language(module.language())
+                language_obj = ensure_language(language)
+                self.languages[language_name] = language_obj
+                return language_obj
             except (ImportError, AttributeError) as e:
                 # Try installing if auto_install is enabled
                 should_install = (

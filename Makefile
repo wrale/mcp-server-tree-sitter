@@ -44,6 +44,9 @@ lint:
 	$(UV) run ruff check $(PACKAGE_PATH) tests/
 	$(UV) run mypy $(PACKAGE_PATH)
 
+mypy:
+	$(UV) run mypy $(PACKAGE_PATH)
+
 .PHONY: format
 format:
 	$(UV) run black $(PACKAGE_PATH) tests/

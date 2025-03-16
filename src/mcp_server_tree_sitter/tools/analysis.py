@@ -4,13 +4,20 @@ import os
 from collections import Counter, defaultdict
 from typing import Any, Dict, List, Optional
 
-from ..cache.parser_cache import tree_cache
 from ..config import CONFIG
 from ..exceptions import SecurityError
 from ..language.query_templates import get_query_template
 from ..language.registry import LanguageRegistry
 from ..models.project import ProjectRegistry
+from ..utils.context import MCPContext
+from ..utils.file_io import get_comment_prefix, read_text_file
 from ..utils.security import validate_file_access
+from ..utils.tree_sitter_helpers import (
+    ensure_language,
+    ensure_node,
+    get_node_text,
+    parse_with_cached_tree,
+)
 
 project_registry = ProjectRegistry()
 language_registry = LanguageRegistry()
@@ -60,27 +67,18 @@ def extract_symbols(
 
     # Parse file and extract symbols
     try:
-        # Check if we have a cached tree
-        cached = tree_cache.get(abs_path, language)
-        if cached:
-            tree, source_bytes = cached
-        else:
-            # Parse file
-            with open(abs_path, "rb") as f:
-                source_bytes = f.read()
+        # Get language object
+        language_obj = language_registry.get_language(language)
+        safe_lang = ensure_language(language_obj)
 
-            parser = language_registry.get_parser(language)
-            tree = parser.parse(source_bytes)
-
-            # Cache the tree
-            tree_cache.put(abs_path, language, tree, source_bytes)
+        # Parse with cached tree
+        tree, source_bytes = parse_with_cached_tree(abs_path, language, safe_lang)
 
         # Execute queries
-        lang = language_registry.get_language(language)
         symbols: Dict[str, List[Dict[str, Any]]] = {}
 
         for symbol_type, query_string in queries.items():
-            query = lang.query(query_string)
+            query = safe_lang.query(query_string)
             matches = query.captures(tree.root_node)
 
             symbols[symbol_type] = []
@@ -93,21 +91,21 @@ def extract_symbols(
                     continue
 
                 try:
-                    text = source_bytes[node.start_byte : node.end_byte].decode(
-                        "utf-8", errors="replace"
-                    )
+                    # Use helper function to get text
+                    safe_node = ensure_node(node)
+                    text = get_node_text(safe_node, source_bytes)
 
                     symbol = {
                         "name": text,
                         "type": symbol_type,
                         "location": {
                             "start": {
-                                "row": node.start_point[0],
-                                "column": node.start_point[1],
+                                "row": safe_node.start_point[0],
+                                "column": safe_node.start_point[1],
                             },
                             "end": {
-                                "row": node.end_point[0],
-                                "column": node.end_point[1],
+                                "row": safe_node.end_point[0],
+                                "column": safe_node.end_point[1],
                             },
                         },
                     }
@@ -124,7 +122,9 @@ def extract_symbols(
         raise ValueError(f"Error extracting symbols from {file_path}: {e}") from e
 
 
-def analyze_project_structure(project_name: str, scan_depth: int = 3) -> Dict[str, Any]:
+def analyze_project_structure(
+    project_name: str, scan_depth: int = 3, mcp_ctx: Optional[Any] = None
+) -> Dict[str, Any]:
     """
     Analyze the overall structure of a project.
 
@@ -138,8 +138,13 @@ def analyze_project_structure(project_name: str, scan_depth: int = 3) -> Dict[st
     project = project_registry.get_project(project_name)
     root = project.root_path
 
-    # Update language information
-    project.scan_files(language_registry)
+    # Create context for progress reporting
+    ctx = MCPContext(mcp_ctx)
+
+    with ctx.progress_scope(100, "Analyzing project structure") as progress:
+        # Update language information (5%)
+        project.scan_files(language_registry)
+        progress.update(5)
 
     # Count files by language
     languages = project.languages
@@ -330,24 +335,15 @@ def find_dependencies(project_name: str, file_path: str) -> Dict[str, List[str]]
 
     # Parse file and extract imports
     try:
-        # Use cached tree if available
-        cached = tree_cache.get(abs_path, language)
-        if cached:
-            tree, source_bytes = cached
-        else:
-            # Parse file
-            with open(abs_path, "rb") as f:
-                source_bytes = f.read()
+        # Get language object
+        language_obj = language_registry.get_language(language)
+        safe_lang = ensure_language(language_obj)
 
-            parser = language_registry.get_parser(language)
-            tree = parser.parse(source_bytes)
-
-            # Cache the tree
-            tree_cache.put(abs_path, language, tree, source_bytes)
+        # Parse with cached tree
+        tree, source_bytes = parse_with_cached_tree(abs_path, language, safe_lang)
 
         # Execute query
-        lang = language_registry.get_language(language)
-        query = lang.query(query_string)
+        query = safe_lang.query(query_string)
         matches = query.captures(tree.root_node)
 
         # Organize imports by type
@@ -355,9 +351,9 @@ def find_dependencies(project_name: str, file_path: str) -> Dict[str, List[str]]
 
         for node, capture_name in matches:
             try:
-                text = source_bytes[node.start_byte : node.end_byte].decode(
-                    "utf-8", errors="replace"
-                )
+                # Use helper function to get text
+                safe_node = ensure_node(node)
+                text = get_node_text(safe_node, source_bytes)
 
                 if capture_name.startswith("import."):
                     category = capture_name.split(".", 1)[1]
@@ -400,50 +396,28 @@ def analyze_code_complexity(project_name: str, file_path: str) -> Dict[str, Any]
 
     # Parse file
     try:
-        # Use cached tree if available
-        cached = tree_cache.get(abs_path, language)
-        if cached:
-            tree, source_bytes = cached
-        else:
-            # Parse file
-            with open(abs_path, "rb") as f:
-                source_bytes = f.read()
+        # Get language object
+        language_obj = language_registry.get_language(language)
+        safe_lang = ensure_language(language_obj)
 
-            parser = language_registry.get_parser(language)
-            tree = parser.parse(source_bytes)
-
-            # Cache the tree
-            tree_cache.put(abs_path, language, tree, source_bytes)
+        # Parse with cached tree
+        tree, source_bytes = parse_with_cached_tree(abs_path, language, safe_lang)
 
         # Calculate basic metrics
-        # Open file for reading text content
-        with open(abs_path, "r", encoding="utf-8", errors="replace") as f:
-            lines = f.readlines()
+        # Read lines from file using utility
+        lines = read_text_file(abs_path)
 
         line_count = len(lines)
         empty_lines = sum(1 for line in lines if line.strip() == "")
         comment_lines = 0
 
-        # Language-specific comment detection
-        comment_starters = {
-            "python": "#",
-            "javascript": "//",
-            "typescript": "//",
-            "java": "//",
-            "c": "//",
-            "cpp": "//",
-            "go": "//",
-            "ruby": "#",
-            "rust": "//",
-        }
-
-        if language in comment_starters:
-            comment_start = comment_starters[language]
+        # Language-specific comment detection using utility
+        comment_prefix = get_comment_prefix(language)
+        if comment_prefix:
             # Count comments for text lines
-            comment_lines = 0
-            for line in lines:
-                if line.strip().startswith(comment_start):
-                    comment_lines += 1
+            comment_lines = sum(
+                1 for line in lines if line.strip().startswith(comment_prefix)
+            )
 
         # Get function and class definitions
         symbols = extract_symbols(project_name, file_path, ["functions", "classes"])
@@ -480,11 +454,12 @@ def analyze_code_complexity(project_name: str, file_path: str) -> Dict[str, Any]
             decision_types = complexity_nodes[language]
 
             def count_nodes(node: Any, types: List[str]) -> int:
+                safe_node = ensure_node(node)
                 count = 0
-                if node.type in types:
+                if safe_node.type in types:
                     count += 1
 
-                for child in node.children:
+                for child in safe_node.children:
                     count += count_nodes(child, types)
 
                 return count

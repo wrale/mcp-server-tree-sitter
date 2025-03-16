@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional
 from mcp.server.fastmcp import FastMCP
 
 from .cache.parser_cache import tree_cache
+from .capabilities import register_capabilities
 from .config import CONFIG, load_config
 from .language.query_templates import list_query_templates
 from .language.registry import LanguageRegistry
@@ -41,6 +42,9 @@ from .tools.search import query_code, search_text
 
 # Create server instance - this single instance will maintain state across calls
 mcp = FastMCP("tree_sitter")
+
+# Register server capabilities
+register_capabilities(mcp)
 
 # Initialize language registry - uses singleton pattern for persistence
 language_registry = LanguageRegistry()
@@ -501,7 +505,9 @@ def get_symbols(
 
 
 @mcp.tool()
-def analyze_project(project: str, scan_depth: int = 3) -> Dict[str, Any]:
+def analyze_project(
+    project: str, scan_depth: int = 3, ctx: Optional[Any] = None
+) -> Dict[str, Any]:
     """Analyze overall project structure.
 
     Args:
@@ -511,7 +517,7 @@ def analyze_project(project: str, scan_depth: int = 3) -> Dict[str, Any]:
     Returns:
         Project analysis
     """
-    return analyze_project_structure(project, scan_depth)
+    return analyze_project_structure(project, scan_depth, ctx)
 
 
 @mcp.tool()

@@ -7,30 +7,16 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
-try:
-    from tree_sitter import Language as TSLanguage
-    from tree_sitter import Parser as TSParser
-    from tree_sitter import Tree as TSTree
-except ImportError:
-    # For type checking and module importing without tree-sitter installed
-    TSTree = Any
-
-    class TSLanguage:
-        pass
-
-    class TSParser:
-        def set_language(self, language: Any) -> None:
-            pass
-
-
 from ..config import CONFIG
+from ..utils.tree_sitter_types import (
+    Parser,
+    Tree,
+    ensure_language,
+    ensure_parser,
+    ensure_tree,
+)
 
 logger = logging.getLogger(__name__)
-
-# Type aliases for better readability
-Tree = TSTree
-Language = TSLanguage
-Parser = TSParser
 
 
 class TreeCache:
@@ -46,12 +32,14 @@ class TreeCache:
         )  # (tree, source, timestamp)
         self.lock = threading.RLock()
         self.current_size_bytes = 0
+        # Track modified trees for incremental parsing
+        self.modified_trees: Dict[str, bool] = {}
 
     def _get_cache_key(self, file_path: Path, language: str) -> str:
         """Generate cache key from file path and language."""
         return f"{language}:{str(file_path)}:{file_path.stat().st_mtime}"
 
-    def get(self, file_path: Path, language: str) -> Optional[Tuple[Any, bytes]]:
+    def get(self, file_path: Path, language: str) -> Optional[Tuple[Tree, bytes]]:
         """
         Get cached tree if available and not expired.
 
@@ -79,13 +67,17 @@ class TreeCache:
                     del self.cache[cache_key]
                     # Approximate size reduction
                     self.current_size_bytes -= len(source)
+                    if cache_key in self.modified_trees:
+                        del self.modified_trees[cache_key]
                     return None
 
-                return tree, source
+                # Cast to the correct type for type checking
+                safe_tree = ensure_tree(tree)
+                return safe_tree, source
 
         return None
 
-    def put(self, file_path: Path, language: str, tree: Any, source: bytes) -> None:
+    def put(self, file_path: Path, language: str, tree: Tree, source: bytes) -> None:
         """
         Cache a parsed tree.
 
@@ -114,13 +106,89 @@ class TreeCache:
             return
 
         with self.lock:
-            # If we need to make room, remove oldest entries
-            if self.current_size_bytes + source_size > self.max_size_mb * 1024 * 1024:
-                self._evict_entries(source_size)
+            # If entry already exists, subtract its size
+            if cache_key in self.cache:
+                _, old_source, _ = self.cache[cache_key]
+                self.current_size_bytes -= len(old_source)
+            else:
+                # If we need to make room for a new entry, remove oldest entries
+                if (
+                    self.current_size_bytes + source_size
+                    > self.max_size_mb * 1024 * 1024
+                ):
+                    self._evict_entries(source_size)
 
             # Store the new entry
             self.cache[cache_key] = (tree, source, time.time())
             self.current_size_bytes += source_size
+
+            # Mark as not modified (fresh parse)
+            self.modified_trees[cache_key] = False
+
+    def mark_modified(self, file_path: Path, language: str) -> None:
+        """
+        Mark a tree as modified for tracking changes.
+
+        Args:
+            file_path: Path to the source file
+            language: Language identifier
+        """
+        try:
+            cache_key = self._get_cache_key(file_path, language)
+            with self.lock:
+                if cache_key in self.cache:
+                    self.modified_trees[cache_key] = True
+        except (FileNotFoundError, OSError):
+            pass
+
+    def is_modified(self, file_path: Path, language: str) -> bool:
+        """
+        Check if a tree has been modified since last parse.
+
+        Args:
+            file_path: Path to the source file
+            language: Language identifier
+
+        Returns:
+            True if the tree has been modified, False otherwise
+        """
+        try:
+            cache_key = self._get_cache_key(file_path, language)
+            with self.lock:
+                return self.modified_trees.get(cache_key, False)
+        except (FileNotFoundError, OSError):
+            return False
+
+    def update_tree(
+        self, file_path: Path, language: str, tree: Tree, source: bytes
+    ) -> None:
+        """
+        Update a cached tree after modification.
+
+        Args:
+            file_path: Path to the source file
+            language: Language identifier
+            tree: Updated parsed tree
+            source: Updated source bytes
+        """
+        try:
+            cache_key = self._get_cache_key(file_path, language)
+        except (FileNotFoundError, OSError):
+            return
+
+        with self.lock:
+            if cache_key in self.cache:
+                _, old_source, _ = self.cache[cache_key]
+                # Update size tracking
+                self.current_size_bytes -= len(old_source)
+                self.current_size_bytes += len(source)
+                # Update cache entry
+                self.cache[cache_key] = (tree, source, time.time())
+                # Reset modified flag
+                self.modified_trees[cache_key] = False
+            else:
+                # If not already in cache, just add it
+                self.put(file_path, language, tree, source)
 
     def _evict_entries(self, required_bytes: int) -> None:
         """
@@ -138,6 +206,8 @@ class TreeCache:
         for key, (_, source, _) in sorted_entries:
             # Remove entry
             del self.cache[key]
+            if key in self.modified_trees:
+                del self.modified_trees[key]
             entry_size = len(source)
             bytes_freed += entry_size
             self.current_size_bytes -= entry_size
@@ -155,6 +225,8 @@ class TreeCache:
             _, source, _ = self.cache[oldest_key]
             self.current_size_bytes -= len(source)
             del self.cache[oldest_key]
+            if oldest_key in self.modified_trees:
+                del self.modified_trees[oldest_key]
 
     def invalidate(self, file_path: Optional[Path] = None) -> None:
         """
@@ -168,6 +240,7 @@ class TreeCache:
             if file_path is None:
                 # Clear entire cache
                 self.cache.clear()
+                self.modified_trees.clear()
                 self.current_size_bytes = 0
             else:
                 # Clear only entries for this file
@@ -176,6 +249,8 @@ class TreeCache:
                     _, source, _ = self.cache[key]
                     self.current_size_bytes -= len(source)
                     del self.cache[key]
+                    if key in self.modified_trees:
+                        del self.modified_trees[key]
 
 
 # Global cache instance
@@ -183,8 +258,9 @@ tree_cache = TreeCache()
 
 
 @lru_cache(maxsize=32)
-def get_cached_parser(language: Any) -> TSParser:
+def get_cached_parser(language: Any) -> Parser:
     """Get a cached parser for a language."""
-    parser = TSParser()
-    parser.set_language(language)
-    return parser
+    parser = Parser()
+    safe_language = ensure_language(language)
+    parser.set_language(safe_language)
+    return ensure_parser(parser)
