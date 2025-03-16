@@ -33,7 +33,6 @@ dependencies = [
 dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
-    "black>=23.1.0",
     "ruff>=0.0.262",
     "mypy>=1.2.0",
 ]
@@ -71,9 +70,6 @@ disallow_incomplete_defs = true
 [[tool.mypy.overrides]]
 module = "tree_sitter.*"
 ignore_missing_imports = true
-
-[tool.black]
-line-length = 120
 
 [tool.ruff]
 line-length = 120

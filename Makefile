@@ -58,7 +58,6 @@ mypy:
 
 .PHONY: format
 format:
-	$(UV) run black .
 	$(UV) run ruff format .
 	$(UV) run ruff check --fix .
 
@@ -117,7 +116,7 @@ help:
 	@echo "  test-all              : Run both normal tests and diagnostic tests"
 	@echo "  clean                 : Clean build artifacts and test results"
 	@echo "  lint                  : Run linting checks"
-	@echo "  format                : Format and fix code in the entire repository"
+	@echo "  format                : Format code using ruff"
 	@echo "  build                 : Build distribution packages"
 	@echo "  run                   : Run the server directly"
 	@echo "  mcp-dev               : Run the server with MCP Inspector"
