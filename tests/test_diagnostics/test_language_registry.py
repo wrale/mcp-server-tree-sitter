@@ -103,15 +103,20 @@ def test_language_detection_vs_listing(diagnostic):
     results = {}
     for lang in test_languages:
         try:
-            # Check if install_language reports the language as available
-            registry.install_language(lang)
-            results[lang] = {
-                "install_success": True,
-                "language_object": registry.get_language(lang) is not None,
-            }
+            # Check if language is available
+            if registry.is_language_available(lang):
+                results[lang] = {
+                    "available": True,
+                    "language_object": registry.get_language(lang) is not None,
+                }
+            else:
+                results[lang] = {
+                    "available": False,
+                    "reason": "Not available in language-pack",
+                }
         except Exception as e:
             results[lang] = {
-                "install_success": False,
+                "available": False,
                 "error": str(e),
             }
 
@@ -125,7 +130,7 @@ def test_language_detection_vs_listing(diagnostic):
     # Compare detection vs listing
     discrepancies = []
     for lang, result in results.items():
-        if result.get("install_success", False) and lang not in available_languages:
+        if result.get("available", False) and lang not in available_languages:
             discrepancies.append(lang)
 
     if discrepancies:
@@ -135,9 +140,9 @@ def test_language_detection_vs_listing(diagnostic):
         )
 
     # For diagnostic purposes, not all assertions should fail
-    # This checks if there are any successful language detections
+    # This checks if there are any available languages
     successful_languages = [
-        lang for lang, result in results.items() if result.get("install_success", False)
+        lang for lang, result in results.items() if result.get("available", False)
     ]
 
     assert len(successful_languages) > 0, "No languages could be successfully installed"

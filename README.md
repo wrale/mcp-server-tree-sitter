@@ -226,7 +226,7 @@ The server provides the following MCP resources:
 The server provides tools for:
 
 - Project management: `register_project_tool`, `list_projects_tool`, `remove_project_tool`
-- Language management: `list_languages`, `install_language`
+- Language management: `list_languages`, `check_language_available`
 - File operations: `list_files`, `get_file`, `get_file_metadata`
 - AST analysis: `get_ast`, `get_node_at_position`
 - Code search: `find_text`, `run_query`

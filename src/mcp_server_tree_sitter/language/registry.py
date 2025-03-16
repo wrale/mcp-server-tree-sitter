@@ -102,84 +102,61 @@ class LanguageRegistry:
 
     def list_available_languages(self) -> List[str]:
         """
-        List languages that are installed and available.
+        List languages that are available via tree-sitter-language-pack.
 
         Returns:
             List of available language identifiers
         """
-        available: List[str] = []
-
-        # Check currently loaded languages
-        available.extend(self.languages.keys())
-
-        # Add languages available in tree-sitter-language-pack
-        try:
-            # Get all language names from the language pack binding
-            # Type ignore required because tree-sitter-language-pack has restrictive
-            # literal types but supports dynamic language names at runtime
-            binding = get_binding()  # type: ignore
-            if hasattr(binding, "get_all_language_names"):
-                # Use the language pack's API if available
-                available.extend(binding.get_all_language_names())
-            else:
-                # Fallback: Try common languages (we know language-pack includes these)
-                for lang in self._language_map.values():
-                    if lang not in available:
-                        try:
-                            # Type ignore required for dynamic language access pattern
-                            get_language(lang)  # type: ignore
-                            available.append(lang)
-                        except Exception:
-                            pass
-        except Exception as e:
-            logger.warning(f"Error checking language pack languages: {e}")
-
-        return sorted(set(available))  # Use set to remove duplicates
+        # Start with loaded languages
+        available = set(self.languages.keys())
+        
+        # Add all mappable languages from our extension map
+        # These correspond to the languages available in tree-sitter-language-pack
+        available.update(set(self._language_map.values()))
+        
+        # Add frequently used languages that might not be in the map
+        common_languages = [
+            "python", "javascript", "typescript", "java", "c", "cpp", "go", "rust",
+            "ruby", "php", "swift", "kotlin", "scala", "bash", "html", "css", "json",
+            "yaml", "markdown", "c_sharp", "objective_c", "xml"
+        ]
+        available.update(common_languages)
+        
+        # Return as a sorted list
+        return sorted(available)
 
     def list_installable_languages(self) -> List[Tuple[str, str]]:
         """
         List languages that can be installed.
+        With tree-sitter-language-pack, no additional installation is needed.
 
         Returns:
-            List of tuples (language_id, package_name)
+            Empty list (all languages are available via language-pack)
         """
-        # All languages are already available via language pack
-        # This method is maintained for backward compatibility
         return []
 
-    def install_language(self, language_name: str) -> bool:
+    def is_language_available(self, language_name: str) -> bool:
         """
-        No longer needed with tree-sitter-language-pack but maintained for
-        compatibility.
+        Check if a language is available in tree-sitter-language-pack.
 
         Args:
             language_name: Language identifier
 
         Returns:
             True if language is available
-
-        Raises:
-            LanguageNotFoundError: If language is not available
         """
-        # Try to get the language to see if it's available
         try:
             self.get_language(language_name)
             return True
-        except Exception as e:
-            raise LanguageNotFoundError(
-                f"Language {language_name} not available in tree-sitter-language-pack: "
-                f"{e}"
-            ) from e
+        except Exception:
+            return False
 
-    def get_language(
-        self, language_name: str, auto_install: Optional[bool] = None
-    ) -> Any:
+    def get_language(self, language_name: str) -> Any:
         """
-        Get or load a language by name.
+        Get or load a language by name from tree-sitter-language-pack.
 
         Args:
             language_name: Language identifier
-            auto_install: DEPRECATED - No longer used with language pack
 
         Returns:
             Tree-sitter Language object

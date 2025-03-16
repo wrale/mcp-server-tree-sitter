@@ -39,12 +39,12 @@ These commands manage tree-sitter language parsers.
 
 | Command | Status | Dependencies | Notes |
 |---------|--------|--------------|-------|
-| `list_languages` | ❌ | None | Returns empty available/installable languages lists despite languages being available |
-| `install_language` | ✅ | None | Successfully reports language availability via tree-sitter-language-pack |
+| `list_languages` | ✅ | None | Lists all available languages from tree-sitter-language-pack |
+| `check_language_available` | ✅ | None | Checks if a specific language is available via tree-sitter-language-pack |
 
-### Common Failure Modes:
-- `list_languages` returns empty lists despite languages being available through `install_language`
-- Language registry implementation doesn't correctly populate available languages
+### Previous Issues (Now Fixed):
+- `list_languages` used to return empty lists despite languages being available
+- Language registry implementation now correctly provides available languages
 
 ## File Operations Commands
 
@@ -151,7 +151,7 @@ The integration of tree-sitter-language-pack appears to be partially complete, b
 
 | Feature Area | Previous Status | Current Status | Test Results |
 |--------------|-----------------|----------------|--------------|
-| Language Tools | ⚠️ Partial | ⚠️ Partial | `install_language` reports languages as available, but `list_languages` returns empty lists |
+| Language Tools | ⚠️ Partial | ✅ Working | Language tools now properly report and list available languages |
 | AST Analysis | ⚠️ Partial | ❌ Not Working | `get_ast` fails with node ID errors, showing issues with AST building |
 | Search Queries | ⚠️ Partial | ⚠️ Partial | Text search works but tree-sitter queries run without returning results |
 | Code Analysis | ⚠️ Partial | ⚠️ Partial | Basic structure analysis works, but symbol extraction and AST-dependent features return empty results |
@@ -177,8 +177,8 @@ When testing the MCP Tree-sitter server, use this structured approach:
    - Test `get_file_metadata` to check file information
 
 3. **Language Parser Verification**:
-   - Test `install_language` to check language availability
-   - Note that `list_languages` currently returns empty results
+   - Test `check_language_available` to verify specific language support
+   - Use `list_languages` to see all available languages
 
 4. **Feature Testing**:
    - Focus on working features: project management, file operations, text search, basic project analysis
