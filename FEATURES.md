@@ -39,12 +39,12 @@ These commands manage tree-sitter language parsers.
 
 | Command | Status | Dependencies | Notes |
 |---------|--------|--------------|-------|
-| `list_languages` | ⚠️ | None | Currently returns empty available/installable languages list |
+| `list_languages` | ❌ | None | Returns empty available/installable languages lists despite languages being available |
 | `install_language` | ✅ | None | Successfully reports language availability via tree-sitter-language-pack |
 
 ### Common Failure Modes:
-- `list_languages` returns empty lists despite languages being available
-- Language availability check through `install_language` works, but languages don't appear in lists
+- `list_languages` returns empty lists despite languages being available through `install_language`
+- Language registry implementation doesn't correctly populate available languages
 
 ## File Operations Commands
 
@@ -74,12 +74,12 @@ These commands perform abstract syntax tree (AST) operations.
 
 | Command | Status | Dependencies | Notes |
 |---------|--------|--------------|-------|
-| `get_ast` | ❌ | None | Currently fails with error code 4384162096 |
-| `get_node_at_position` | ❌ | None | Not tested but likely fails due to AST parsing issues |
+| `get_ast` | ❌ | None | Returns error with node ID not found in nodes_dict |
+| `get_node_at_position` | ❌ | None | Not fully tested but likely fails due to AST parsing issues |
 
 ### Common Failure Modes:
-- `get_ast` fails with error code rather than informative error message
-- AST parsing functionality appears to be non-operational
+- `get_ast` returns error about missing node IDs rather than a usable AST
+- AST parsing functionality appears to be non-operational despite tree-sitter-language-pack integration
 
 ## Search and Query Commands
 
@@ -87,13 +87,13 @@ These commands search code and execute tree-sitter queries.
 
 | Command | Status | Dependencies | Notes |
 |---------|--------|--------------|-------|
-| `find_text` | ✅ | Project registration | Text search works without language parsers |
-| `run_query` | ❌ | None | Not tested but likely fails due to AST parsing issues |
-| `get_query_template_tool` | ✅ | None | Successfully returns query templates for language |
-| `list_query_templates_tool` | ✅ | None | Successfully lists available query templates |
-| `build_query` | ❌ | None | Not tested but likely fails with complex queries |
-| `adapt_query` | ❌ | None | Not tested but likely fails with current implementation |
-| `get_node_types` | ✅ | None | Successfully returns node type descriptions |
+| `find_text` | ✅ | Project registration | Text search works correctly with pattern matching |
+| `run_query` | ❌ | None | Executes without output but fails to return results |
+| `get_query_template_tool` | ⚠️ | None | Not fully tested but likely returns templates when available |
+| `list_query_templates_tool` | ⚠️ | None | Not fully tested but likely lists available templates |
+| `build_query` | ❌ | None | Not fully tested but likely fails due to AST parsing issues |
+| `adapt_query` | ❌ | None | Not fully tested but likely fails due to AST parsing issues |
+| `get_node_types` | ⚠️ | None | Not fully tested but likely works as it doesn't depend on parsing |
 
 ### Example Usage:
 ```python
@@ -113,16 +113,16 @@ These commands analyze code structure and complexity.
 
 | Command | Status | Dependencies | Notes |
 |---------|--------|--------------|-------|
-| `get_symbols` | ❌ | None | Fails with "too many values to unpack (expected 2)" |
-| `analyze_project` | ✅ | Project registration | Project structure analysis works, but detailed analysis fails |
-| `get_dependencies` | ❌ | None | Fails with "too many values to unpack (expected 2)" |
-| `analyze_complexity` | ❌ | None | Fails with "too many values to unpack (expected 2)" |
-| `find_similar_code` | ❌ | None | Not tested but likely fails in current implementation |
-| `find_usage` | ❌ | None | Not tested but likely fails in current implementation |
+| `get_symbols` | ⚠️ | Project registration | Returns empty lists for symbols instead of failing |
+| `analyze_project` | ✅ | Project registration | Project structure analysis works, but detailed code analysis is limited |
+| `get_dependencies` | ⚠️ | Project registration | Returns empty results instead of failing |
+| `analyze_complexity` | ✅ | Project registration | Works but may have limited accuracy due to AST issues |
+| `find_similar_code` | ❌ | None | Not fully tested but likely limited to text-based matching |
+| `find_usage` | ❌ | None | Not fully tested but likely fails due to AST parsing issues |
 
 ### Common Failure Modes:
-- Several commands fail with "too many values to unpack (expected 2)" error
-- Core functionality dependent on AST parsing fails with current implementation
+- Several commands return empty results rather than failing with errors
+- AST-dependent functionality is limited despite successful execution
 
 ## Cache Management Commands
 
@@ -151,16 +151,17 @@ The integration of tree-sitter-language-pack appears to be partially complete, b
 
 | Feature Area | Previous Status | Current Status | Test Results |
 |--------------|-----------------|----------------|--------------|
-| Language Tools | ⚠️ Partial | ⚠️ Partial | Language detection works but listing fails |
-| AST Analysis | ⚠️ Partial | ❌ Not Working | Core AST functionality fails with errors |
-| Search Queries | ⚠️ Partial | ⚠️ Partial | Text search works but AST queries fail |
-| Code Analysis | ⚠️ Partial | ❌ Not Working | Analysis functions fail with errors |
+| Language Tools | ⚠️ Partial | ⚠️ Partial | `install_language` reports languages as available, but `list_languages` returns empty lists |
+| AST Analysis | ⚠️ Partial | ❌ Not Working | `get_ast` fails with node ID errors, showing issues with AST building |
+| Search Queries | ⚠️ Partial | ⚠️ Partial | Text search works but tree-sitter queries run without returning results |
+| Code Analysis | ⚠️ Partial | ⚠️ Partial | Basic structure analysis works, but symbol extraction and AST-dependent features return empty results |
 
 ### Current Integration Issues:
-- Basic language detection works through `install_language` command
-- AST parsing appears to be broken, affecting multiple dependent commands
-- Several commands that rely on AST functionality fail with unpacking errors
-- Project management and file operations continue to function properly
+- Discrepancy between language detection and language listing
+- AST parsing returns errors about missing node IDs
+- Query execution completes but doesn't return proper results
+- Analysis functions run but return empty or limited results
+- Project management and file operations function correctly
 
 ## Testing Guidelines
 
@@ -173,28 +174,30 @@ When testing the MCP Tree-sitter server, use this structured approach:
 2. **Basic File Operations**:
    - Test `list_files` to ensure project access
    - Test `get_file` to verify content retrieval
+   - Test `get_file_metadata` to check file information
 
 3. **Language Parser Verification**:
    - Test `install_language` to check language availability
    - Note that `list_languages` currently returns empty results
 
 4. **Feature Testing**:
-   - Focus on working features: project management, file operations, text search
-   - Document errors in AST and analysis operations for debugging
+   - Focus on working features: project management, file operations, text search, basic project analysis
+   - Document empty results from AST-dependent operations for debugging
 
 5. **Error Cases**:
-   - Common error: "too many values to unpack (expected 2)"
-   - AST operations failing with numeric error codes
+   - AST operations returning errors about missing node IDs
+   - Empty results from symbol extraction and dependency analysis
+   - Query execution without result output
 
 ## Common Issues and Solutions
 
 | Issue | Cause | Solution |
 |-------|-------|----------|
-| AST parsing failures | Implementation issues with tree-sitter integration | Needs code fixes in AST handling |
-| "too many values to unpack (expected 2)" | Likely tuple unpacking error in query code | Needs code fix in capture handling |
-| Empty language lists | Issues with language registry | Check language registry implementation |
-| Numeric error codes | Exception handling not properly configured | Enhance error reporting |
+| Empty language lists | Discrepancy between language detection and listing | Fix language registry implementation |
+| AST parsing node ID errors | Issues with tree-sitter integration | Fix AST node dictionary building in models/ast.py |
+| Empty results from analysis | Problems with AST traversal | Update cursor-based traversal to handle errors gracefully |
+| Query execution without output | Issues with query capture handling | Fix capture handling in query_code function |
 
 ---
 
-This feature matrix reflects test results as of March 16, 2025. Several critical functions need implementation fixes to become operational.
+This feature matrix reflects test results as of March 16, 2025. While basic functionality works, AST-dependent features need implementation fixes to become fully operational.
