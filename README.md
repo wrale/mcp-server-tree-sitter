@@ -101,6 +101,32 @@ Alternatively, you can manually configure Claude Desktop:
 
 The MCP tools icon (hammer) will appear in Claude Desktop's interface once you have properly configured at least one MCP server. You can then access the `tree_sitter` server's functionality by clicking on this icon.
 
+### Configuring with Released Version
+
+If you've installed the package from PyPI (released version) rather than cloning the repository, use the following configuration for Claude Desktop:
+
+1. Open your Claude Desktop configuration file (same location as above).
+
+2. Add the tree-sitter server to the `mcpServers` section:
+
+   ```json
+   {
+       "mcpServers": {
+           "tree_sitter": {
+               "command": "uvx",
+               "args": [
+                   "--directory", "/ABSOLUTE/PATH/TO/YOUR/PROJECT",
+                   "mcp-server-tree-sitter"
+               ]
+           }
+       }
+   }
+   ```
+
+3. Save the file and restart Claude Desktop.
+
+This method uses `uvx` to run the installed PyPI package directly, which is the recommended approach for the released version. The server doesn't require any additional parameters to run in its basic configuration.
+
 ## State Persistence
 
 The MCP Tree-sitter Server maintains state between invocations. This means:

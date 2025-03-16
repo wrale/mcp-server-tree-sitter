@@ -111,4 +111,4 @@ jobs:
     - name: Install and verify
       run: |
         python -m pip install dist/*.whl
-        mcp-ts --help
+        mcp-server-tree-sitter --help
