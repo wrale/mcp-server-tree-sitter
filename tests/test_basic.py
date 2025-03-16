@@ -30,7 +30,12 @@ def test_project_registry():
 
         # Check project details
         assert project.name == "test"
-        assert str(project.root_path) == temp_dir
+        # Use os.path.samefile to compare paths instead of string comparison
+        # This handles platform-specific path normalization
+        # (e.g., /tmp -> /private/tmp on macOS)
+        import os
+
+        assert os.path.samefile(str(project.root_path), temp_dir)
 
         # List projects
         projects = registry.list_projects()
