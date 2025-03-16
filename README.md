@@ -6,10 +6,12 @@ A Model Context Protocol (MCP) server that provides code analysis capabilities u
 
 - 🔍 **Flexible Exploration**: Examine code at multiple levels of granularity
 - 🧠 **Context Management**: Provides just enough information without overwhelming the context window
-- 🌐 **Language Agnostic**: Supports multiple programming languages via tree-sitter parsers
-- 🌳 **Structure-Aware**: Uses AST-based understanding rather than just text
-- 🔎 **Searchable**: Find specific patterns across codebases
+- 🌐 **Language Agnostic**: Supports 30+ programming languages via tree-sitter-language-pack
+- 🌳 **Structure-Aware**: Uses AST-based understanding with efficient cursor-based traversal
+- 🔎 **Searchable**: Find specific patterns using text search and tree-sitter queries
 - 🔄 **Caching**: Optimized performance through parse tree caching
+- 🔑 **Symbol Extraction**: Extract and analyze functions, classes, and other code symbols
+- 📊 **Dependency Analysis**: Identify and analyze code dependencies and relationships
 - 🧩 **State Persistence**: Maintains project registrations and cached data between invocations
 - 🔒 **Secure**: Built-in security boundaries and input validation
 

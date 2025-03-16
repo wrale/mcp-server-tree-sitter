@@ -15,14 +15,15 @@ CRITICAL: When a task is done, update this document to mark it done. However, yo
 - ✅ Add MCP Progress Reporting
 - ✅ Add Server Capabilities Declaration
 - [ ] Add mcp server start flag(s) for enabling (allow list approach) and disabling (block list approach) a list of features. Only one approach may be applied at a time. The default should be minimal allowed, for now. Add meta features such as stable, wip, advanced, basic
-- 🔄 [WIP] Add mcp server start flag(s) for ensuring language packs are installed beforehand.
+- ✅ Add mcp server start flag(s) for ensuring language packs are installed - Resolved by tree-sitter-language-pack integration
 - [ ] Add mcp server start flag(s) for ensuring project is configured beforehand.
 - [ ] Achieve 100% type hinting coverage (and ensure this is enforced by our linting)
 - [ ] Improve docstring coverage and quality (Don't thrash on updating docs that are already good) (HOLD pending other work)
 - [ ] Split files until the longest .py file is less than 500 lines (unless that breaks functionality, in which case do not)
 
 ### Testing
-- 🔄 [WIP] Create tests for context utilities, incremental parsing, and cursor traversal
+- ✅ Create and maintain tests for AST functionality, query execution, and symbol extraction
+- 🔄 [WIP] Create additional tests for context utilities, incremental parsing, and cursor traversal
 - [ ] Increase unit test coverage to 100% and begin enforcing that in pre-commit and CI
 - [ ] Add integration tests for MCP server functionality (HOLD pending other work)
 - [ ] Create automated testing workflow with GitHub Actions (unit, integration, static, etc) (HOLD pending other work)
@@ -37,6 +38,7 @@ CRITICAL: When a task is done, update this document to mark it done. However, yo
 
 ### Feature Improvements
 - ✅ Add support for more tree-sitter languages by implementing https://github.com/Goldziher/tree-sitter-language-pack/
+- ✅ Add support for query execution with proper result handling
 - [ ] Improve query building tools with more sophisticated matching options (HOLD because we could cripple the codebase with complexity)
 - [ ] Implement more advanced code analysis metrics (HOLD because we could cripple the codebase with complexity)
 - [ ] Enhance caching system with better invalidation strategy (HOLD because we could cripple the codebase with complexity)

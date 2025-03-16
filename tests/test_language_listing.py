@@ -1,6 +1,5 @@
 """Test for language listing functionality."""
 
-
 from mcp_server_tree_sitter.language.registry import LanguageRegistry
 from mcp_server_tree_sitter.server import check_language_available, list_languages
 

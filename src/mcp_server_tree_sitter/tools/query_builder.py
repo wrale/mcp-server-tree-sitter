@@ -58,6 +58,27 @@ def build_compound_query(
     return combined
 
 
+def adapt_query(query: str, from_language: str, to_language: str) -> Dict[str, str]:
+    """
+    Adapt a query from one language to another.
+
+    Args:
+        query: Original query string
+        from_language: Source language
+        to_language: Target language
+
+    Returns:
+        Dictionary with adapted query and metadata
+    """
+    adapted = adapt_query_for_language(query, from_language, to_language)
+    return {
+        "original_language": from_language,
+        "target_language": to_language,
+        "original_query": query,
+        "adapted_query": adapted,
+    }
+
+
 def adapt_query_for_language(query: str, from_language: str, to_language: str) -> str:
     """
     Try to adapt a query from one language to another.
