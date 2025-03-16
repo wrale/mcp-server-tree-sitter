@@ -95,7 +95,7 @@ class TreeCache:
 
         # Check if adding this entry would exceed cache size limit
         if source_size > self.max_size_mb * 1024 * 1024:
-            logger.warning(f"File too large to cache: {file_path} " f"({source_size / (1024*1024):.2f}MB)")
+            logger.warning(f"File too large to cache: {file_path} ({source_size / (1024 * 1024):.2f}MB)")
             return
 
         with self.lock:

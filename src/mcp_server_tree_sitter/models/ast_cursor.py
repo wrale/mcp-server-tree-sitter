@@ -140,7 +140,11 @@ def node_to_dict_cursor(
                 # Process the child node
                 current_depth += 1
                 parent_stack.append(current_data)
-                current_data = process_node(cursor.node, current_data, current_depth)
+                # Ensure node is not None before processing
+                if cursor.node is not None:
+                    current_data = process_node(cursor.node, current_data, current_depth)
+                else:
+                    visited_children = True
                 continue
             else:
                 # No children
@@ -148,7 +152,11 @@ def node_to_dict_cursor(
 
         # Try next sibling if children visited
         elif cursor.goto_next_sibling():
-            current_data = process_node(cursor.node, parent_stack[-1], current_depth)
+            # Ensure node is not None before processing
+            if cursor.node is not None:
+                current_data = process_node(cursor.node, parent_stack[-1], current_depth)
+            else:
+                visited_children = True
             visited_children = False
             continue
 

@@ -139,9 +139,9 @@ def test_direct_parsing(test_project, diagnostic):
 
                         # Assert dictionary structure
                         assert "type" in node_dict, "node_dict should contain type"
-                        assert (
-                            "children" in node_dict or "truncated" in node_dict
-                        ), "node_dict should contain children or be truncated"
+                        assert "children" in node_dict or "truncated" in node_dict, (
+                            "node_dict should contain children or be truncated"
+                        )
 
                         # Check for error in node dictionary
                         if "error" in node_dict:

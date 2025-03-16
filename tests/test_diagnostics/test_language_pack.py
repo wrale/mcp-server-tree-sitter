@@ -64,12 +64,12 @@ def test_language_pack_import(diagnostic):
         diagnostic.add_detail("language_pack_info", results)
 
         # Test basic assertions
-        assert hasattr(
-            tree_sitter_language_pack, "get_language"
-        ), "tree_sitter_language_pack should have get_language function"
-        assert hasattr(
-            tree_sitter_language_pack, "get_parser"
-        ), "tree_sitter_language_pack should have get_parser function"
+        assert hasattr(tree_sitter_language_pack, "get_language"), (
+            "tree_sitter_language_pack should have get_language function"
+        )
+        assert hasattr(tree_sitter_language_pack, "get_parser"), (
+            "tree_sitter_language_pack should have get_parser function"
+        )
 
     except ImportError as e:
         diagnostic.add_error("ImportError", str(e))

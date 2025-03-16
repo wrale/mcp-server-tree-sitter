@@ -170,7 +170,7 @@ def check_language_available(language: str) -> Dict[str, str]:
     if language_registry.is_language_available(language):
         return {
             "status": "success",
-            "message": f"Language '{language}' is available " f"via tree-sitter-language-pack",
+            "message": f"Language '{language}' is available via tree-sitter-language-pack",
         }
     else:
         return {
@@ -729,14 +729,14 @@ def suggest_improvements(project: str, file_path: str) -> str:
         complexity = analyze_code_complexity(project, file_path)
         complexity_info = f"""
         Code metrics:
-        - Line count: {complexity['line_count']}
-        - Code lines: {complexity['code_lines']}
-        - Comment lines: {complexity['comment_lines']}
-        - Comment ratio: {complexity['comment_ratio']:.1%}
-        - Functions: {complexity['function_count']}
-        - Classes: {complexity['class_count']}
-        - Avg. function length: {complexity['avg_function_lines']} lines
-        - Cyclomatic complexity: {complexity['cyclomatic_complexity']}
+        - Line count: {complexity["line_count"]}
+        - Code lines: {complexity["code_lines"]}
+        - Comment lines: {complexity["comment_lines"]}
+        - Comment ratio: {complexity["comment_ratio"]:.1%}
+        - Functions: {complexity["function_count"]}
+        - Classes: {complexity["class_count"]}
+        - Avg. function length: {complexity["avg_function_lines"]} lines
+        - Cyclomatic complexity: {complexity["cyclomatic_complexity"]}
         """
     except Exception:
         complexity_info = ""

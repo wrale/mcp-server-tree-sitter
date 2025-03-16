@@ -123,7 +123,7 @@ def pytest_terminal_summary(terminalreporter: Any, exitstatus: Any, config: Any)
                 if diag.status == "error":
                     terminalreporter.write_line(f"- {test_id}")
                     for i, error in enumerate(diag.errors):
-                        terminalreporter.write_line(f"  Error {i+1}: {error['type']}: {error['message']}")
+                        terminalreporter.write_line(f"  Error {i + 1}: {error['type']}: {error['message']}")
 
 
 def pytest_sessionfinish(session: Any, exitstatus: Any) -> None:
