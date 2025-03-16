@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mcp-server-tree-sitter"
-version = "0.2.0"
+version = "0.3.0"
 description = "MCP Server for Tree-sitter code analysis"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -55,6 +55,11 @@ packages = ["src/mcp_server_tree_sitter"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+markers = [
+    "diagnostic: mark test as producing diagnostic information",
+]
 
 [tool.mypy]
 python_version = "3.10"

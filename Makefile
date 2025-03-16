@@ -21,22 +21,30 @@ install:
 install-dev:
 	$(UV) pip install -e ".[dev]"
 
-.PHONY: install-languages
-install-languages:
-	$(UV) pip install -e ".[languages]"
-
 .PHONY: install-all
 install-all:
-	$(UV) pip install -e ".[dev,languages]"
+	$(UV) pip install -e ".[dev]"
 
 # Testing targets
 .PHONY: test
 test:
 	$(UV) run pytest
 
+.PHONY: test-diagnostics
+test-diagnostics:
+	$(UV) run pytest tests/test_diagnostics/ -v
+
+.PHONY: test-diagnostics-ci
+test-diagnostics-ci:
+	$(UV) run pytest tests/test_diagnostics/ -v || echo "Diagnostic tests completed with issues - see diagnostic_results directory"
+
 .PHONY: test-coverage
 test-coverage:
 	$(UV) run pytest --cov=$(PACKAGE) --cov-report=term --cov-report=html
+
+# Unified test target
+.PHONY: test-all
+test-all: test test-diagnostics
 
 # Linting and formatting targets
 .PHONY: lint
@@ -44,6 +52,7 @@ lint:
 	$(UV) run ruff check $(PACKAGE_PATH) tests/
 	$(UV) run mypy $(PACKAGE_PATH)
 
+.PHONY: mypy
 mypy:
 	$(UV) run mypy $(PACKAGE_PATH)
 
@@ -55,8 +64,10 @@ format:
 # Cleaning targets
 .PHONY: clean
 clean:
-	rm -rf build/ dist/ *.egg-info/ .pytest_cache/ htmlcov/ .coverage .ruff_cache .mypy_cache
+	rm -rf build/ dist/ *.egg-info/ .pytest_cache/ htmlcov/ .coverage .ruff_cache .mypy_cache diagnostic_results
 	find . -type d -name __pycache__ -exec rm -rf {} +
+	rm -f tests/issue_tests/*.json
+	rm -f tests/issue_tests/results/*.json
 
 # Building and packaging
 .PHONY: build
@@ -97,13 +108,15 @@ help:
 	@echo "  all                   : Default target, install the package"
 	@echo "  install               : Install the package"
 	@echo "  install-dev           : Install the package with development dependencies"
-	@echo "  install-languages     : Install language parsers"
-	@echo "  install-all           : Install with development dependencies and language parsers"
-	@echo "  test                  : Run tests"
+	@echo "  install-all           : Install with all dependencies"
+	@echo "  test                  : Run normal tests"
+	@echo "  test-diagnostics      : Run pytest-based diagnostic tests"
+	@echo "  test-diagnostics-ci   : Run diagnostic tests in CI mode (won't fail the build)"
 	@echo "  test-coverage         : Run tests with coverage report"
+	@echo "  test-all              : Run both normal tests and diagnostic tests"
+	@echo "  clean                 : Clean build artifacts and test results"
 	@echo "  lint                  : Run linting checks"
 	@echo "  format                : Format code"
-	@echo "  clean                 : Clean build artifacts"
 	@echo "  build                 : Build distribution packages"
 	@echo "  run                   : Run the server directly"
 	@echo "  mcp-dev               : Run the server with MCP Inspector"

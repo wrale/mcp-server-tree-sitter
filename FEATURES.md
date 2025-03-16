@@ -39,16 +39,12 @@ These commands manage tree-sitter language parsers.
 
 | Command | Status | Dependencies | Notes |
 |---------|--------|--------------|-------|
-| `list_languages` | ✅ | None | Returns available and installable languages |
-| `install_language` | ✅ | None (tree-sitter-language-pack included) | Successful with tree-sitter-language-pack integration |
+| `list_languages` | ⚠️ | None | Currently returns empty available/installable languages list |
+| `install_language` | ✅ | None | Successfully reports language availability via tree-sitter-language-pack |
 
 ### Common Failure Modes:
-- Language installation fails when auto-install is disabled (default)
-- Languages may be unavailable even when requested to install
-- Requires server restart after language installation
-
-### With tree-sitter-language-pack Implementation:
-With tree-sitter-language-pack now integrated, both commands work without dependencies or installation requirements.
+- `list_languages` returns empty lists despite languages being available
+- Language availability check through `install_language` works, but languages don't appear in lists
 
 ## File Operations Commands
 
@@ -78,15 +74,12 @@ These commands perform abstract syntax tree (AST) operations.
 
 | Command | Status | Dependencies | Notes |
 |---------|--------|--------------|-------|
-| `get_ast` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
-| `get_node_at_position` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
+| `get_ast` | ❌ | None | Currently fails with error code 4384162096 |
+| `get_node_at_position` | ❌ | None | Not tested but likely fails due to AST parsing issues |
 
 ### Common Failure Modes:
-- Fails with "Language not available" when appropriate parser isn't installed
-- May fail with encoding errors on non-UTF8 files
-
-### With tree-sitter-language-pack Implementation:
-These commands now work for all supported languages without additional installations.
+- `get_ast` fails with error code rather than informative error message
+- AST parsing functionality appears to be non-operational
 
 ## Search and Query Commands
 
@@ -95,24 +88,23 @@ These commands search code and execute tree-sitter queries.
 | Command | Status | Dependencies | Notes |
 |---------|--------|--------------|-------|
 | `find_text` | ✅ | Project registration | Text search works without language parsers |
-| `run_query` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
-| `get_query_template_tool` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
-| `list_query_templates_tool` | ✅ | None | Works even without language parsers |
-| `build_query` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
-| `adapt_query` | ✅ | None (tree-sitter-language-pack included) | Works for all language pairs |
-| `get_node_types` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
+| `run_query` | ❌ | None | Not tested but likely fails due to AST parsing issues |
+| `get_query_template_tool` | ✅ | None | Successfully returns query templates for language |
+| `list_query_templates_tool` | ✅ | None | Successfully lists available query templates |
+| `build_query` | ❌ | None | Not tested but likely fails with complex queries |
+| `adapt_query` | ❌ | None | Not tested but likely fails with current implementation |
+| `get_node_types` | ✅ | None | Successfully returns node type descriptions |
 
 ### Example Usage:
 ```python
 # Find text in project files
 find_text(project="my-project", pattern="TODO", file_pattern="**/*.py")
 
-# Run a tree-sitter query
-run_query(
-    project="my-project",
-    query='(function_definition name: (identifier) @function.name)',
-    language="python"
-)
+# List query templates for a language
+list_query_templates_tool(language="python")
+
+# Get descriptions of node types
+get_node_types(language="python")
 ```
 
 ## Code Analysis Commands
@@ -121,16 +113,16 @@ These commands analyze code structure and complexity.
 
 | Command | Status | Dependencies | Notes |
 |---------|--------|--------------|-------|
-| `get_symbols` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
-| `analyze_project` | ✅ | Project registration | Structure analysis works without language parsers |
-| `get_dependencies` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
-| `analyze_complexity` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
-| `find_similar_code` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
-| `find_usage` | ✅ | None (tree-sitter-language-pack included) | Works for all supported languages |
+| `get_symbols` | ❌ | None | Fails with "too many values to unpack (expected 2)" |
+| `analyze_project` | ✅ | Project registration | Project structure analysis works, but detailed analysis fails |
+| `get_dependencies` | ❌ | None | Fails with "too many values to unpack (expected 2)" |
+| `analyze_complexity` | ❌ | None | Fails with "too many values to unpack (expected 2)" |
+| `find_similar_code` | ❌ | None | Not tested but likely fails in current implementation |
+| `find_usage` | ❌ | None | Not tested but likely fails in current implementation |
 
 ### Common Failure Modes:
-- Symbol extraction fails when language parser is not installed
-- Language-specific analysis fails without the correct parser
+- Several commands fail with "too many values to unpack (expected 2)" error
+- Core functionality dependent on AST parsing fails with current implementation
 
 ## Cache Management Commands
 
@@ -155,20 +147,20 @@ configure(cache_enabled=True, max_file_size_mb=10, log_level="DEBUG")
 
 ## Tree-sitter Language Pack Integration Status
 
-The integration of tree-sitter-language-pack has solved most dependency issues by providing all necessary language parsers in a single package.
+The integration of tree-sitter-language-pack appears to be partially complete, but core functionality issues remain.
 
-| Feature Area | Previous Status | Current Status |
-|--------------|----------------|----------------|
-| Language Tools | ⚠️ Partial | ✅ Full Support |
-| AST Analysis | ⚠️ Partial | ✅ Full Support |
-| Search Queries | ⚠️ Partial | ✅ Full Support |
-| Code Analysis | ⚠️ Partial | ✅ Full Support |
+| Feature Area | Previous Status | Current Status | Test Results |
+|--------------|-----------------|----------------|--------------|
+| Language Tools | ⚠️ Partial | ⚠️ Partial | Language detection works but listing fails |
+| AST Analysis | ⚠️ Partial | ❌ Not Working | Core AST functionality fails with errors |
+| Search Queries | ⚠️ Partial | ⚠️ Partial | Text search works but AST queries fail |
+| Code Analysis | ⚠️ Partial | ❌ Not Working | Analysis functions fail with errors |
 
-### Benefits of the Completed Integration:
-- All commands now work without requiring individual language installations
-- No server restarts needed when accessing new languages
-- Consistent behavior across different language types
-- Access to 100+ tree-sitter grammars in a single dependency
+### Current Integration Issues:
+- Basic language detection works through `install_language` command
+- AST parsing appears to be broken, affecting multiple dependent commands
+- Several commands that rely on AST functionality fail with unpacking errors
+- Project management and file operations continue to function properly
 
 ## Testing Guidelines
 
@@ -183,29 +175,26 @@ When testing the MCP Tree-sitter server, use this structured approach:
    - Test `get_file` to verify content retrieval
 
 3. **Language Parser Verification**:
-   - Test `list_languages` to check available languages
-   - If using language-specific features, check parser availability
+   - Test `install_language` to check language availability
+   - Note that `list_languages` currently returns empty results
 
 4. **Feature Testing**:
-   - Test general features first (text search, project analysis)
-   - Test language-specific features with available parsers
-   - Document any failures with specific error messages
+   - Focus on working features: project management, file operations, text search
+   - Document errors in AST and analysis operations for debugging
 
 5. **Error Cases**:
-   - Test behavior with invalid inputs
-   - Verify appropriate error messages
-   - Check recovery after errors
+   - Common error: "too many values to unpack (expected 2)"
+   - AST operations failing with numeric error codes
 
 ## Common Issues and Solutions
 
 | Issue | Cause | Solution |
 |-------|-------|----------|
-| "Language not available" | Missing language parser | Install tree-sitter-language-pack |
-| "Automatic installation disabled" | Default config setting | Enable auto_install or use language pack |
-| "Project not found" | Missing project registration | Register project before other operations |
-| "Access denied" | Path outside project root | Use paths within project directory |
-| "File too large" | File exceeds size limit | Increase max_file_size_mb in config |
+| AST parsing failures | Implementation issues with tree-sitter integration | Needs code fixes in AST handling |
+| "too many values to unpack (expected 2)" | Likely tuple unpacking error in query code | Needs code fix in capture handling |
+| Empty language lists | Issues with language registry | Check language registry implementation |
+| Numeric error codes | Exception handling not properly configured | Enhance error reporting |
 
 ---
 
-This feature matrix will be updated as development progresses. The tree-sitter-language-pack integration has been completed as of March 2025.
+This feature matrix reflects test results as of March 16, 2025. Several critical functions need implementation fixes to become operational.

@@ -29,7 +29,7 @@ pip install mcp-server-tree-sitter
 ### Development Installation
 
 ```bash
-git clone https://github.com/organization/mcp-server-tree-sitter.git
+git clone https://github.com/wrale/mcp-server-tree-sitter.git
 cd mcp-server-tree-sitter
 pip install -e ".[dev,languages]"
 ```

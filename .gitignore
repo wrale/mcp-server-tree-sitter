@@ -172,3 +172,8 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# etc.
+results/
+diagnostic_results/
+*.json
