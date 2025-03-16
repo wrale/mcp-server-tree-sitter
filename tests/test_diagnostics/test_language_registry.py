@@ -6,7 +6,7 @@ from mcp_server_tree_sitter.language.registry import LanguageRegistry
 
 
 @pytest.mark.diagnostic
-def test_language_detection(diagnostic):
+def test_language_detection(diagnostic) -> None:
     """Test language detection functionality."""
     registry = LanguageRegistry()
 
@@ -45,7 +45,7 @@ def test_language_detection(diagnostic):
 
 
 @pytest.mark.diagnostic
-def test_language_list_empty(diagnostic):
+def test_language_list_empty(diagnostic) -> None:
     """Test that list_languages returns languages correctly."""
     registry = LanguageRegistry()
 
@@ -83,7 +83,7 @@ def test_language_list_empty(diagnostic):
 
 
 @pytest.mark.diagnostic
-def test_language_detection_vs_listing(diagnostic):
+def test_language_detection_vs_listing(diagnostic) -> None:
     """Test discrepancy between language detection and language listing."""
     registry = LanguageRegistry()
 
@@ -105,18 +105,17 @@ def test_language_detection_vs_listing(diagnostic):
             if registry.is_language_available(lang):
                 results[lang] = {
                     "available": True,
-                    "language_object": registry.get_language(lang) is not None,
+                    "language_object": bool(registry.get_language(lang) is not None),
+                    "reason": "",
                 }
             else:
                 results[lang] = {
                     "available": False,
                     "reason": "Not available in language-pack",
+                    "language_object": False,
                 }
         except Exception as e:
-            results[lang] = {
-                "available": False,
-                "error": str(e),
-            }
+            results[lang] = {"available": False, "error": str(e), "language_object": False}
 
     # Check if languages reported as available appear in list_languages
     available_languages = registry.list_available_languages()

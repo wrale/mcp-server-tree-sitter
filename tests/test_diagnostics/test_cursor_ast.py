@@ -2,6 +2,7 @@
 
 import tempfile
 from pathlib import Path
+from typing import Any, Dict, Generator
 
 import pytest
 
@@ -12,7 +13,7 @@ from mcp_server_tree_sitter.resources.ast import parse_file
 
 
 @pytest.fixture
-def test_project():
+def test_project() -> Generator[Dict[str, Any], None, None]:
     """Create a temporary test project with a sample file."""
     # Set up a temporary directory
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -36,7 +37,7 @@ def test_project():
 
 
 @pytest.mark.diagnostic
-def test_cursor_ast_implementation(test_project, diagnostic):
+def test_cursor_ast_implementation(test_project, diagnostic) -> None:
     """Test the cursor-based AST implementation."""
     # Add test details to diagnostic data
     diagnostic.add_detail("project", test_project["name"])
@@ -46,6 +47,7 @@ def test_cursor_ast_implementation(test_project, diagnostic):
         # Get language
         registry = LanguageRegistry()
         language = registry.language_for_file(test_project["file"])
+        assert language is not None, "Could not detect language for file"
         _language_obj = registry.get_language(language)
 
         # Parse file
@@ -104,7 +106,7 @@ def test_cursor_ast_implementation(test_project, diagnostic):
 
 
 @pytest.mark.diagnostic
-def test_large_ast_handling(test_project, diagnostic):
+def test_large_ast_handling(test_project, diagnostic) -> None:
     """Test handling of a slightly larger AST to ensure cursor-based approach works."""
     # Add test details to diagnostic data
     diagnostic.add_detail("project", test_project["name"])
@@ -163,6 +165,7 @@ if __name__ == "__main__":
         # Get language
         registry = LanguageRegistry()
         language = registry.language_for_file("large.py")
+        assert language is not None, "Could not detect language for large.py"
         _language_obj = registry.get_language(language)
 
         # Parse file
@@ -179,7 +182,7 @@ if __name__ == "__main__":
         class_nodes = []
         function_nodes = []
 
-        def count_nodes(node_dict):
+        def count_nodes(node_dict) -> None:
             if node_dict["type"] == "class_definition":
                 class_nodes.append(node_dict["id"])
             elif node_dict["type"] == "function_definition":

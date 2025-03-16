@@ -8,7 +8,7 @@ from mcp_server_tree_sitter.models.ast_cursor import node_to_dict_cursor
 from mcp_server_tree_sitter.utils.tree_sitter_helpers import create_parser, parse_file
 
 
-def test_cursor_based_ast():
+def test_cursor_based_ast() -> None:
     """Test that the cursor-based AST node_to_dict function works."""
     # Create a temporary test file
     with tempfile.NamedTemporaryFile(suffix=".py", mode="w+") as f:
@@ -20,6 +20,7 @@ def test_cursor_based_ast():
         # Set up language registry
         registry = LanguageRegistry()
         language = registry.language_for_file(file_path.name)
+        assert language is not None, "Could not detect language for test file"
         language_obj = registry.get_language(language)
 
         # Parse the file

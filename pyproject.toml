@@ -71,6 +71,14 @@ disallow_incomplete_defs = true
 module = "tree_sitter.*"
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = false
+warn_return_any = false
+warn_no_return = false
+
 [tool.ruff]
 line-length = 120
 target-version = "py310"

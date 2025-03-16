@@ -38,7 +38,7 @@ def test_project():
 
 
 @pytest.mark.diagnostic
-def test_ast_failure(test_project, diagnostic):
+def test_ast_failure(test_project, diagnostic) -> None:
     """Test the get_ast functionality."""
     # Add test details to diagnostic data
     diagnostic.add_detail("project", test_project["name"])
@@ -81,7 +81,7 @@ def test_ast_failure(test_project, diagnostic):
 
 
 @pytest.mark.diagnostic
-def test_language_detection(diagnostic):
+def test_language_detection(diagnostic) -> None:
     """Test language detection functionality."""
     registry = LanguageRegistry()
 

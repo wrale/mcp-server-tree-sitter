@@ -2,6 +2,7 @@
 
 import tempfile
 from pathlib import Path
+from typing import Any, Dict, Generator
 
 import pytest
 
@@ -15,7 +16,7 @@ from mcp_server_tree_sitter.server import (
 
 
 @pytest.fixture
-def test_project():
+def test_project() -> Generator[Dict[str, Any], None, None]:
     """Create a temporary test project with a sample file."""
     # Set up a temporary directory
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -38,7 +39,7 @@ class Person:
     def __init__(self, name):
         self.name = name
 
-    def greet(self):
+    def greet(self) -> None:
         return hello(self.name)
 
 if __name__ == "__main__":
@@ -60,7 +61,7 @@ if __name__ == "__main__":
 
 
 @pytest.mark.diagnostic
-def test_get_symbols_error(test_project, diagnostic):
+def test_get_symbols_error(test_project, diagnostic) -> None:
     """Test get_symbols and diagnose unpacking errors."""
     diagnostic.add_detail("project", test_project["name"])
     diagnostic.add_detail("file", test_project["file"])
@@ -95,7 +96,7 @@ def test_get_symbols_error(test_project, diagnostic):
 
 
 @pytest.mark.diagnostic
-def test_get_dependencies_error(test_project, diagnostic):
+def test_get_dependencies_error(test_project, diagnostic) -> None:
     """Test get_dependencies and diagnose unpacking errors."""
     diagnostic.add_detail("project", test_project["name"])
     diagnostic.add_detail("file", test_project["file"])
@@ -128,7 +129,7 @@ def test_get_dependencies_error(test_project, diagnostic):
 
 
 @pytest.mark.diagnostic
-def test_analyze_complexity_error(test_project, diagnostic):
+def test_analyze_complexity_error(test_project, diagnostic) -> None:
     """Test analyze_complexity and diagnose unpacking errors."""
     diagnostic.add_detail("project", test_project["name"])
     diagnostic.add_detail("file", test_project["file"])
@@ -162,7 +163,7 @@ def test_analyze_complexity_error(test_project, diagnostic):
 
 
 @pytest.mark.diagnostic
-def test_run_query_error(test_project, diagnostic):
+def test_run_query_error(test_project, diagnostic) -> None:
     """Test run_query and diagnose unpacking errors."""
     diagnostic.add_detail("project", test_project["name"])
     diagnostic.add_detail("file", test_project["file"])

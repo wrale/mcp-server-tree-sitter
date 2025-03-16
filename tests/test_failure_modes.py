@@ -11,6 +11,7 @@ These tests help ensure robust behavior even in known failure scenarios.
 
 import tempfile
 from pathlib import Path
+from typing import Any, Dict, Generator
 
 import pytest
 
@@ -27,7 +28,7 @@ from mcp_server_tree_sitter.server import (
 
 
 @pytest.fixture
-def mock_project(request):
+def mock_project(request) -> Generator[Dict[str, Any], None, None]:
     """Create a mock project fixture for testing with unique names."""
     with tempfile.TemporaryDirectory() as temp_dir:
         project_path = Path(temp_dir)
@@ -58,7 +59,7 @@ def mock_project(request):
 class TestQueryExecutionFailures:
     """Test the known failure modes for query execution."""
 
-    def test_run_query_empty_results(self, mock_project):
+    def test_run_query_empty_results(self, mock_project) -> None:
         """Test that run_query executes without errors but returns no results."""
         # Simple query that should match functions
         query = "(function_definition name: (identifier) @function.name) @function.def"
@@ -76,7 +77,7 @@ class TestQueryExecutionFailures:
         # The query may now return actual results instead of empty list
         assert isinstance(result, list), "Query should return a list (empty or with results)"
 
-    def test_adapt_query_language_specific_syntax(self, mock_project):
+    def test_adapt_query_language_specific_syntax(self, mock_project) -> None:
         """Test adapt_query with language-specific syntax handling."""
         # Import the adapt_query function
         from mcp_server_tree_sitter.tools.query_builder import adapt_query
@@ -101,7 +102,7 @@ class TestQueryExecutionFailures:
 class TestSymbolExtractionFailures:
     """Test the known failure modes for symbol extraction."""
 
-    def test_get_symbols_empty_results(self, mock_project):
+    def test_get_symbols_empty_results(self, mock_project) -> None:
         """Test that get_symbols returns empty lists regardless of file content."""
         # Execute get_symbols on a file with known content
         result = get_symbols(project=mock_project["name"], file_path="test.py")
@@ -122,7 +123,7 @@ class TestSymbolExtractionFailures:
 class TestDependencyAnalysisFailures:
     """Test the known failure modes for dependency analysis."""
 
-    def test_get_dependencies_empty_results(self, mock_project):
+    def test_get_dependencies_empty_results(self, mock_project) -> None:
         """Test that get_dependencies returns empty results regardless of imports."""
         # Execute get_dependencies on a file with known imports
         result = get_dependencies(project=mock_project["name"], file_path="test.py")
@@ -136,7 +137,7 @@ class TestDependencyAnalysisFailures:
 class TestCodeSearchFailures:
     """Test the known failure modes for code search operations."""
 
-    def test_find_similar_code_no_results(self, mock_project):
+    def test_find_similar_code_no_results(self, mock_project) -> None:
         """Test that find_similar_code executes without output but fails to return results."""
         # Execute find_similar_code with a snippet
         result = find_similar_code(project=mock_project["name"], snippet="print('Hello')", language="python")
@@ -145,7 +146,7 @@ class TestCodeSearchFailures:
         assert result is not None, "find_similar_code should execute without exceptions"
         assert isinstance(result, list) and len(result) == 0, "find_similar_code should return empty list"
 
-    def test_find_usage_no_results(self, mock_project):
+    def test_find_usage_no_results(self, mock_project) -> None:
         """Test that find_usage executes without errors but doesn't return any results."""
         # Execute find_usage with a symbol that exists in the file
         result = find_usage(project=mock_project["name"], symbol="hello", language="python")
@@ -189,7 +190,7 @@ class TestCodeSearchFailures:
         ),
     ],
 )
-def test_graceful_error_handling(mock_project, command_name, function, args):
+def test_graceful_error_handling(mock_project, command_name, function, args) -> None:
     """Test that commands with known issues handle errors gracefully."""
     # Update the project name in args
     if "project" in args:
@@ -215,7 +216,7 @@ def test_graceful_error_handling(mock_project, command_name, function, args):
 class TestASTCursorOperations:
     """Test the limitations of Tree Cursor API operations."""
 
-    def test_ast_cursor_limitations(self, mock_project):
+    def test_ast_cursor_limitations(self, mock_project) -> None:
         """Test limitations with advanced cursor operations."""
         # Get an AST for a file
         ast_result = get_ast(project=mock_project["name"], path="test.py", max_depth=5, include_text=True)
@@ -239,7 +240,7 @@ class TestASTCursorOperations:
         # But no advanced semantic information
         function_nodes = []
 
-        def find_functions(node):
+        def find_functions(node) -> None:
             if isinstance(node, dict) and node.get("type") == "function_definition":
                 function_nodes.append(node)
             if isinstance(node, dict) and "children" in node:
