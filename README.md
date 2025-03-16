@@ -103,7 +103,7 @@ The MCP tools icon (hammer) will appear in Claude Desktop's interface once you h
 
 ### Configuring with Released Version
 
-If you've installed the package from PyPI (released version) rather than cloning the repository, use the following configuration for Claude Desktop:
+If you prefer not to manually install the package from PyPI (released version) or clone the repository, simply use the following configuration for Claude Desktop:
 
 1. Open your Claude Desktop configuration file (same location as above).
 
