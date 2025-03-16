@@ -8,13 +8,13 @@ import json
 import time
 import traceback
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Generator, List, Optional
 
 import pytest
 
 # Global storage for test context and diagnostic results
-_DIAGNOSTICS = {}
-_CURRENT_TEST = {}
+_DIAGNOSTICS: Dict[str, "DiagnosticData"] = {}
+_CURRENT_TEST: Dict[str, Any] = {}
 
 
 class DiagnosticData:
@@ -30,7 +30,9 @@ class DiagnosticData:
         self.errors: List[Dict[str, Any]] = []
         self.artifacts: Dict[str, Any] = {}
 
-    def add_error(self, error_type: str, message: str, tb=None):
+    def add_error(
+        self, error_type: str, message: str, tb: Optional[str] = None
+    ) -> None:
         """Add an error to the diagnostic data."""
         error_info = {
             "type": error_type,
@@ -41,15 +43,15 @@ class DiagnosticData:
         self.errors.append(error_info)
         self.status = "error"
 
-    def add_detail(self, key: str, value: Any):
+    def add_detail(self, key: str, value: Any) -> None:
         """Add a detail to the diagnostic data."""
         self.details[key] = value
 
-    def add_artifact(self, name: str, content: Any):
+    def add_artifact(self, name: str, content: Any) -> None:
         """Add an artifact to the diagnostic data."""
         self.artifacts[name] = content
 
-    def finalize(self, status="completed"):
+    def finalize(self, status: str = "completed") -> None:
         """Mark the diagnostic as complete."""
         self.end_time = time.time()
         if not self.errors:
@@ -70,7 +72,7 @@ class DiagnosticData:
 
 
 @pytest.fixture
-def diagnostic(request):
+def diagnostic(request: Any) -> Generator[DiagnosticData, None, None]:
     """Fixture to provide diagnostic functionality to tests."""
     # Get the current test ID
     test_id = f"{request.path}::{request.node.name}"
@@ -85,7 +87,7 @@ def diagnostic(request):
     diag.finalize()
 
 
-def pytest_configure(config):
+def pytest_configure(config: Any) -> None:
     """Set up the plugin when pytest starts."""
     # Register additional markers
     config.addinivalue_line(
@@ -93,25 +95,27 @@ def pytest_configure(config):
     )
 
 
-def pytest_runtest_protocol(item, nextitem):
+def pytest_runtest_protocol(item: Any, nextitem: Any) -> Optional[bool]:
     """Custom test protocol that captures detailed diagnostics."""
     # Use the standard protocol
     return None
 
 
-def pytest_runtest_setup(item):
+def pytest_runtest_setup(item: Any) -> None:
     """Set up the test environment."""
     # This is no longer needed as we use the request fixture
     pass
 
 
-def pytest_runtest_teardown(item):
+def pytest_runtest_teardown(item: Any) -> None:
     """Clean up after a test."""
     # This is no longer needed as we use the request fixture
     pass
 
 
-def pytest_terminal_summary(terminalreporter, exitstatus, config):
+def pytest_terminal_summary(
+    terminalreporter: Any, exitstatus: Any, config: Any
+) -> None:
     """Add diagnostic summary to the terminal output."""
     if _DIAGNOSTICS:
         terminalreporter.write_sep("=", "Diagnostic Summary")
@@ -132,7 +136,7 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
                         )
 
 
-def pytest_sessionfinish(session, exitstatus):
+def pytest_sessionfinish(session: Any, exitstatus: Any) -> None:
     """Generate JSON reports at the end of the test session."""
     output_dir = Path("diagnostic_results")
     output_dir.mkdir(exist_ok=True)
@@ -169,7 +173,7 @@ def pytest_sessionfinish(session, exitstatus):
 
 
 @pytest.hookimpl(tryfirst=True)
-def pytest_exception_interact(node, call, report):
+def pytest_exception_interact(node: Any, call: Any, report: Any) -> None:
     """Capture exception details for diagnostics."""
     if call.excinfo:
         try:

@@ -104,7 +104,7 @@ def test_language_detection_vs_listing(diagnostic):
     for lang in test_languages:
         try:
             # Check if install_language reports the language as available
-            install_result = registry.install_language(lang)
+            registry.install_language(lang)
             results[lang] = {
                 "install_success": True,
                 "language_object": registry.get_language(lang) is not None,
@@ -115,7 +115,7 @@ def test_language_detection_vs_listing(diagnostic):
                 "error": str(e),
             }
 
-    # Check if languages that install_language reports as available appear in list_languages
+    # Check if languages reported as available appear in list_languages
     available_languages = registry.list_available_languages()
 
     # Add results to diagnostic data
@@ -131,7 +131,7 @@ def test_language_detection_vs_listing(diagnostic):
     if discrepancies:
         diagnostic.add_error(
             "LanguageInconsistency",
-            f"Languages available via install_language but not in list_languages: {discrepancies}",
+            f"Languages available but not in list_languages: {discrepancies}",
         )
 
     # For diagnostic purposes, not all assertions should fail

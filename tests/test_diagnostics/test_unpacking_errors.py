@@ -37,7 +37,7 @@ def hello(name):
 class Person:
     def __init__(self, name):
         self.name = name
-    
+
     def greet(self):
         return hello(self.name)
 
@@ -50,7 +50,7 @@ if __name__ == "__main__":
         # Register project
         project_registry = ProjectRegistry()
         project_name = "unpacking_test_project"
-        project = project_registry.register_project(project_name, str(project_path))
+        project_registry.register_project(project_name, str(project_path))
 
         # Yield the project info
         yield {"name": project_name, "path": project_path, "file": "test.py"}

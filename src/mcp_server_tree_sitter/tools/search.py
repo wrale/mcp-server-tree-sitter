@@ -216,7 +216,21 @@ def query_code(
             query = lang.query(query_string)
 
             captures = query.captures(tree.root_node)
-            for node, capture_name in captures:
+            for match in captures:
+                # Handle different return types from query.captures()
+                if isinstance(match, tuple) and len(match) == 2:
+                    # Direct tuple unpacking
+                    node, capture_name = match
+                elif hasattr(match, "node") and hasattr(match, "capture_name"):
+                    # Object with node and capture_name attributes
+                    node, capture_name = match.node, match.capture_name
+                elif isinstance(match, dict) and "node" in match and "capture" in match:
+                    # Dictionary with node and capture keys
+                    node, capture_name = match["node"], match["capture"]
+                else:
+                    # Skip if format is unknown
+                    continue
+
                 # Skip if we've reached max results
                 if max_results is not None and len(results) >= max_results:
                     break

@@ -25,7 +25,7 @@ def test_tree_sitter_import(diagnostic):
 
         # Check if Parser can be initialized
         try:
-            parser = tree_sitter.Parser()
+            _ = tree_sitter.Parser()
             diagnostic.add_detail("can_create_parser", True)
         except Exception as e:
             diagnostic.add_detail("can_create_parser", False)
@@ -96,7 +96,14 @@ def test_language_binding_available(diagnostic):
 
     language_results = {}
     try:
-        import tree_sitter_language_pack
+        # Use find_spec to check if the module is available
+        import importlib.util
+
+        has_pack = importlib.util.find_spec("tree_sitter_language_pack") is not None
+        diagnostic.add_detail("has_language_pack", has_pack)
+
+        # If we have the language_pack, we'll try to use it later
+        # through _get_language_binding()
 
         for language in test_languages:
             try:

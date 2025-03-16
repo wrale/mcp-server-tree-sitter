@@ -2,7 +2,7 @@
 
 import os
 from collections import Counter, defaultdict
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, Dict, List, Optional
 
 from ..config import CONFIG
 from ..exceptions import SecurityError
@@ -85,7 +85,19 @@ def extract_symbols(
             # Using explicit type annotations for captures
 
             for match in matches:
-                node, capture_name = cast(Tuple[Any, str], match)
+                # Handle different return types from query.captures()
+                if isinstance(match, tuple) and len(match) == 2:
+                    # Direct tuple unpacking
+                    node, capture_name = match
+                elif hasattr(match, "node") and hasattr(match, "capture_name"):
+                    # Object with node and capture_name attributes
+                    node, capture_name = match.node, match.capture_name
+                elif isinstance(match, dict) and "node" in match and "capture" in match:
+                    # Dictionary with node and capture keys
+                    node, capture_name = match["node"], match["capture"]
+                else:
+                    # Skip if format is unknown
+                    continue
                 # Skip non-name captures
                 if (
                     not capture_name.endswith(".name")
@@ -353,7 +365,19 @@ def find_dependencies(project_name: str, file_path: str) -> Dict[str, List[str]]
         imports = defaultdict(list)
 
         for match in matches:
-            node, capture_name = cast(Tuple[Any, str], match)
+            # Handle different return types from query.captures()
+            if isinstance(match, tuple) and len(match) == 2:
+                # Direct tuple unpacking
+                node, capture_name = match
+            elif hasattr(match, "node") and hasattr(match, "capture_name"):
+                # Object with node and capture_name attributes
+                node, capture_name = match.node, match.capture_name
+            elif isinstance(match, dict) and "node" in match and "capture" in match:
+                # Dictionary with node and capture keys
+                node, capture_name = match["node"], match["capture"]
+            else:
+                # Skip if format is unknown
+                continue
             try:
                 # Use helper function to get text
                 safe_node = ensure_node(node)

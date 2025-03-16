@@ -28,7 +28,7 @@ def test_project():
         # Register project
         project_registry = ProjectRegistry()
         project_name = "diagnostic_test_project"
-        project = project_registry.register_project(project_name, str(project_path))
+        project_registry.register_project(project_name, str(project_path))
 
         # Yield the project info
         yield {"name": project_name, "path": project_path, "file": "test.py"}

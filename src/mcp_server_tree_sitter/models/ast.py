@@ -124,6 +124,14 @@ def node_to_dict(
 
     # Build the final tree from our dictionaries
     def build_tree(node_id: int) -> Dict[str, Any]:
+        # Check if node_id exists in the dictionary
+        if node_id not in nodes_dict:
+            return {
+                "error": f"Node ID {node_id} not found in nodes_dict",
+                "type": "error",
+                "children": [],
+                "truncated": True,
+            }
         node_data = nodes_dict[node_id].copy()
 
         # Add children if they exist
