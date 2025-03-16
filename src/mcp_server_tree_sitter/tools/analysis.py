@@ -2,7 +2,7 @@
 
 import os
 from collections import Counter, defaultdict
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from ..cache.parser_cache import tree_cache
 from ..config import CONFIG
@@ -17,7 +17,7 @@ language_registry = LanguageRegistry()
 
 
 def extract_symbols(
-    project_name: str, file_path: str, symbol_types: List[str] = None
+    project_name: str, file_path: str, symbol_types: Optional[List[str]] = None
 ) -> Dict[str, List[Dict[str, Any]]]:
     """
     Extract symbols (functions, classes, etc) from a file.
@@ -77,7 +77,7 @@ def extract_symbols(
 
         # Execute queries
         lang = language_registry.get_language(language)
-        symbols = {}
+        symbols: Dict[str, List[Dict[str, Any]]] = {}
 
         for symbol_type, query_string in queries.items():
             query = lang.query(query_string)
@@ -201,8 +201,8 @@ def analyze_project_structure(project_name: str, scan_depth: int = 3) -> Dict[st
                 )
 
     # Analyze directory structure
-    dir_counts = Counter()
-    file_counts = Counter()
+    dir_counts: Counter = Counter()
+    file_counts: Counter = Counter()
 
     for current_dir, dirs, files in os.walk(root):
         rel_dir = os.path.relpath(current_dir, root)
@@ -416,6 +416,7 @@ def analyze_code_complexity(project_name: str, file_path: str) -> Dict[str, Any]
             tree_cache.put(abs_path, language, tree, source_bytes)
 
         # Calculate basic metrics
+        # Open file for reading text content
         with open(abs_path, "r", encoding="utf-8", errors="replace") as f:
             lines = f.readlines()
 
@@ -438,9 +439,11 @@ def analyze_code_complexity(project_name: str, file_path: str) -> Dict[str, Any]
 
         if language in comment_starters:
             comment_start = comment_starters[language]
-            comment_lines = sum(
-                1 for line in lines if line.strip().startswith(comment_start)
-            )
+            # Count comments for text lines
+            comment_lines = 0
+            for line in lines:
+                if line.strip().startswith(comment_start):
+                    comment_lines += 1
 
         # Get function and class definitions
         symbols = extract_symbols(project_name, file_path, ["functions", "classes"])
@@ -476,7 +479,7 @@ def analyze_code_complexity(project_name: str, file_path: str) -> Dict[str, Any]
             # Count decision points
             decision_types = complexity_nodes[language]
 
-            def count_nodes(node, types):
+            def count_nodes(node: Any, types: List[str]) -> int:
                 count = 0
                 if node.type in types:
                     count += 1
@@ -493,7 +496,7 @@ def analyze_code_complexity(project_name: str, file_path: str) -> Dict[str, Any]
         comment_ratio = comment_lines / line_count if line_count > 0 else 0
 
         # Estimate average function length
-        avg_func_lines = (
+        avg_func_lines = float(
             code_lines / function_count if function_count > 0 else code_lines
         )
 

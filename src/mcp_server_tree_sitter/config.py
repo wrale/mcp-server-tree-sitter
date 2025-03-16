@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from typing import Optional
 
-import yaml
+import yaml  # type: ignore
 from pydantic import BaseModel, Field
 
 
@@ -62,33 +62,39 @@ class ServerConfig(BaseModel):
 
         # Example of loading from env vars
         if os.environ.get("MCP_TS_CACHE_ENABLED"):
-            config.cache.enabled = (
-                os.environ.get("MCP_TS_CACHE_ENABLED").lower() == "true"
-            )
+            cache_enabled = os.environ.get("MCP_TS_CACHE_ENABLED")
+            if cache_enabled is not None:
+                config.cache.enabled = cache_enabled.lower() == "true"
 
         if os.environ.get("MCP_TS_CACHE_MAX_SIZE_MB"):
-            config.cache.max_size_mb = int(os.environ.get("MCP_TS_CACHE_MAX_SIZE_MB"))
+            max_size = os.environ.get("MCP_TS_CACHE_MAX_SIZE_MB")
+            if max_size is not None:
+                config.cache.max_size_mb = int(max_size)
 
         if os.environ.get("MCP_TS_CACHE_TTL_SECONDS"):
-            config.cache.ttl_seconds = int(os.environ.get("MCP_TS_CACHE_TTL_SECONDS"))
+            ttl = os.environ.get("MCP_TS_CACHE_TTL_SECONDS")
+            if ttl is not None:
+                config.cache.ttl_seconds = int(ttl)
 
         if os.environ.get("MCP_TS_SECURITY_MAX_FILE_SIZE_MB"):
-            config.security.max_file_size_mb = int(
-                os.environ.get("MCP_TS_SECURITY_MAX_FILE_SIZE_MB")
-            )
+            max_file_size = os.environ.get("MCP_TS_SECURITY_MAX_FILE_SIZE_MB")
+            if max_file_size is not None:
+                config.security.max_file_size_mb = int(max_file_size)
 
         if os.environ.get("MCP_TS_LANGUAGE_AUTO_INSTALL"):
-            config.language.auto_install = (
-                os.environ.get("MCP_TS_LANGUAGE_AUTO_INSTALL").lower() == "true"
-            )
+            auto_install = os.environ.get("MCP_TS_LANGUAGE_AUTO_INSTALL")
+            if auto_install is not None:
+                config.language.auto_install = auto_install.lower() == "true"
 
         if os.environ.get("MCP_TS_LANGUAGE_DEFAULT_MAX_DEPTH"):
-            config.language.default_max_depth = int(
-                os.environ.get("MCP_TS_LANGUAGE_DEFAULT_MAX_DEPTH")
-            )
+            default_max_depth = os.environ.get("MCP_TS_LANGUAGE_DEFAULT_MAX_DEPTH")
+            if default_max_depth is not None:
+                config.language.default_max_depth = int(default_max_depth)
 
         if os.environ.get("MCP_TS_LOG_LEVEL"):
-            config.log_level = os.environ.get("MCP_TS_LOG_LEVEL")
+            log_level = os.environ.get("MCP_TS_LOG_LEVEL")
+            if log_level is not None:
+                config.log_level = log_level
 
         return config
 
@@ -108,7 +114,9 @@ def load_config(config_path: Optional[str] = None) -> None:
     if config_path:
         CONFIG = ServerConfig.from_file(config_path)
     elif os.environ.get("MCP_TS_CONFIG_PATH"):
-        CONFIG = ServerConfig.from_file(os.environ.get("MCP_TS_CONFIG_PATH"))
+        config_path_env = os.environ.get("MCP_TS_CONFIG_PATH")
+        if config_path_env is not None:
+            CONFIG = ServerConfig.from_file(config_path_env)
     else:
         # Load from env vars
         CONFIG = ServerConfig.from_env()

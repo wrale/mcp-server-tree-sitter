@@ -5,35 +5,43 @@ import threading
 import time
 from functools import lru_cache
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 try:
-    from tree_sitter import Language, Parser, Tree
+    from tree_sitter import Language as TSLanguage
+    from tree_sitter import Parser as TSParser
+    from tree_sitter import Tree as TSTree
 except ImportError:
     # For type checking and module importing without tree-sitter installed
-    class Parser:
-        def set_language(self, language):
+    TSTree = Any
+
+    class TSLanguage:
+        pass
+
+    class TSParser:
+        def set_language(self, language: Any) -> None:
             pass
-
-    class Language:
-        pass
-
-    class Tree:
-        pass
 
 
 from ..config import CONFIG
 
 logger = logging.getLogger(__name__)
 
+# Type aliases for better readability
+Tree = TSTree
+Language = TSLanguage
+Parser = TSParser
+
 
 class TreeCache:
     """Cache for parsed syntax trees."""
 
-    def __init__(self, max_size_mb: int = None, ttl_seconds: int = None):
+    def __init__(
+        self, max_size_mb: Optional[int] = None, ttl_seconds: Optional[int] = None
+    ):
         self.max_size_mb = max_size_mb or CONFIG.cache.max_size_mb
         self.ttl_seconds = ttl_seconds or CONFIG.cache.ttl_seconds
-        self.cache: Dict[str, Tuple[Tree, bytes, float]] = (
+        self.cache: Dict[str, Tuple[Any, bytes, float]] = (
             {}
         )  # (tree, source, timestamp)
         self.lock = threading.RLock()
@@ -43,7 +51,7 @@ class TreeCache:
         """Generate cache key from file path and language."""
         return f"{language}:{str(file_path)}:{file_path.stat().st_mtime}"
 
-    def get(self, file_path: Path, language: str) -> Optional[Tuple[Tree, bytes]]:
+    def get(self, file_path: Path, language: str) -> Optional[Tuple[Any, bytes]]:
         """
         Get cached tree if available and not expired.
 
@@ -77,7 +85,7 @@ class TreeCache:
 
         return None
 
-    def put(self, file_path: Path, language: str, tree: Tree, source: bytes) -> None:
+    def put(self, file_path: Path, language: str, tree: Any, source: bytes) -> None:
         """
         Cache a parsed tree.
 
@@ -175,8 +183,8 @@ tree_cache = TreeCache()
 
 
 @lru_cache(maxsize=32)
-def get_cached_parser(language: Language) -> Parser:
+def get_cached_parser(language: Any) -> TSParser:
     """Get a cached parser for a language."""
-    parser = Parser()
+    parser = TSParser()
     parser.set_language(language)
     return parser

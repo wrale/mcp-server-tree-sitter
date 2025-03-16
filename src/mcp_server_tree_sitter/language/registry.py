@@ -4,25 +4,31 @@ import importlib
 import logging
 import subprocess
 import threading
-from typing import Dict, List, Optional, Tuple
-
-try:
-    import pkg_resources
-    from tree_sitter import Language, Parser
-except ImportError:
-    # For type checking and module importing without tree-sitter installed
-    class Parser:
-        def set_language(self, language):
-            pass
-
-    class Language:
-        pass
-
-    pkg_resources = None
+from typing import Any, Dict, List, Optional, Tuple
 
 from ..cache.parser_cache import get_cached_parser
 from ..config import CONFIG
 from ..exceptions import LanguageInstallError, LanguageNotFoundError
+
+try:
+    import pkg_resources  # type: ignore
+    from tree_sitter import Language as TSLanguage
+    from tree_sitter import Parser as TSParser
+except ImportError:
+    # For type checking and module importing without tree-sitter installed
+    pkg_resources = None
+
+    class TSLanguage:
+        pass
+
+    class TSParser:
+        def set_language(self, language: Any) -> None:
+            pass
+
+
+# Type aliases for better readability
+Language = TSLanguage
+Parser = TSParser
 
 logger = logging.getLogger(__name__)
 
@@ -30,10 +36,10 @@ logger = logging.getLogger(__name__)
 class LanguageRegistry:
     """Manages tree-sitter language parsers."""
 
-    _instance = None
+    _instance: Optional["LanguageRegistry"] = None
     _lock = threading.RLock()
 
-    def __new__(cls):
+    def __new__(cls) -> "LanguageRegistry":
         """Singleton pattern to ensure one registry instance."""
         with cls._lock:
             if cls._instance is None:
@@ -41,10 +47,10 @@ class LanguageRegistry:
                 cls._instance._initialized = False
             return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the registry if not already initialized."""
         with self._lock:
-            if self._initialized:
+            if getattr(self, "_initialized", False):
                 return
 
             self.languages: Dict[str, Language] = {}
@@ -128,7 +134,7 @@ class LanguageRegistry:
         Returns:
             List of available language identifiers
         """
-        available = []
+        available: List[str] = []
 
         # Check currently loaded languages
         available.extend(self.languages.keys())
@@ -198,7 +204,9 @@ class LanguageRegistry:
         except subprocess.CalledProcessError as e:
             raise LanguageInstallError(f"Failed to install {package}: {e}") from e
 
-    def get_language(self, language_name: str, auto_install: bool = None) -> Language:
+    def get_language(
+        self, language_name: str, auto_install: Optional[bool] = None
+    ) -> Any:
         """
         Get or load a language by name.
 
@@ -220,7 +228,7 @@ class LanguageRegistry:
                 # Import tree-sitter language module
                 module_name = f"tree_sitter_{language_name}"
                 module = importlib.import_module(module_name)
-                language = Language(module.language())
+                language = TSLanguage(module.language())
                 self.languages[language_name] = language
                 return language
             except (ImportError, AttributeError) as e:

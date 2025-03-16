@@ -14,7 +14,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def main():
+def main() -> int:
     """Run the server with optional arguments."""
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="MCP Tree-sitter Server")

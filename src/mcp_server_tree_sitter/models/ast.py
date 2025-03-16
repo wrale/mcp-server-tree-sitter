@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 
 def node_to_dict(
-    node,
+    node: Any,
     source_bytes: Optional[bytes] = None,
     include_children: bool = True,
     include_text: bool = True,
@@ -92,7 +92,7 @@ def node_to_dict(
     return result
 
 
-def summarize_node(node, source_bytes: Optional[bytes] = None) -> Dict[str, Any]:
+def summarize_node(node: Any, source_bytes: Optional[bytes] = None) -> Dict[str, Any]:
     """
     Create a compact summary of a node without details or children.
 
@@ -128,7 +128,7 @@ def summarize_node(node, source_bytes: Optional[bytes] = None) -> Dict[str, Any]
     return result
 
 
-def find_node_at_position(root_node, row: int, column: int) -> Optional[Any]:
+def find_node_at_position(root_node: Any, row: int, column: int) -> Optional[Any]:
     """
     Find the most specific node at a given position.
 
@@ -165,8 +165,8 @@ def find_node_at_position(root_node, row: int, column: int) -> Optional[Any]:
 
 
 def extract_node_path(
-    root_node,
-    target_node,
+    root_node: Any,
+    target_node: Any,
 ) -> List[Tuple[str, Optional[str]]]:
     """
     Extract the path from root to a specific node.

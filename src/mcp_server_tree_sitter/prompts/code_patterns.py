@@ -1,5 +1,7 @@
 """Common prompt templates for code analysis."""
 
+from typing import Dict, List, Optional
+
 # Language-specific common patterns
 LANGUAGE_PATTERNS = {
     "python": {
@@ -263,7 +265,7 @@ def get_review_pattern(pattern_name: str) -> str:
     return REVIEW_PATTERNS.get(pattern_name, "No pattern found")
 
 
-def get_available_patterns(language: str = None) -> dict:
+def get_available_patterns(language: Optional[str] = None) -> Dict[str, List[str]]:
     """Get available patterns."""
     if language:
         return {

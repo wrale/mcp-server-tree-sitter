@@ -12,9 +12,9 @@ project_registry = ProjectRegistry()
 
 def list_project_files(
     project_name: str,
-    pattern: str = None,
-    max_depth: int = None,
-    filter_extensions: List[str] = None,
+    pattern: Optional[str] = None,
+    max_depth: Optional[int] = None,
+    filter_extensions: Optional[List[str]] = None,
 ) -> List[str]:
     """
     List files in a project, optionally filtered by pattern.
@@ -105,7 +105,7 @@ def get_file_content(
                 )
                 content = b"\n".join(lines[start_line:end_line])
 
-            return content
+            return content  # type: ignore
         else:
             if max_lines is None and start_line == 0:
                 # Simple case: read whole file
