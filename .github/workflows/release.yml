@@ -44,6 +44,26 @@ jobs:
       env:
         PYTHONPATH: ${{ github.workspace }}/src
 
+    - name: Ensure diagnostic results directory exists
+      if: always()
+      run: mkdir -p diagnostic_results
+
+    - name: Create placeholder if needed
+      if: always()
+      run: |
+        if [ -z "$(ls -A diagnostic_results 2>/dev/null)" ]; then
+          echo '{"info": "No diagnostic results generated"}' > diagnostic_results/placeholder.json
+        fi
+
+    - name: Archive diagnostic results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: diagnostic-results-release
+        path: diagnostic_results/
+        retention-days: 7
+        if-no-files-found: warn
+
     - name: Install build dependencies
       run: |
         source .venv/bin/activate
