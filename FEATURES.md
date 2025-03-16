@@ -42,9 +42,14 @@ These commands manage tree-sitter language parsers.
 | `list_languages` | ✅ | None | Lists all available languages from tree-sitter-language-pack |
 | `check_language_available` | ✅ | None | Checks if a specific language is available via tree-sitter-language-pack |
 
-### Previous Issues (Now Fixed):
-- `list_languages` used to return empty lists despite languages being available
-- Language registry implementation now correctly provides available languages
+### Example Usage:
+```python
+# List all available languages
+list_languages()
+
+# Check if a specific language is available
+check_language_available(language="python")
+```
 
 ## File Operations Commands
 
@@ -89,8 +94,8 @@ These commands search code and execute tree-sitter queries.
 |---------|--------|--------------|-------|
 | `find_text` | ✅ | Project registration | Text search works correctly with pattern matching |
 | `run_query` | ❌ | None | Executes without output but fails to return results |
-| `get_query_template_tool` | ⚠️ | None | Not fully tested but likely returns templates when available |
-| `list_query_templates_tool` | ⚠️ | None | Not fully tested but likely lists available templates |
+| `get_query_template_tool` | ✅ | None | Successfully returns templates when available |
+| `list_query_templates_tool` | ✅ | None | Successfully lists available templates |
 | `build_query` | ❌ | None | Not fully tested but likely fails due to AST parsing issues |
 | `adapt_query` | ❌ | None | Not fully tested but likely fails due to AST parsing issues |
 | `get_node_types` | ⚠️ | None | Not fully tested but likely works as it doesn't depend on parsing |
@@ -117,8 +122,8 @@ These commands analyze code structure and complexity.
 | `analyze_project` | ✅ | Project registration | Project structure analysis works, but detailed code analysis is limited |
 | `get_dependencies` | ⚠️ | Project registration | Returns empty results instead of failing |
 | `analyze_complexity` | ✅ | Project registration | Works but may have limited accuracy due to AST issues |
-| `find_similar_code` | ❌ | None | Not fully tested but likely limited to text-based matching |
-| `find_usage` | ❌ | None | Not fully tested but likely fails due to AST parsing issues |
+| `find_similar_code` | ❌ | None | Executes without output but fails to return results |
+| `find_usage` | ❌ | None | Executes without output but fails to return results |
 
 ### Common Failure Modes:
 - Several commands return empty results rather than failing with errors
@@ -142,7 +147,7 @@ clear_cache()
 clear_cache(project="my-project")
 
 # Configure cache settings
-configure(cache_enabled=True, max_file_size_mb=10, log_level="DEBUG")
+configure(cache_enabled=true, max_file_size_mb=10, log_level="DEBUG")
 ```
 
 ## Tree-sitter Language Pack Integration Status
@@ -151,17 +156,50 @@ The integration of tree-sitter-language-pack appears to be partially complete, b
 
 | Feature Area | Previous Status | Current Status | Test Results |
 |--------------|-----------------|----------------|--------------|
-| Language Tools | ⚠️ Partial | ✅ Working | Language tools now properly report and list available languages |
+| Language Tools | ⚠️ Partial | ✅ Working | Language tools properly report and list available languages |
 | AST Analysis | ⚠️ Partial | ❌ Not Working | `get_ast` fails with node ID errors, showing issues with AST building |
 | Search Queries | ⚠️ Partial | ⚠️ Partial | Text search works but tree-sitter queries run without returning results |
 | Code Analysis | ⚠️ Partial | ⚠️ Partial | Basic structure analysis works, but symbol extraction and AST-dependent features return empty results |
 
 ### Current Integration Issues:
-- Discrepancy between language detection and language listing
 - AST parsing returns errors about missing node IDs
 - Query execution completes but doesn't return proper results
 - Analysis functions run but return empty or limited results
 - Project management and file operations function correctly
+
+## Implementation Gaps Analysis
+
+Based on the latest tests, these are the current implementation gaps:
+
+### ⚠️ Partial: Tree Editing and Incremental Parsing
+- Status: ❌ Not Working
+- Core AST functionality must be fixed before these features can be implemented
+- Tree manipulation functionality is currently non-operational
+
+### ⚠️ Partial: Tree Cursor API
+- Status: ❌ Not Working
+- AST node traversal is not functioning correctly
+- Core cursor-based tree walking is needed for most advanced functionality
+
+### ❌ Missing: UTF-16 Support
+- Status: ❌ Not Implemented
+- Encoding detection and support is not yet available
+- Will require parser improvements after core AST functionality is fixed
+
+### ❌ Missing: Read Callable Support
+- Status: ❌ Not Implemented
+- Custom read strategies are not yet available
+- Streaming parsing for large files remains unavailable
+
+### MCP SDK Implementation Status
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Application Lifecycle Management | ✅ Working | Basic lifespan support is functioning correctly |
+| Image Handling | ❌ Not Implemented | No support for returning images from tools |
+| MCP Context Handling | ⚠️ Partial | Basic context access works, but progress reporting not fully implemented |
+| Claude Desktop Integration | ✅ Working | MCP server can be installed in Claude Desktop |
+| Server Capabilities Declaration | ✅ Working | Capabilities are properly declared |
 
 ## Testing Guidelines
 
@@ -189,14 +227,17 @@ When testing the MCP Tree-sitter server, use this structured approach:
    - Empty results from symbol extraction and dependency analysis
    - Query execution without result output
 
-## Common Issues and Solutions
+## Critical Next Steps
 
-| Issue | Cause | Solution |
-|-------|-------|----------|
-| Empty language lists | Discrepancy between language detection and listing | Fix language registry implementation |
-| AST parsing node ID errors | Issues with tree-sitter integration | Fix AST node dictionary building in models/ast.py |
-| Empty results from analysis | Problems with AST traversal | Update cursor-based traversal to handle errors gracefully |
-| Query execution without output | Issues with query capture handling | Fix capture handling in query_code function |
+Based on the testing results, these are the most critical next steps:
+
+1. **Fix AST Node Dictionary Building**: The core issue preventing most functionality appears to be in the AST node dictionary construction. Error "Node ID not found in nodes_dict" indicates a tracking issue during AST creation.
+
+2. **Implement Tree Cursor Functionality**: This is a prerequisite for most advanced features and depends on fixing the core AST handling.
+
+3. **Repair Query Execution Output**: Query execution completes but returns no results, suggesting capture handling issues.
+
+4. **Complete MCP Context Progress Reporting**: Add progress reporting for long-running operations to improve user experience.
 
 ---
 

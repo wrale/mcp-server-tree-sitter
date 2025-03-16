@@ -58,6 +58,10 @@ def test_ast_failure(test_project, diagnostic):
 
         # This assertion would fail if there's an issue with AST parsing
         assert "tree" in ast_result, "AST result should contain a tree"
+        
+        # Check that the tree doesn't contain an error
+        if isinstance(ast_result["tree"], dict) and "error" in ast_result["tree"]:
+            raise AssertionError(f"AST tree contains an error: {ast_result['tree']['error']}")
 
     except Exception as e:
         # Record the error in diagnostics

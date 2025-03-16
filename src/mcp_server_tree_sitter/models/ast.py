@@ -18,8 +18,8 @@ def node_to_dict(
     max_depth: int = 5,
 ) -> Dict[str, Any]:
     """
-    Convert a tree-sitter node to a dictionary representation using cursor-based
-    traversal.
+    Convert a tree-sitter node to a dictionary representation using a simplified approach
+    that avoids the cursor-based traversal issues.
 
     Args:
         node: Tree-sitter Node object
@@ -33,48 +33,12 @@ def node_to_dict(
     """
     safe_node = ensure_node(node)
 
-    # Dictionary to store all node information keyed by node id
-    nodes_dict: Dict[int, Dict[str, Any]] = {}
-    # Track parent-child relationships
-    children_map: Dict[int, List[int]] = {}
-    # Keep track of node paths
-    path_map: Dict[int, str] = {}
-
-    # Root node ID
-    root_id = id(safe_node)
-    path_map[root_id] = ""
-
-    def process_node(
-        node: Optional[Node], field_name: Optional[str], depth: int
-    ) -> bool:
+    # Simple recursive approach to build the tree directly
+    def build_node_dict(node: Node, depth: int = 0) -> Dict[str, Any]:
         if node is None:
-            return False
+            return {"type": "none", "children": []}
 
-        node_id = id(node)
-        parent_id = id(node.parent) if node.parent else None
-
-        # Skip if beyond max depth
-        if depth > max_depth:
-            if parent_id is not None and parent_id in nodes_dict:
-                # Store truncated info for parent
-                if parent_id not in children_map:
-                    children_map[parent_id] = []
-                children_map[parent_id].append(node_id)
-
-                nodes_dict[node_id] = {
-                    "type": node.type,
-                    "truncated": True,
-                    "children_count": len(node.children),
-                }
-
-                if parent_id in path_map:
-                    path = path_map[parent_id]
-                    child_path = f"{path}.{node.type}" if path else node.type
-                    path_map[node_id] = child_path
-                    nodes_dict[node_id]["path"] = child_path
-            return False
-
-        # Build node data
+        # Build basic node data
         node_data = {
             "type": node.type,
             "start_point": {"row": node.start_point[0], "column": node.start_point[1]},
@@ -82,22 +46,7 @@ def node_to_dict(
             "start_byte": node.start_byte,
             "end_byte": node.end_byte,
             "named": node.is_named,
-            "children_count": len(node.children),
         }
-
-        # Set path
-        if parent_id is not None and parent_id in path_map:
-            path = path_map[parent_id]
-            if field_name:
-                # Use field name if available
-                child_path = f"{path}.{field_name}" if path else field_name
-                node_data["field"] = field_name
-            else:
-                # Use node type otherwise
-                child_path = f"{path}.{node.type}" if path else node.type
-
-            path_map[node_id] = child_path
-            node_data["path"] = child_path
 
         # Add text if source is available and requested
         if source_bytes and include_text:
@@ -106,48 +55,29 @@ def node_to_dict(
             except Exception as e:
                 node_data["text_error"] = str(e)
 
-        # Store node data
-        nodes_dict[node_id] = node_data
-
-        # Track parent-child relationship for building the tree later
-        if node.parent and include_children:
-            parent_id = id(node.parent)
-            if parent_id not in children_map:
-                children_map[parent_id] = []
-            if node.is_named:  # Only include named nodes
-                children_map[parent_id].append(node_id)
-
-        return True
-
-    # Walk the tree using cursor
-    cursor_walk_tree(safe_node, process_node)
-
-    # Build the final tree from our dictionaries
-    def build_tree(node_id: int) -> Dict[str, Any]:
-        # Check if node_id exists in the dictionary
-        if node_id not in nodes_dict:
-            return {
-                "error": f"Node ID {node_id} not found in nodes_dict",
-                "type": "error",
-                "children": [],
-                "truncated": True,
-            }
-        node_data = nodes_dict[node_id].copy()
-
-        # Add children if they exist
-        if (
-            include_children
-            and node_id in children_map
-            and len(children_map[node_id]) > 0
-        ):
-            node_data["children"] = [
-                build_tree(child_id) for child_id in children_map[node_id]
-            ]
+        # Handle children recursively if needed and within depth limit
+        if include_children and depth < max_depth:
+            if hasattr(node, "children") and node.children:
+                children = []
+                for child in node.children:
+                    children.append(build_node_dict(child, depth + 1))
+                
+                if children:
+                    node_data["children"] = children
+                    node_data["children_count"] = len(children)
+        elif depth >= max_depth and hasattr(node, "children") and node.children:
+            # Mark as truncated at max depth
+            node_data["truncated"] = True
+            node_data["children_count"] = len(node.children)
+        else:
+            # Empty children list for leaf nodes or when include_children is False
+            node_data["children"] = []
+            node_data["children_count"] = 0
 
         return node_data
 
-    # Return the root node with all its children
-    return build_tree(root_id)
+    # Start building from the root node
+    return build_node_dict(safe_node)
 
 
 def summarize_node(node: Any, source_bytes: Optional[bytes] = None) -> Dict[str, Any]:

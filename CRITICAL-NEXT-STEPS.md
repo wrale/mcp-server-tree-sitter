@@ -42,6 +42,51 @@ We've made significant progress in fixing linting issues and implementing key fe
     - Handled null nodes safely throughout traversal code
     - Improved memory efficiency for large ASTs
 
+## Remaining Critical Issues (March 16, 2025)
+
+The latest testing reveals significant issues with AST parsing and query functionality:
+
+1. ❌ **AST Node Dictionary Building Error**
+   - Current status: `get_ast` fails with "Node ID not found in nodes_dict" error
+   - Issue appears to be in the node tracking during AST creation
+   - Affects all AST-dependent functions like queries, symbol extraction, etc.
+   - This is now the **highest priority issue** to fix
+
+2. ❌ **Query Execution Issues**
+   - Current status: Query execution completes but returns no results
+   - Related to AST node dictionary issues
+   - Affects all semantic analysis capabilities
+
+3. ❌ **Tree Cursor Implementation**
+   - While cursor API is defined, the implementation appears to be incomplete or not working
+   - Tree traversal issues impact all AST functionality
+   - Node extraction is failing during AST construction
+
+## Immediate Action Items
+
+Based on the latest testing, these are the immediate priorities:
+
+1. **Fix Node Dictionary Building**
+   - Review the node_to_dict implementation in models/ast.py
+   - Fix the node ID tracking mechanism
+   - Ensure proper node registration in the dictionary
+   - Add error handling to provide better diagnostics
+
+2. **Debug AST Construction Process**
+   - Add detailed logging to the AST construction process
+   - Create a simplified test case with minimum dependencies
+   - Verify the correct API usage for tree-sitter-language-pack
+
+3. **Fix Query Capture Processing**
+   - Once AST issues are fixed, ensure query captures are properly extracted
+   - Add handling for empty query results
+   - Implement more robust error reporting
+
+4. **Complete Tree Cursor Implementation**
+   - Ensure the cursor implementation correctly traverses the AST
+   - Fix node parent-child relationship tracking
+   - Implement safe navigation through the tree
+
 ## Remaining Next Steps
 
 The following tasks still need to be addressed:
@@ -88,46 +133,24 @@ The implementation of cursor-based AST traversal brings significant performance 
 - Cursor-based traversal now supports deep ASTs without stack issues
 - Enhanced all node-related functions to use modern traversal patterns
 
-### Performance Impact
+### Current Issues and Diagnostic Findings
 
-The recent changes have improved performance in several ways:
+The latest testing reveals:
 
-1. **Better memory usage**: Cursor-based traversal avoids deep recursion which can lead to stack overflow
-2. **Faster traversal**: More efficient traversal algorithms for large trees
-3. **Handling deep ASTs**: Better support for deeply nested code structures
-4. **Consistent language loading**: Immediate language availability without installation delays
-5. **More responsive UI**: No server restarts needed when accessing new languages
+1. **AST Construction Issues**: While language detection works, the AST construction process
+   is failing with node ID tracking errors.
 
-### Next Development Focus
+2. **Query Processing Problems**: The run_query tool executes but returns no results, indicating
+   issues with query capture processing.
 
-With the language integration and traversal improvements complete, we can now focus on enhancing the user experience and test coverage. The Claude Desktop integration is particularly important for user adoption.
+3. **Empty Analysis Results**: Code analysis tools run but return empty results, suggesting they
+   cannot properly access the AST structure.
 
-### Original Type Safety Improvements
-
-The tree-sitter type handling has been significantly improved:
-- Added appropriate interfaces via Protocol classes
-- Implemented safe type casting with runtime verification
-- Added null-safety checks throughout cursor traversal code
-- Used targeted type suppressions for API compatibility issues
-- Added clear documentation for type handling patterns
-
-The TreeCursor API implementation provides:
-- Type-safe cursor traversal with proper Optional type handling
-- Null-safe navigation through node children and siblings
-- Efficient collector patterns for gathering nodes
-- Better handling of potential runtime type variations
-- Safe parent-child relationship traversal
-
-Query processing includes:
-- Explicit type casting for query captures
-- Safe unpacking of node-capture pairs
-- Better error handling for malformed queries
-- Type-safe processing of query results
+4. **Working Core Features**: Project management, file operations, and text search work correctly,
+   showing that the core infrastructure is operational.
 
 ## Conclusion
 
-With two major improvements now complete (tree-sitter-language-pack integration and cursor-based AST traversal), we've made significant progress on the most critical issues affecting the MCP Tree-sitter Server.
+With the integration of tree-sitter-language-pack complete, we need to focus on fixing the critical issues with AST construction and node tracking. Once these core issues are fixed, the advanced features like queries, symbol extraction, and code analysis should start working properly.
 
-The remaining tasks focus on enhancing testing coverage, improving Claude Desktop integration, and updating documentation to reflect the new improved patterns.
-
-Once the remaining steps are completed, this document will be deprecated, and we can move on to the additional feature improvements outlined in the ROADMAP.md document.
+The highest priority is to fix the "Node ID not found in nodes_dict" error in the AST construction process, which is blocking all advanced functionality.
