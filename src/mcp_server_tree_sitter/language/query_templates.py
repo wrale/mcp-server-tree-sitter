@@ -1,6 +1,6 @@
 """Query templates for common code patterns by language."""
 
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 # Query templates for common code patterns by language
 QUERY_TEMPLATES = {
@@ -19,7 +19,7 @@ QUERY_TEMPLATES = {
         "imports": """
             (import_statement
                 name: (dotted_name) @import.module) @import
-                
+
             (import_from_statement
                 module_name: (dotted_name) @import.from
                 name: (dotted_name) @import.item) @import
@@ -41,7 +41,7 @@ QUERY_TEMPLATES = {
                 name: (identifier) @function.name
                 parameters: (formal_parameters) @function.params
                 body: (statement_block) @function.body) @function.def
-                
+
             (arrow_function
                 parameters: (formal_parameters) @function.params
                 body: (_) @function.body) @function.def
@@ -73,7 +73,7 @@ QUERY_TEMPLATES = {
                 name: (identifier) @function.name
                 parameters: (formal_parameters) @function.params
                 body: (statement_block) @function.body) @function.def
-                
+
             (arrow_function
                 parameters: (formal_parameters) @function.params
                 body: (_) @function.body) @function.def
@@ -142,11 +142,11 @@ QUERY_TEMPLATES = {
 def get_query_template(language: str, template_name: str) -> Optional[str]:
     """
     Get a query template for a language.
-    
+
     Args:
         language: Language identifier
         template_name: Template name
-        
+
     Returns:
         Query string or None if not found
     """
@@ -159,10 +159,10 @@ def get_query_template(language: str, template_name: str) -> Optional[str]:
 def list_query_templates(language: str = None) -> Dict[str, Any]:
     """
     List available query templates.
-    
+
     Args:
         language: Optional language to filter by
-        
+
     Returns:
         Dictionary of templates by language
     """

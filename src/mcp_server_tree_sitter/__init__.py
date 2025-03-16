@@ -1,4 +1,4 @@
-"""MCP Server for Tree-sitter - Code analysis capabilities using tree-sitter parsing library.
+"""MCP Server for Tree-sitter - Code analysis capabilities using tree-sitter.
 
 This module provides a Model Context Protocol server that gives LLMs like Claude
 intelligent access to codebases with appropriate context management.

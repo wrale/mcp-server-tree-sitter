@@ -3,36 +3,36 @@
 import importlib
 import logging
 import subprocess
-from typing import Dict, Optional, List, Tuple
 import threading
+from typing import Dict, List, Optional, Tuple
 
 try:
     import pkg_resources
-    from tree_sitter import Parser, Language
+    from tree_sitter import Language, Parser
 except ImportError:
     # For type checking and module importing without tree-sitter installed
     class Parser:
         def set_language(self, language):
             pass
-    
+
     class Language:
         pass
-    
+
     pkg_resources = None
 
-from ..exceptions import LanguageNotFoundError, LanguageInstallError
-from ..config import CONFIG
 from ..cache.parser_cache import get_cached_parser
+from ..config import CONFIG
+from ..exceptions import LanguageInstallError, LanguageNotFoundError
 
 logger = logging.getLogger(__name__)
 
 
 class LanguageRegistry:
     """Manages tree-sitter language parsers."""
-    
+
     _instance = None
     _lock = threading.RLock()
-    
+
     def __new__(cls):
         """Singleton pattern to ensure one registry instance."""
         with cls._lock:
@@ -40,13 +40,13 @@ class LanguageRegistry:
                 cls._instance = super(LanguageRegistry, cls).__new__(cls)
                 cls._instance._initialized = False
             return cls._instance
-    
+
     def __init__(self):
         """Initialize the registry if not already initialized."""
         with self._lock:
             if self._initialized:
                 return
-                
+
             self.languages: Dict[str, Language] = {}
             self._initialized = True
             self._language_map = {
@@ -88,65 +88,65 @@ class LanguageRegistry:
                 "ex": "elixir",
                 "exs": "elixir",
             }
-            
+
             # Pre-load preferred languages if configured
             for lang in CONFIG.language.preferred_languages:
                 try:
                     self.get_language(lang)
                 except Exception as e:
                     logger.warning(f"Failed to pre-load language {lang}: {e}")
-    
+
     def language_for_file(self, file_path: str) -> Optional[str]:
         """
         Detect language from file extension.
-        
+
         Args:
             file_path: Path to the file
-            
+
         Returns:
             Language identifier or None if unknown
         """
-        ext = file_path.split('.')[-1].lower() if '.' in file_path else ''
+        ext = file_path.split(".")[-1].lower() if "." in file_path else ""
         return self._language_map.get(ext)
-    
+
     def get_package_name(self, language_name: str) -> str:
         """
         Get the Python package name for a language.
-        
+
         Args:
             language_name: Language identifier
-            
+
         Returns:
             Python package name
         """
         return f"tree-sitter-{language_name.replace('_', '-')}"
-    
+
     def list_available_languages(self) -> List[str]:
         """
         List languages that are installed and available.
-        
+
         Returns:
             List of available language identifiers
         """
         available = []
-        
+
         # Check currently loaded languages
         available.extend(self.languages.keys())
-        
+
         # Look for installed packages
         if pkg_resources:
             for package in pkg_resources.working_set:
                 if package.key.startswith("tree-sitter-"):
-                    lang_name = package.key[len("tree-sitter-"):].replace("-", "_")
+                    lang_name = package.key[len("tree-sitter-") :].replace("-", "_")
                     if lang_name not in available:
                         available.append(lang_name)
-                    
+
         return sorted(available)
-    
+
     def list_installable_languages(self) -> List[Tuple[str, str]]:
         """
         List languages that can be installed.
-        
+
         Returns:
             List of tuples (language_id, package_name)
         """
@@ -165,56 +165,57 @@ class LanguageRegistry:
             ("c_sharp", "tree-sitter-c-sharp"),
             ("php", "tree-sitter-php"),
         ]
-        
+
         # Filter out already installed languages
         available = self.list_available_languages()
         return [(lang, pkg) for lang, pkg in installable if lang not in available]
-    
+
     def install_language(self, language_name: str) -> bool:
         """
         Try to install a language parser package.
-        
+
         Args:
             language_name: Language identifier
-            
+
         Returns:
             True if installation succeeded
-            
+
         Raises:
             LanguageInstallError: If installation fails
         """
         if not CONFIG.language.auto_install:
             raise LanguageInstallError(
-                f"Automatic installation disabled. Please install {self.get_package_name(language_name)} manually."
+                f"Automatic installation disabled. "
+                f"Please install {self.get_package_name(language_name)} manually."
             )
-            
+
         package = self.get_package_name(language_name)
-        
+
         try:
             # Use pip to install the package
             subprocess.check_call(["pip", "install", package])
             return True
         except subprocess.CalledProcessError as e:
-            raise LanguageInstallError(f"Failed to install {package}: {e}")
-    
+            raise LanguageInstallError(f"Failed to install {package}: {e}") from e
+
     def get_language(self, language_name: str, auto_install: bool = None) -> Language:
         """
         Get or load a language by name.
-        
+
         Args:
             language_name: Language identifier
             auto_install: Whether to try installing missing languages
-            
+
         Returns:
             Tree-sitter Language object
-            
+
         Raises:
             LanguageNotFoundError: If language cannot be loaded
         """
         with self._lock:
             if language_name in self.languages:
                 return self.languages[language_name]
-            
+
             try:
                 # Import tree-sitter language module
                 module_name = f"tree_sitter_{language_name}"
@@ -225,10 +226,11 @@ class LanguageRegistry:
             except (ImportError, AttributeError) as e:
                 # Try installing if auto_install is enabled
                 should_install = (
-                    auto_install if auto_install is not None 
+                    auto_install
+                    if auto_install is not None
                     else CONFIG.language.auto_install
                 )
-                
+
                 if should_install:
                     try:
                         success = self.install_language(language_name)
@@ -237,18 +239,21 @@ class LanguageRegistry:
                             return self.get_language(language_name, auto_install=False)
                     except LanguageInstallError as install_err:
                         raise LanguageNotFoundError(
-                            f"Language {language_name} not available and installation failed: {install_err}"
-                        )
-                
-                raise LanguageNotFoundError(f"Language {language_name} not available: {e}")
-    
+                            f"Language {language_name} not available "
+                            f"and installation failed: {install_err}"
+                        ) from install_err
+
+                raise LanguageNotFoundError(
+                    f"Language {language_name} not available: {e}"
+                ) from e
+
     def get_parser(self, language_name: str) -> Parser:
         """
         Get a parser for the specified language.
-        
+
         Args:
             language_name: Language identifier
-            
+
         Returns:
             Tree-sitter Parser configured for the language
         """

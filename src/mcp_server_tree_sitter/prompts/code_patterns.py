@@ -5,35 +5,34 @@ LANGUAGE_PATTERNS = {
     "python": {
         "docstring": """
         Docstrings should follow PEP 257 conventions:
-        - Use triple double quotes (""")
+        - Use triple double quotes (''')
         - First line should be a summary of the function/class
         - Add a blank line after the summary for detailed descriptions
         - Document parameters using Args: section
         - Document return values using Returns: section
         - Document exceptions using Raises: section
-        
+
         Example:
         ```python
         def example_function(param1, param2):
             \"\"\"Summary of what the function does.
-            
+
             More detailed description of the function behavior, edge cases,
             algorithm details, etc.
-            
+
             Args:
                 param1: Description of param1
                 param2: Description of param2
-                
+
             Returns:
                 Description of return value
-                
+
             Raises:
                 ValueError: When an invalid parameter is passed
             \"\"\"
             pass
         ```
         """,
-        
         "imports": """
         Import conventions in Python:
         1. Standard library imports first
@@ -42,20 +41,19 @@ LANGUAGE_PATTERNS = {
         4. Separate each group with a blank line
         5. Use absolute imports when possible
         6. Sort imports alphabetically within each group
-        
+
         Example:
         ```python
         import os
         import sys
-        
+
         import numpy as np
         import pandas as pd
-        
+
         from myproject.utils import helper
         from . import local_module
         ```
         """,
-        
         "error_handling": """
         Error handling best practices in Python:
         1. Be specific about the exceptions you catch
@@ -63,7 +61,7 @@ LANGUAGE_PATTERNS = {
         3. Create custom exceptions for application-specific errors
         4. Provide helpful error messages
         5. Avoid bare except clauses
-        
+
         Example:
         ```python
         try:
@@ -78,19 +76,18 @@ LANGUAGE_PATTERNS = {
         ```
         """,
     },
-    
     "javascript": {
         "commenting": """
         Commenting best practices in JavaScript:
         1. Use JSDoc for documenting functions, classes, and modules
         2. Add inline comments for complex logic
         3. Keep comments up-to-date with code changes
-        
+
         Example:
         ```javascript
         /**
          * Calculates the total price including tax
-         * 
+         *
          * @param {number} price - The base price
          * @param {number} taxRate - The tax rate as a decimal (e.g., 0.07 for 7%)
          * @returns {number} The total price including tax
@@ -101,14 +98,13 @@ LANGUAGE_PATTERNS = {
         }
         ```
         """,
-        
         "error_handling": """
         Error handling best practices in JavaScript:
         1. Use try/catch blocks for synchronous code
         2. Use promises or async/await for asynchronous error handling
         3. Create custom error classes by extending Error
         4. Always include helpful error messages
-        
+
         Example:
         ```javascript
         // Async/await error handling
@@ -124,7 +120,7 @@ LANGUAGE_PATTERNS = {
             throw error;
           }
         }
-        
+
         // Custom error class
         class APIError extends Error {
           constructor(message) {
@@ -135,7 +131,6 @@ LANGUAGE_PATTERNS = {
         ```
         """,
     },
-    
     "typescript": {
         "type_definitions": """
         TypeScript type definition best practices:
@@ -144,7 +139,7 @@ LANGUAGE_PATTERNS = {
         3. Make properties readonly when they shouldn't change
         4. Use strict null checking
         5. Provide descriptive names for types
-        
+
         Example:
         ```typescript
         // Interface for objects with implementation
@@ -154,10 +149,10 @@ LANGUAGE_PATTERNS = {
           email: string;
           settings?: UserSettings;
         }
-        
+
         // Type alias for union
         type Status = 'pending' | 'active' | 'inactive';
-        
+
         // Function with type annotations
         function processUser(user: User, status: Status): boolean {
           // Implementation
@@ -166,7 +161,6 @@ LANGUAGE_PATTERNS = {
         ```
         """,
     },
-    
     "go": {
         "error_handling": """
         Error handling best practices in Go:
@@ -175,17 +169,17 @@ LANGUAGE_PATTERNS = {
         3. Use the errors package for simple errors
         4. Use fmt.Errorf for formatting error messages
         5. Create custom error types for complex cases
-        
+
         Example:
         ```go
         import (
             "errors"
             "fmt"
         )
-        
+
         // Simple error
         var ErrNotFound = errors.New("item not found")
-        
+
         // Function returning an error
         func FindItem(id string) (Item, error) {
             item, ok := storage[id]
@@ -194,7 +188,7 @@ LANGUAGE_PATTERNS = {
             }
             return item, nil
         }
-        
+
         // Error checking
         item, err := FindItem("123")
         if err != nil {
@@ -222,7 +216,6 @@ REVIEW_PATTERNS = {
     6. Be cautious with recursion to avoid stack overflow
     7. Use appropriate data structures for operations (e.g., sets for lookups)
     """,
-    
     "security": """
     Security considerations:
     1. Validate all user inputs
@@ -234,7 +227,6 @@ REVIEW_PATTERNS = {
     7. Be careful with file path handling to prevent path traversal
     8. Check for OWASP Top 10 vulnerabilities
     """,
-    
     "maintainability": """
     Maintainability considerations:
     1. Follow consistent naming conventions
@@ -247,7 +239,6 @@ REVIEW_PATTERNS = {
     8. Follow SOLID principles
     9. Add tests for key functionality
     """,
-    
     "error_handling": """
     Error handling considerations:
     1. Handle all possible error cases
@@ -260,14 +251,17 @@ REVIEW_PATTERNS = {
     """,
 }
 
+
 def get_language_pattern(language: str, pattern_name: str) -> str:
     """Get a language-specific pattern."""
     language_patterns = LANGUAGE_PATTERNS.get(language, {})
     return language_patterns.get(pattern_name, "No pattern found")
 
+
 def get_review_pattern(pattern_name: str) -> str:
     """Get a generic code review pattern."""
     return REVIEW_PATTERNS.get(pattern_name, "No pattern found")
+
 
 def get_available_patterns(language: str = None) -> dict:
     """Get available patterns."""
@@ -276,7 +270,7 @@ def get_available_patterns(language: str = None) -> dict:
             "language_patterns": list(LANGUAGE_PATTERNS.get(language, {}).keys()),
             "review_patterns": list(REVIEW_PATTERNS.keys()),
         }
-    
+
     return {
         "languages": list(LANGUAGE_PATTERNS.keys()),
         "review_patterns": list(REVIEW_PATTERNS.keys()),

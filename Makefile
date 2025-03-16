@@ -47,7 +47,7 @@ lint:
 .PHONY: format
 format:
 	$(UV) run black $(PACKAGE_PATH) tests/
-	$(UV) run ruff --fix $(PACKAGE_PATH) tests/
+	$(UV) run ruff check --fix $(PACKAGE_PATH) tests/
 
 # Cleaning targets
 .PHONY: clean
