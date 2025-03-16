@@ -162,25 +162,33 @@ def list_languages() -> Dict[str, Any]:
 
 @mcp.tool()
 def install_language(language: str) -> Dict[str, str]:
-    """Install a tree-sitter language parser.
+    """Check if a tree-sitter language parser is available.
 
     Args:
-        language: Language to install
+        language: Language to check
 
     Returns:
         Success message
     """
-    if language in language_registry.list_available_languages():
+    # Check if the language is available
+    try:
+        if language in language_registry.list_available_languages():
+            return {
+                "status": "success",
+                "message": f"Language '{language}' is available via tree-sitter-language-pack",
+            }
+
+        # Try to access the language to confirm it's available
+        language_registry.get_language(language)
         return {
             "status": "success",
-            "message": f"Language '{language}' is already installed",
+            "message": f"Language '{language}' is available via tree-sitter-language-pack",
         }
-
-    language_registry.install_language(language)
-    return {
-        "status": "success",
-        "message": f"Language '{language}' installed successfully",
-    }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Language '{language}' is not available: {str(e)}",
+        }
 
 
 # File Resources

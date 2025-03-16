@@ -29,7 +29,9 @@ class SecurityConfig(BaseModel):
 class LanguageConfig(BaseModel):
     """Language-specific configuration."""
 
-    auto_install: bool = False  # Whether to auto-install missing parsers
+    auto_install: bool = (
+        False  # DEPRECATED: No longer used with tree-sitter-language-pack
+    )
     default_max_depth: int = 5  # Default depth for AST traversal
     preferred_languages: list[str] = Field(default_factory=list)
 
