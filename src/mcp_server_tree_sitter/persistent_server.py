@@ -10,7 +10,7 @@ from .tools.project import list_projects, register_project, remove_project
 logger = logging.getLogger(__name__)
 
 # Create a new MCP instance
-mcp = FastMCP("Tree-Sitter Code Explorer")
+mcp = FastMCP("tree_sitter")
 
 
 # Define project-related tools that directly use the stable tool functions

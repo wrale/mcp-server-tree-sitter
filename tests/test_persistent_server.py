@@ -13,7 +13,7 @@ def test_persistent_mcp_instance():
     """Test that the persistent MCP instance works properly."""
     # Simply check that the instance exists
     assert mcp is not None
-    assert mcp.name == "Tree-Sitter Code Explorer"
+    assert mcp.name == "tree_sitter"
 
 
 def test_persistent_project_registration():

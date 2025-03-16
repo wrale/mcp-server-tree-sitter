@@ -36,7 +36,7 @@ from .tools.query_builder import (
 from .tools.search import query_code, search_text
 
 # Create server instance
-mcp = FastMCP("Tree-Sitter Code Explorer")
+mcp = FastMCP("tree_sitter")
 
 # Initialize language registry
 language_registry = LanguageRegistry()

@@ -44,7 +44,7 @@ You can make the server available in Claude Desktop either through the MCP CLI o
 Register the server with Claude Desktop:
 
 ```bash
-mcp install mcp_server_tree_sitter.server:mcp --name "Code Explorer"
+mcp install mcp_server_tree_sitter.server:mcp --name "tree_sitter"
 ```
 
 #### Manual Configuration
@@ -62,7 +62,7 @@ Alternatively, you can manually configure Claude Desktop:
    ```json
    {
        "mcpServers": {
-           "Code Explorer": {
+           "tree_sitter": {
                "command": "python",
                "args": [
                    "-m",
@@ -78,7 +78,7 @@ Alternatively, you can manually configure Claude Desktop:
    ```json
    {
        "mcpServers": {
-           "Code Explorer": {
+           "tree_sitter": {
                "command": "uv",
                "args": [
                    "--directory",
@@ -96,7 +96,7 @@ Alternatively, you can manually configure Claude Desktop:
 
 3. Save the file and restart Claude Desktop.
 
-The MCP tools icon (hammer) will appear in Claude Desktop's interface once you have properly configured at least one MCP server. You can then access the Code Explorer's functionality by clicking on this icon.
+The MCP tools icon (hammer) will appear in Claude Desktop's interface once you have properly configured at least one MCP server. You can then access the `tree_sitter` server's functionality by clicking on this icon.
 
 ### Running as a standalone server
 

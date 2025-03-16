@@ -76,7 +76,7 @@ mcp-run:
 
 .PHONY: mcp-install
 mcp-install:
-	$(UV) run mcp install $(PACKAGE).server:mcp --name "Code Explorer"
+	$(UV) run mcp install $(PACKAGE).server:mcp --name "tree_sitter"
 
 # Example targets
 .PHONY: run-example-basic
