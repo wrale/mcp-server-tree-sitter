@@ -1,0 +1,49 @@
+MCP Tree-sitter Server
+Copyright (c) 2025 Wrale
+Licensed under the MIT License (see LICENSE file)
+
+This software includes or depends upon the following third-party components:
+
+--------------------------------------------------
+tree-sitter
+--------------------------------------------------
+https://github.com/tree-sitter/tree-sitter
+Copyright (c) 2018-2024 Max Brunsfeld
+Licensed under the MIT License
+
+--------------------------------------------------
+tree-sitter-language-pack
+--------------------------------------------------
+https://github.com/Goldziher/tree-sitter-language-pack
+
+Dual licensed:
+1. MIT License
+   Copyright (c) 2024-2025 Na'aman Hirschfeld
+
+2. Apache License 2.0
+   Copyright (c) 2022 Grant Jenks
+   As a fork of tree-sitter-languages
+
+tree-sitter-language-pack bundles numerous tree-sitter language parsers,
+each with their own licenses (all permissive: MIT, Apache 2.0, etc.).
+See the tree-sitter-language-pack repository for details on individual language parsers.
+
+--------------------------------------------------
+Python Dependencies
+--------------------------------------------------
+- mcp: Model Context Protocol implementation
+- pydantic: Data validation library
+- pyyaml: YAML parsing library
+
+All Python dependencies are used in accordance with their respective licenses.
+
+--------------------------------------------------
+Note on Language Grammars
+--------------------------------------------------
+When using tree-sitter-language-pack, this project indirectly incorporates 
+numerous tree-sitter language grammars. As noted in tree-sitter-language-pack's 
+documentation, all bundled grammars are under permissive open-source licenses 
+(MIT, Apache 2.0, etc.) and no GPL-licensed grammars are included.
+
+For a complete list of included grammars and their specific licenses, please refer to:
+https://github.com/Goldziher/tree-sitter-language-pack#available-languages
