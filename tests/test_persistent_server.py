@@ -20,8 +20,8 @@ def test_persistent_mcp_instance() -> None:
 
 def test_persistent_project_registration() -> None:
     """Test that project registration persists across different functions."""
-    # Clear any existing projects
-    project_registry.projects.clear()
+    # We can't directly clear projects in the new design
+    # Instead, let's just work with existing ones
 
     # Create a temporary directory
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -32,7 +32,9 @@ def test_persistent_project_registration() -> None:
 
         # Verify it was registered
         assert project.name == project_name
-        assert project_name in project_registry.projects
+        all_projects = project_registry.list_projects()
+        project_names = [p["name"] for p in all_projects]
+        assert project_name in project_names
 
         # Get the project again to verify persistence
         project2 = project_registry.get_project(project_name)
@@ -52,5 +54,9 @@ def test_project_registry_singleton() -> None:
     # Should be the same instance
     assert registry1 is registry2
 
-    # Should have the same projects dict
-    assert registry1.projects is registry2.projects
+    # Get projects from both registries
+    projects1 = registry1.list_projects()
+    projects2 = registry2.list_projects()
+
+    # Should have the same number of projects
+    assert len(projects1) == len(projects2)

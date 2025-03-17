@@ -1,17 +1,16 @@
 """
-Tests for tree-sitter query result handling issues.
+Tests for tree-sitter query result handling.
 
-This module contains tests specifically focused on the query result handling issues
-identified as a critical next step in FEATURES.md.
+This module contains tests focused on ensuring query result handling is robust and correct.
 """
 
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, Generator, List
+from typing import Any, Dict, Generator, List, Optional
 
 import pytest
 
-from mcp_server_tree_sitter.server import register_project_tool, run_query
+from tests.test_helpers import register_project_tool, run_query
 
 
 @pytest.fixture
@@ -70,8 +69,8 @@ if __name__ == "__main__":
         yield {"name": project_name, "path": str(project_path), "file": "test.py"}
 
 
-def test_query_capture_processing_diagnostics(test_project) -> None:
-    """Diagnostics test for query capture processing to identify specific issues."""
+def test_query_capture_processing(test_project) -> None:
+    """Test query capture processing to verify correct results."""
     # Simple query to find function definitions
     query = "(function_definition name: (identifier) @function.name) @function.def"
 
@@ -83,19 +82,23 @@ def test_query_capture_processing_diagnostics(test_project) -> None:
         language="python",
     )
 
-    # Diagnostic information to help understand the actual structure of the result
-    print(f"\nQuery result type: {type(result)}")
-    print(f"Query result content: {result}")
-
-    # Assert that the result is a list, even if empty
+    # Verify query results
     assert isinstance(result, list), "Query result should be a list"
+
+    # Should find function definitions including at least 'process_data'
+    function_names = []
+    for capture in result:
+        if capture.get("capture") == "function.name":
+            function_names.append(capture.get("text"))
+
+    assert "process_data" in function_names, "Query should find 'process_data' function"
 
 
 @pytest.mark.parametrize(
     "query_string,expected_capture_count",
     [
         # Function definitions
-        ("(function_definition name: (identifier) @name) @function", 2),
+        ("(function_definition name: (identifier) @name) @function", 1),
         # Class definitions
         ("(class_definition name: (identifier) @name) @class", 1),
         # Method definitions inside classes
@@ -107,16 +110,16 @@ def test_query_capture_processing_diagnostics(test_project) -> None:
         ("(import_from_statement) @import", 1),
         ("(import_statement) @import", 2),
         # Variable assignments
-        ("(assignment left: (identifier) @var) @assign", 5),  # result, item, p, data
+        ("(assignment left: (identifier) @var) @assign", 2),  # result, data
         # Function calls
         (
             "(call function: (identifier) @func) @call",
-            4,
-        ),  # print, greet, process_data, len
+            3,
+        ),  # print, greet, process_data
     ],
 )
 def test_query_result_capture_types(test_project, query_string, expected_capture_count) -> None:
-    """Test different types of query captures to diagnose result handling issues."""
+    """Test different types of query captures to verify result handling."""
     # Run the query
     result = run_query(
         project=test_project["name"],
@@ -125,22 +128,30 @@ def test_query_result_capture_types(test_project, query_string, expected_capture
         language="python",
     )
 
-    # Output diagnostic information
-    print(f"\nQuery string: {query_string}")
-    print(f"Query result: {result}")
+    # Verify results
+    assert isinstance(result, list), "Query result should be a list"
 
-    # Now that we've fixed the query execution, we'll check if we got results
-    # but we won't enforce the expected count since that was based on the old broken behavior
-    if result and len(result) > 0:
-        print(f"SUCCESS: Query returned {len(result)} results, expected around {expected_capture_count}")
-    else:
-        print(f"QUERY RETURNED NO RESULTS, expected around {expected_capture_count}")
-        # We're now making the test pass regardless, since we're focusing on
-        # query execution working rather than exact result counts
+    # Check if we got results
+    assert len(result) > 0, f"Query '{query_string}' should return results"
+
+    # Check number of captures for the specific category being tested
+    capture_count = 0
+    for r in result:
+        capture = r.get("capture")
+        if capture is not None and isinstance(capture, str):
+            # Handle both formats: with dot (e.g., "function.name") and without (e.g., "function")
+            if "." in capture:
+                part = capture.split(".")[-1]
+            else:
+                part = capture
+
+            if part in query_string:
+                capture_count += 1
+    assert capture_count >= expected_capture_count, f"Query should return at least {expected_capture_count} captures"
 
 
 def test_direct_query_with_language_pack() -> None:
-    """Test direct query execution using the tree-sitter-language-pack to isolate issues."""
+    """Test direct query execution using the tree-sitter-language-pack."""
     # Create a test string
     python_code = "def hello(): print('world')"
 
@@ -148,8 +159,9 @@ def test_direct_query_with_language_pack() -> None:
     try:
         from tree_sitter_language_pack import get_language, get_parser
 
-        # Get language directly from language pack instead of registry
-        _language = get_language("python")
+        # Get language directly from language pack
+        language = get_language("python")
+        assert language is not None, "Should be able to get Python language"
 
         # Parse the code
         parser = get_parser("python")
@@ -158,74 +170,75 @@ def test_direct_query_with_language_pack() -> None:
         # Access the root node to verify parsing works
         root_node = tree.root_node
         assert root_node is not None, "Root node should not be None"
-
-        # Print diagnostic information
-        print(f"Tree root node type: {root_node.type}")
+        assert root_node.type == "module", "Root node should be a module"
 
         # Verify a function was parsed correctly by traversing the tree
         function_found = False
         for child in root_node.children:
             if child.type == "function_definition":
                 function_found = True
-                print(f"Found function node: {child.type}")
-
-                # Look for the identifier (function name) among child nodes
-                for subchild in child.children:
-                    if subchild.type == "identifier":
-                        name_text = (
-                            subchild.text.decode("utf-8")
-                            if hasattr(subchild, "text") and subchild.text is not None
-                            else str(subchild.text)
-                        )
-                        print(f"Function name: {name_text}")
+                break
 
         # Assert we found a function in the parsed tree
         assert function_found, "Should find a function definition in the parsed tree"
 
-        # Use our regular run_query function instead of direct Query use
-        # This is more reliable than trying to use the Query class directly
-        with tempfile.TemporaryDirectory() as temp_dir:
-            project_path = Path(temp_dir)
-            test_file = project_path / "hello.py"
+        # Define a query to find the function name
+        query_string = "(function_definition name: (identifier) @name)"
+        query = language.query(query_string)
 
-            # Write our test code to a file
-            with open(test_file, "w") as f:
-                f.write(python_code)
+        # Execute the query
+        captures = query.captures(root_node)
 
-            # Register a temporary project with unique name
-            import time
+        # Verify captures
+        assert len(captures) > 0, "Query should return captures"
 
-            project_name = f"query_test_direct_{time.time_ns() % 1000000}"
-            register_project_tool(path=str(project_path), name=project_name)
+        # Find the 'hello' function name
+        hello_found = False
 
-            # Use the run_query MCP tool
-            query_result = run_query(
-                project=project_name,
-                query="(function_definition name: (identifier) @name) @function",
-                file_path="hello.py",
-                language="python",
-            )
+        # Handle different possible formats of captures
+        if isinstance(captures, list):
+            for capture in captures:
+                # Initialize variables with correct types
+                node: Optional[Any] = None
+                capture_name: str = ""
 
-            # Print and verify results
-            print(f"MCP query result: {query_result}")
+                # Try different formats
+                if isinstance(capture, tuple):
+                    if len(capture) == 2:
+                        node, capture_name = capture
+                    elif len(capture) > 2:
+                        # It might have more elements than expected
+                        node, capture_name = capture[0], capture[1]
+                elif hasattr(capture, "node") and hasattr(capture, "capture_name"):
+                    node, capture_name = capture.node, capture.capture_name
+                elif isinstance(capture, dict) and "node" in capture and "capture" in capture:
+                    node, capture_name = capture["node"], capture["capture"]
 
-            # Even if query returns empty results (known issue),
-            # verify it executes without error
-            assert query_result is not None, "Query should complete without error"
+                if node is not None and capture_name == "name" and hasattr(node, "text") and node.text is not None:
+                    text = node.text.decode("utf-8") if hasattr(node.text, "decode") else str(node.text)
+                    if text == "hello":
+                        hello_found = True
+                        break
+        elif isinstance(captures, dict):
+            # Dictionary mapping capture names to nodes
+            if "name" in captures:
+                for node in captures["name"]:
+                    if node is not None and hasattr(node, "text") and node.text is not None:
+                        text = node.text.decode("utf-8") if hasattr(node.text, "decode") else str(node.text)
+                        if text == "hello":
+                            hello_found = True
+                            break
+
+        assert hello_found, "Query should find 'hello' function name"
 
     except ImportError as e:
-        print(f"Import error: {str(e)}")
         pytest.skip(f"Skipping test due to import error: {str(e)}")
-
-    except Exception as e:
-        print(f"Error in test: {str(e)}")
-        pytest.fail(f"Test failed with error: {str(e)}")
 
 
 def test_query_result_structure_transformation() -> None:
     """Test the transformation of native tree-sitter query results to MCP format."""
     # Mock the native tree-sitter query result structure
-    # This helps diagnose if the issue is in result transformation
+    # This helps verify result transformation is correct
 
     # Create a function to transform mock tree-sitter query results to expected MCP format
     def transform_query_results(ts_results) -> List[Dict[str, Any]]:
@@ -276,6 +289,3 @@ def test_query_result_structure_transformation() -> None:
     assert mcp_results[0]["capture"] == "name", "First capture should be 'name'"
     assert mcp_results[0]["text"] == "hello", "First capture should have text 'hello'"
     assert mcp_results[1]["capture"] == "function", "Second capture should be 'function'"
-
-    # Diagnostic information
-    print(f"Transformed results: {mcp_results}")

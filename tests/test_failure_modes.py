@@ -1,12 +1,12 @@
-"""Test cases for known tree-sitter failure modes identified in FEATURES.md.
+"""Test cases for tree-sitter API robustness.
 
-This module contains mock-based tests that verify the handling of all failure modes
-documented in FEATURES.md, ensuring that:
+This module contains tests that verify proper error handling and robustness
+in the tree-sitter integration:
 1. The code properly handles error conditions
-2. Appropriate error messages or empty responses are returned
+2. Appropriate error messages or exceptions are raised when expected
 3. Edge cases are managed correctly
 
-These tests help ensure robust behavior even in known failure scenarios.
+These tests help ensure robust behavior in various scenarios.
 """
 
 import tempfile
@@ -15,8 +15,8 @@ from typing import Any, Dict, Generator
 
 import pytest
 
-# Import modules to be tested
-from mcp_server_tree_sitter.server import (
+# Import test helpers with DI-compatible functions
+from tests.test_helpers import (
     find_similar_code,
     find_usage,
     get_ast,
@@ -56,11 +56,11 @@ def mock_project(request) -> Generator[Dict[str, Any], None, None]:
         yield {"name": project_name, "path": str(project_path), "file": "test.py"}
 
 
-class TestQueryExecutionFailures:
-    """Test the known failure modes for query execution."""
+class TestQueryExecution:
+    """Test query execution functionality."""
 
-    def test_run_query_empty_results(self, mock_project) -> None:
-        """Test that run_query executes without errors but returns no results."""
+    def test_run_query_with_valid_query(self, mock_project) -> None:
+        """Test that run_query executes and returns expected results."""
         # Simple query that should match functions
         query = "(function_definition name: (identifier) @function.name) @function.def"
 
@@ -72,10 +72,18 @@ class TestQueryExecutionFailures:
             language="python",
         )
 
-        # After fixes, verify that the query executes without errors
-        assert result is not None, "Query should execute without raising exceptions"
-        # The query may now return actual results instead of empty list
-        assert isinstance(result, list), "Query should return a list (empty or with results)"
+        # Verify that the query executes without errors and returns expected results
+        assert result is not None, "Query should execute without exceptions"
+        assert isinstance(result, list), "Query should return a list"
+
+        # Should find the function "hello"
+        found_hello = False
+        for item in result:
+            if item.get("capture") == "function.name" and item.get("text") == "hello":
+                found_hello = True
+                break
+
+        assert found_hello, "Query should find the 'hello' function"
 
     def test_adapt_query_language_specific_syntax(self, mock_project) -> None:
         """Test adapt_query with language-specific syntax handling."""
@@ -89,7 +97,7 @@ class TestQueryExecutionFailures:
             to_language="javascript",
         )
 
-        # Now that our implementation works, verify result contains expected keys
+        # Verify result contains expected keys
         assert "original_language" in result
         assert "target_language" in result
         assert "original_query" in result
@@ -99,19 +107,29 @@ class TestQueryExecutionFailures:
         assert "function_declaration" in result["adapted_query"]
 
 
-class TestSymbolExtractionFailures:
-    """Test the known failure modes for symbol extraction."""
+class TestSymbolExtraction:
+    """Test symbol extraction functionality."""
 
-    def test_get_symbols_empty_results(self, mock_project) -> None:
-        """Test that get_symbols returns empty lists regardless of file content."""
+    def test_get_symbols_function_detection(self, mock_project) -> None:
+        """Test that get_symbols properly extracts functions."""
         # Execute get_symbols on a file with known content
         result = get_symbols(project=mock_project["name"], file_path="test.py")
 
         # Verify the result structure contains the expected keys
         assert "functions" in result
         assert isinstance(result["functions"], list)
-        # After fixing the implementation, we may actually get functions now
-        # Leaving this test looser to accommodate actual results
+
+        # It should find the 'hello' function
+        assert len(result["functions"]) > 0, "Should extract at least one function"
+        function_names = [f.get("name", "") for f in result["functions"]]
+
+        # Check for hello function - handling both bytes and strings
+        hello_found = False
+        for name in function_names:
+            if (isinstance(name, bytes) and b"hello" in name) or (isinstance(name, str) and "hello" in name):
+                hello_found = True
+                break
+        assert hello_found, "Should find the 'hello' function"
 
         assert "classes" in result
         assert isinstance(result["classes"], list)
@@ -119,41 +137,59 @@ class TestSymbolExtractionFailures:
         assert "imports" in result
         assert isinstance(result["imports"], list)
 
+        # Should find the 'os' import
+        assert len(result["imports"]) > 0, "Should extract at least one import"
+        import_texts = [i.get("name", "") for i in result["imports"]]
+        assert any("os" in text for text in import_texts), "Should find the 'os' import"
 
-class TestDependencyAnalysisFailures:
-    """Test the known failure modes for dependency analysis."""
 
-    def test_get_dependencies_empty_results(self, mock_project) -> None:
-        """Test that get_dependencies returns empty results regardless of imports."""
+class TestDependencyAnalysis:
+    """Test dependency analysis functionality."""
+
+    def test_get_dependencies_import_detection(self, mock_project) -> None:
+        """Test that get_dependencies properly detects imports."""
         # Execute get_dependencies on a file with known imports
         result = get_dependencies(project=mock_project["name"], file_path="test.py")
 
-        # Verify the result structure is as expected
+        # Verify the result structure and content
         assert isinstance(result, dict)
-        # Now that we've fixed the implementation, we may actually get dependencies
-        # We'll just verify the structure, not whether it's empty
+
+        # It should find the 'os' module
+        found_os = False
+        for _key, values in result.items():
+            if any("os" in str(value) for value in values):
+                found_os = True
+                break
+
+        assert found_os, "Should detect the 'os' import"
 
 
-class TestCodeSearchFailures:
-    """Test the known failure modes for code search operations."""
+class TestCodeSearch:
+    """Test code search operations."""
 
-    def test_find_similar_code_no_results(self, mock_project) -> None:
-        """Test that find_similar_code executes without output but fails to return results."""
-        # Execute find_similar_code with a snippet
-        result = find_similar_code(project=mock_project["name"], snippet="print('Hello')", language="python")
+    def test_find_similar_code_with_exact_match(self, mock_project) -> None:
+        """Test that find_similar_code finds exact matches."""
+        # Execute find_similar_code with a snippet that exists in the file
+        result = find_similar_code(
+            project=mock_project["name"],
+            snippet="print('Hello, world!')",
+            language="python",
+        )
 
-        # Verify the function executes but returns empty results
+        # Verify the function finds the match
         assert result is not None, "find_similar_code should execute without exceptions"
-        assert isinstance(result, list) and len(result) == 0, "find_similar_code should return empty list"
+        assert isinstance(result, list), "find_similar_code should return a list"
+        assert len(result) > 0, "Should find at least one match for an exact snippet"
 
-    def test_find_usage_no_results(self, mock_project) -> None:
-        """Test that find_usage executes without errors but doesn't return any results."""
+    def test_find_usage_for_function(self, mock_project) -> None:
+        """Test that find_usage finds function references."""
         # Execute find_usage with a symbol that exists in the file
         result = find_usage(project=mock_project["name"], symbol="hello", language="python")
 
-        # Verify the function executes successfully
+        # Verify the function finds the usage
         assert result is not None, "find_usage should execute without exceptions"
-        assert isinstance(result, list), "find_usage should return a list (empty or with results)"
+        assert isinstance(result, list), "find_usage should return a list"
+        assert len(result) > 0, "Should find at least one reference to 'hello'"
 
 
 @pytest.mark.parametrize(
@@ -190,54 +226,40 @@ class TestCodeSearchFailures:
         ),
     ],
 )
-def test_graceful_error_handling(mock_project, command_name, function, args) -> None:
-    """Test that commands with known issues handle errors gracefully."""
-    # Update the project name in args
+def test_error_handling_with_invalid_project(command_name, function, args) -> None:
+    """Test that commands properly handle invalid project names."""
+    # Use an invalid project name
     if "project" in args:
-        args["project"] = mock_project["name"]
+        args["project"] = "nonexistent_project"
 
-    try:
-        # Execute the function with the provided args
-        result = function(**args)
+    # The function should raise an exception for invalid project
+    from mcp_server_tree_sitter.exceptions import ProjectError
 
-        # Verify the function doesn't raise an exception
-        assert result is not None, f"{command_name} should execute without raising exceptions"
-
-        # For commands that return empty results, verify the structure
-        if command_name in ["run_query", "find_similar_code", "find_usage"]:
-            assert isinstance(result, list), f"{command_name} should return a list"
-        elif command_name in ["get_symbols", "get_dependencies"]:
-            assert isinstance(result, dict), f"{command_name} should return a dictionary"
-
-    except Exception as e:
-        pytest.fail(f"{command_name} failed with exception: {str(e)}")
+    with pytest.raises(ProjectError):
+        function(**args)
 
 
-class TestASTCursorOperations:
-    """Test the limitations of Tree Cursor API operations."""
+class TestASTHandling:
+    """Test AST handling capabilities."""
 
-    def test_ast_cursor_limitations(self, mock_project) -> None:
-        """Test limitations with advanced cursor operations."""
+    def test_ast_node_traversal(self, mock_project) -> None:
+        """Test AST node traversal functionality."""
         # Get an AST for a file
         ast_result = get_ast(project=mock_project["name"], path="test.py", max_depth=5, include_text=True)
 
-        # Verify basic AST structure works
+        # Verify complete AST structure
         assert "tree" in ast_result
         assert "file" in ast_result
         assert "language" in ast_result
+        assert ast_result["language"] == "python"
 
         # Verify the tree structure
         tree = ast_result["tree"]
         assert "type" in tree
         assert "children" in tree
+        assert tree["type"] == "module", "Root node should be a module"
 
-        # Advanced cursor operations would typically involve:
-        # 1. Semantic analysis
-        # 2. Type inference
-        # 3. Symbol resolution
-
-        # Since these are known limitations, we're just verifying the basic structure
-        # But no advanced semantic information
+        # Find the function definition
         function_nodes = []
 
         def find_functions(node) -> None:
@@ -249,9 +271,23 @@ class TestASTCursorOperations:
 
         find_functions(tree)
 
-        # Verify we can find the function node
+        # Verify function details
         assert len(function_nodes) > 0, "Should find at least one function node"
 
-        # But verify semantic information is limited
-        # Semantic info that might be missing: return type, parameter types, scope information
-        # This test would need to be adjusted based on what specifically is missing
+        # Get the hello function
+        hello_func = None
+        for func in function_nodes:
+            # Find the identifier node with name 'hello'
+            if "children" in func:
+                for child in func["children"]:
+                    if child.get("type") == "identifier":
+                        text = child.get("text", "")
+                        if (isinstance(text, bytes) and b"hello" in text) or (
+                            isinstance(text, str) and "hello" in text
+                        ):
+                            hello_func = func
+                            break
+                if hello_func:
+                    break
+
+        assert hello_func is not None, "Should find the 'hello' function node"

@@ -54,9 +54,12 @@ def node_to_dict_cursor(
         "start_byte": safe_node.start_byte,
         "end_byte": safe_node.end_byte,
         "named": safe_node.is_named,
-        "children": [],
-        "children_count": 0,
+        "children_count": safe_node.child_count,
     }
+
+    # Only include children list if we're including children
+    if include_children:
+        root_data["children"] = []
 
     # Add text if requested
     if source_bytes and include_text:
@@ -112,12 +115,15 @@ def node_to_dict_cursor(
             except Exception as e:
                 node_data["text_error"] = str(e)
 
-        # Handle children based on depth
-        if depth < max_depth:
-            node_data["children"] = []
-            node_data["children_count"] = 0
-        else:
-            node_data["truncated"] = True
+        # Set children count
+        node_data["children_count"] = current_node.child_count
+
+        # Only add children list if we're including children
+        if include_children:
+            if depth < max_depth:
+                node_data["children"] = []
+            else:
+                node_data["truncated"] = True
 
         # Add to node map
         node_map[node_id] = node_data

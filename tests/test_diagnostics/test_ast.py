@@ -5,9 +5,9 @@ from pathlib import Path
 
 import pytest
 
+from mcp_server_tree_sitter.api import get_project_registry
 from mcp_server_tree_sitter.language.registry import LanguageRegistry
-from mcp_server_tree_sitter.models.project import ProjectRegistry
-from mcp_server_tree_sitter.server import get_ast
+from tests.test_helpers import get_ast, register_project_tool
 
 # Load the diagnostic fixture
 pytest.importorskip("mcp_server_tree_sitter.testing")
@@ -26,15 +26,18 @@ def test_project():
             f.write("def hello():\n    print('Hello, world!')\n\nhello()\n")
 
         # Register project
-        project_registry = ProjectRegistry()
         project_name = "diagnostic_test_project"
-        project_registry.register_project(project_name, str(project_path))
+        register_project_tool(path=str(project_path), name=project_name)
 
         # Yield the project info
         yield {"name": project_name, "path": project_path, "file": "test.py"}
 
         # Clean up
-        project_registry.remove_project(project_name)
+        project_registry = get_project_registry()
+        try:
+            project_registry.remove_project(project_name)
+        except Exception:
+            pass
 
 
 @pytest.mark.diagnostic

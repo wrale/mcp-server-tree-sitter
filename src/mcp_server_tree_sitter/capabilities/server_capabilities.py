@@ -13,8 +13,13 @@ def register_capabilities(mcp_server: Any) -> None:
     Args:
         mcp_server: MCP server instance
     """
-    # Avoid circular imports
-    from ..config import CONFIG
+    # Use dependency injection instead of global context
+    from ..di import get_container
+
+    # Get container and dependencies
+    container = get_container()
+    config_manager = container.config_manager
+    config = config_manager.get_config()
 
     # FastMCP may not have capability method, so we'll skip this for now
     # @mcp_server.capability("prompts.listChanged")
@@ -97,10 +102,9 @@ def register_capabilities(mcp_server: Any) -> None:
 
         # Project name suggestions
         if current_word and "project" in text[:position].lower():
-            from ..models.project import ProjectRegistry
-
-            registry = ProjectRegistry()
-            for project_dict in registry.list_projects():
+            # Use container's project registry
+            project_registry = container.project_registry
+            for project_dict in project_registry.list_projects():
                 project_name = project_dict["name"]
                 if project_name.startswith(current_word):
                     suggestions.append(
@@ -112,9 +116,8 @@ def register_capabilities(mcp_server: Any) -> None:
 
         # Language suggestions
         if current_word and "language" in text[:position].lower():
-            from ..language.registry import LanguageRegistry
-
-            language_registry = LanguageRegistry()
+            # Use container's language registry
+            language_registry = container.language_registry
             for language in language_registry.list_available_languages():
                 if language.startswith(current_word):
                     suggestions.append({"text": language, "description": f"Language: {language}"})
@@ -125,12 +128,12 @@ def register_capabilities(mcp_server: Any) -> None:
                 suggestions.append(
                     {
                         "text": "cache_enabled",
-                        "description": f"Cache enabled: {CONFIG.cache.enabled}",
+                        "description": f"Cache enabled: {config.cache.enabled}",
                     }
                 )
             if "max_file_size_mb".startswith(current_word):
                 # Store in variable to avoid line length error
-                size_mb = CONFIG.security.max_file_size_mb
+                size_mb = config.security.max_file_size_mb
                 suggestions.append(
                     {
                         "text": "max_file_size_mb",
@@ -141,8 +144,13 @@ def register_capabilities(mcp_server: Any) -> None:
                 suggestions.append(
                     {
                         "text": "log_level",
-                        "description": f"Log level: {CONFIG.log_level}",
+                        "description": f"Log level: {config.log_level}",
                     }
                 )
 
         return {"suggestions": suggestions}
+
+    # Ensure capabilities are accessible to tests
+    if hasattr(mcp_server, "capabilities"):
+        mcp_server.capabilities["logging"] = handle_logging
+        mcp_server.capabilities["completion"] = handle_completion

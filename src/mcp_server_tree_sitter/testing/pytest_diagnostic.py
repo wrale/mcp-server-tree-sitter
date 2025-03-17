@@ -7,10 +7,45 @@ while maintaining standard test pass/fail behavior.
 import json
 import time
 import traceback
+from json import JSONEncoder
 from pathlib import Path
 from typing import Any, Dict, Generator, List, Optional
 
 import pytest
+
+
+# Custom JSON Encoder that can handle binary data
+class DiagnosticJSONEncoder(JSONEncoder):
+    """Custom JSON encoder that can handle bytes and other non-serializable types."""
+
+    def default(self, obj: Any) -> Any:
+        """Convert bytes and other types to JSON-serializable objects."""
+        if isinstance(obj, bytes):
+            # Convert bytes to base64 string for JSON serialization
+            import base64
+
+            return {"__bytes__": True, "value": base64.b64encode(obj).decode("ascii")}
+        # Handle Path objects
+        if isinstance(obj, Path):
+            return str(obj)
+        # Handle tree-sitter specific types
+        if hasattr(obj, "start_point") and hasattr(obj, "end_point") and hasattr(obj, "type"):
+            # Probably a tree-sitter Node
+            return {
+                "type": obj.type,
+                "start_point": obj.start_point,
+                "end_point": obj.end_point,
+                "_tsnode": True,
+            }
+        # Handle types with custom __dict__ but no standard serialization
+        if hasattr(obj, "__dict__"):
+            try:
+                return obj.__dict__
+            except (TypeError, AttributeError):
+                pass
+        # Let the base class handle any other types
+        return super().default(obj)
+
 
 # Global storage for test context and diagnostic results
 _DIAGNOSTICS: Dict[str, "DiagnosticData"] = {}
@@ -151,6 +186,7 @@ def pytest_sessionfinish(session: Any, exitstatus: Any) -> None:
             },
             f,
             indent=2,
+            cls=DiagnosticJSONEncoder,
         )
 
     print(f"\nDiagnostic results saved to {output_file}")

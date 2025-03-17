@@ -5,6 +5,7 @@ import logging
 import sys
 
 from .config import load_config
+from .context import global_context
 from .server import mcp
 
 # Configure logging
@@ -29,7 +30,18 @@ def main() -> int:
 
     # Load configuration
     try:
-        load_config(args.config)
+        config = load_config(args.config)
+
+        # Update global context with config
+        if args.config:
+            global_context.config_manager.load_from_file(args.config)
+        else:
+            # Update individual settings from config
+            global_context.config_manager.update_value("cache.enabled", config.cache.enabled)
+            global_context.config_manager.update_value("cache.max_size_mb", config.cache.max_size_mb)
+            global_context.config_manager.update_value("security.max_file_size_mb", config.security.max_file_size_mb)
+            global_context.config_manager.update_value("language.default_max_depth", config.language.default_max_depth)
+
         logger.debug("Configuration loaded successfully")
     except Exception as e:
         logger.error(f"Error loading configuration: {e}")

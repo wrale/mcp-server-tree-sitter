@@ -6,8 +6,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from tree_sitter_language_pack import get_language, get_parser
 
-from ..cache.parser_cache import get_cached_parser
-from ..config import CONFIG
+# Import parser_cache functions inside methods to avoid circular imports
+# Import global_context inside methods to avoid circular imports
 from ..exceptions import LanguageNotFoundError
 from ..utils.tree_sitter_types import (
     Language,
@@ -21,71 +21,64 @@ logger = logging.getLogger(__name__)
 class LanguageRegistry:
     """Manages tree-sitter language parsers."""
 
-    _instance: Optional["LanguageRegistry"] = None
-    _lock = threading.RLock()
-
-    def __new__(cls) -> "LanguageRegistry":
-        """Singleton pattern to ensure one registry instance."""
-        with cls._lock:
-            if cls._instance is None:
-                cls._instance = super(LanguageRegistry, cls).__new__(cls)
-                cls._instance._initialized = False
-            return cls._instance
-
     def __init__(self) -> None:
-        """Initialize the registry if not already initialized."""
-        with self._lock:
-            if getattr(self, "_initialized", False):
-                return
+        """Initialize the registry."""
+        self._lock = threading.RLock()
+        self.languages: Dict[str, Language] = {}
+        self._language_map = {
+            "py": "python",
+            "js": "javascript",
+            "ts": "typescript",
+            "jsx": "javascript",
+            "tsx": "typescript",
+            "rb": "ruby",
+            "rs": "rust",
+            "go": "go",
+            "java": "java",
+            "c": "c",
+            "cpp": "cpp",
+            "cc": "cpp",
+            "h": "c",
+            "hpp": "cpp",
+            "cs": "c_sharp",
+            "php": "php",
+            "scala": "scala",
+            "swift": "swift",
+            "kt": "kotlin",
+            "lua": "lua",
+            "hs": "haskell",
+            "ml": "ocaml",
+            "sh": "bash",
+            "yaml": "yaml",
+            "yml": "yaml",
+            "json": "json",
+            "md": "markdown",
+            "html": "html",
+            "css": "css",
+            "scss": "scss",
+            "sass": "scss",
+            "sql": "sql",
+            "proto": "proto",
+            "elm": "elm",
+            "clj": "clojure",
+            "ex": "elixir",
+            "exs": "elixir",
+        }
 
-            self.languages: Dict[str, Language] = {}
-            self._initialized = True
-            self._language_map = {
-                "py": "python",
-                "js": "javascript",
-                "ts": "typescript",
-                "jsx": "javascript",
-                "tsx": "typescript",
-                "rb": "ruby",
-                "rs": "rust",
-                "go": "go",
-                "java": "java",
-                "c": "c",
-                "cpp": "cpp",
-                "cc": "cpp",
-                "h": "c",
-                "hpp": "cpp",
-                "cs": "c_sharp",
-                "php": "php",
-                "scala": "scala",
-                "swift": "swift",
-                "kt": "kotlin",
-                "lua": "lua",
-                "hs": "haskell",
-                "ml": "ocaml",
-                "sh": "bash",
-                "yaml": "yaml",
-                "yml": "yaml",
-                "json": "json",
-                "md": "markdown",
-                "html": "html",
-                "css": "css",
-                "scss": "scss",
-                "sass": "scss",
-                "sql": "sql",
-                "proto": "proto",
-                "elm": "elm",
-                "clj": "clojure",
-                "ex": "elixir",
-                "exs": "elixir",
-            }
+        # Pre-load preferred languages if configured
+        # Get dependencies within the method to avoid circular imports
+        try:
+            from ..di import get_container
 
-            # Pre-load preferred languages if configured
-            for lang in CONFIG.language.preferred_languages:
+            config = get_container().get_config()
+            for lang in config.language.preferred_languages:
                 try:
                     self.get_language(lang)
                 except Exception as e:
                     logger.warning(f"Failed to pre-load language {lang}: {e}")
+        except ImportError:
+            # If dependency container isn't available yet, just skip this step
+            logger.warning("Skipping pre-loading of languages due to missing dependencies")
 
     def language_for_file(self, file_path: str) -> Optional[str]:
         """
@@ -219,6 +212,8 @@ class LanguageRegistry:
             parser = get_parser(language_name)  # type: ignore
             return parser
         except Exception:
-            # Fall back to older method
+            # Fall back to older method, importing at runtime to avoid circular imports
+            from ..cache.parser_cache import get_cached_parser
+
             language = self.get_language(language_name)
             return get_cached_parser(language)

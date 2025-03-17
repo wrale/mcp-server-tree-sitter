@@ -2,15 +2,13 @@
 
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, Generator
+from typing import Any, Dict, Generator, Tuple
 
 import pytest
 
-from mcp_server_tree_sitter.language.registry import LanguageRegistry
+from mcp_server_tree_sitter.api import get_language_registry, get_project_registry, get_tree_cache
 from mcp_server_tree_sitter.models.ast import node_to_dict
-from mcp_server_tree_sitter.models.project import ProjectRegistry
-from mcp_server_tree_sitter.resources.ast import parse_file
-from mcp_server_tree_sitter.server import get_ast
+from tests.test_helpers import get_ast, register_project_tool
 
 
 @pytest.fixture
@@ -26,15 +24,40 @@ def test_project() -> Generator[Dict[str, Any], None, None]:
             f.write("def hello():\n    print('Hello, world!')\n\nhello()\n")
 
         # Register project
-        project_registry = ProjectRegistry()
+        project_registry = get_project_registry()
         project_name = "ast_test_project"
-        project_registry.register_project(project_name, str(project_path))
+        try:
+            register_project_tool(path=str(project_path), name=project_name)
+        except Exception:
+            # If registration fails, try again with timestamp
+            import time
+
+            project_name = f"ast_test_project_{int(time.time())}"
+            register_project_tool(path=str(project_path), name=project_name)
 
         # Yield the project info
         yield {"name": project_name, "path": project_path, "file": "test.py"}
 
         # Clean up
-        project_registry.remove_project(project_name)
+        try:
+            project_registry.remove_project(project_name)
+        except Exception:
+            pass
+
+
+def parse_file(file_path: Path, language: str) -> Tuple[Any, bytes]:
+    """Replacement for the relocated parse_file function."""
+    language_registry = get_language_registry()
+    tree_cache = get_tree_cache()
+
+    # Get language object
+    # We don't need to store language_obj directly as it's used by ast_parse_file
+    _ = language_registry.get_language(language)
+
+    # Use the tools.ast_operations.parse_file function
+    from mcp_server_tree_sitter.tools.ast_operations import parse_file as ast_parse_file
+
+    return ast_parse_file(file_path, language, language_registry, tree_cache)
 
 
 @pytest.mark.diagnostic
@@ -91,7 +114,7 @@ def test_direct_parsing(test_project, diagnostic) -> None:
 
     try:
         # Get language
-        registry = LanguageRegistry()
+        registry = get_language_registry()
         language = registry.language_for_file(test_project["file"])
         assert language is not None, "Could not detect language for file"
         language_obj = None
@@ -118,7 +141,7 @@ def test_direct_parsing(test_project, diagnostic) -> None:
                 diagnostic.add_detail("parsing", parsing_info)
 
                 # Try to access the root node
-                if hasattr(tree, "root_node"):
+                if tree is not None and hasattr(tree, "root_node"):
                     root = tree.root_node
                     root_info = {
                         "type": root.type,
