@@ -19,6 +19,13 @@ TEMPLATES = {
         (import_from_statement
             module_name: (dotted_name) @import.from
             name: (dotted_name) @import.item) @import
+
+        ;; Handle aliased imports with 'as' keyword
+        (import_from_statement
+            module_name: (dotted_name) @import.from
+            name: (aliased_import
+                name: (dotted_name) @import.item
+                alias: (identifier) @import.alias)) @import
     """,
     "function_calls": """
         (call

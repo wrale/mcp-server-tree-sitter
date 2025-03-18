@@ -49,8 +49,8 @@ test-all: test test-diagnostics
 # Linting and formatting targets
 .PHONY: lint
 lint:
-	$(UV) run ruff check .
 	$(UV) run mypy .
+	$(UV) run ruff check .
 
 .PHONY: mypy
 mypy:
@@ -92,15 +92,6 @@ mcp-run:
 mcp-install:
 	$(UV) run mcp install $(PACKAGE).server:mcp --name "tree_sitter"
 
-# Example targets
-.PHONY: run-example-basic
-run-example-basic:
-	$(UV) run python examples/basic_usage.py $(PROJECT_PATH)
-
-.PHONY: run-example-query
-run-example-query:
-	$(UV) run python examples/query_explorer.py $(PROJECT_PATH) --language $(LANGUAGE)
-
 # Help target
 .PHONY: help
 help:
@@ -122,6 +113,4 @@ help:
 	@echo "  mcp-dev               : Run the server with MCP Inspector"
 	@echo "  mcp-run               : Run the server with MCP"
 	@echo "  mcp-install           : Install the server in Claude Desktop"
-	@echo "  run-example-basic     : Run the basic usage example (set PROJECT_PATH=/path/to/project)"
-	@echo "  run-example-query     : Run the query explorer example (set PROJECT_PATH and LANGUAGE)"
 	@echo "  help                  : Show this help message"

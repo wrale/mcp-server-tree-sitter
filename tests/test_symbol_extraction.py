@@ -13,7 +13,7 @@ from typing import Any, Dict, Generator
 
 import pytest
 
-from mcp_server_tree_sitter.server import (
+from tests.test_helpers import (
     get_ast,
     get_dependencies,
     get_symbols,
@@ -157,11 +157,12 @@ def test_symbol_extraction_diagnostics(test_project) -> None:
     symbols = get_symbols(project=test_project["name"], file_path="test.py")
 
     # Also get symbols with class methods excluded for comparison
-    from mcp_server_tree_sitter.models.project import ProjectRegistry
+    from mcp_server_tree_sitter.api import get_language_registry, get_project_registry
     from mcp_server_tree_sitter.tools.analysis import extract_symbols
 
-    _project = ProjectRegistry().get_project(test_project["name"])
-    symbols_excluding_methods = extract_symbols(test_project["name"], "test.py", exclude_class_methods=True)
+    project = get_project_registry().get_project(test_project["name"])
+    language_registry = get_language_registry()
+    symbols_excluding_methods = extract_symbols(project, "test.py", language_registry, exclude_class_methods=True)
 
     # Verify the result structure
     assert "functions" in symbols, "Result should contain 'functions' key"
@@ -184,8 +185,27 @@ def test_symbol_extraction_diagnostics(test_project) -> None:
     if symbols_excluding_methods["functions"] and len(symbols_excluding_methods["functions"]) > 0:
         # Instead of checking exact counts, just verify we found the main functions
         function_names = [f["name"] for f in symbols_excluding_methods["functions"]]
-        assert "process_data" in function_names, "Expected to find 'process_data' function"
-        assert "calculate_age" in function_names, "Expected to find 'calculate_age' function"
+
+        # Check for process_data function - handle both bytes and strings
+        process_data_found = False
+        for name in function_names:
+            if (isinstance(name, bytes) and b"process_data" in name) or (
+                isinstance(name, str) and "process_data" in name
+            ):
+                process_data_found = True
+                break
+
+        # Check for calculate_age function - handle both bytes and strings
+        calculate_age_found = False
+        for name in function_names:
+            if (isinstance(name, bytes) and b"calculate_age" in name) or (
+                isinstance(name, str) and "calculate_age" in name
+            ):
+                calculate_age_found = True
+                break
+
+        assert process_data_found, "Expected to find 'process_data' function"
+        assert calculate_age_found, "Expected to find 'calculate_age' function"
     else:
         print(f"KNOWN ISSUE: Expected {expected_function_count} functions, but got empty list")
 
@@ -195,7 +215,14 @@ def test_symbol_extraction_diagnostics(test_project) -> None:
         print(f"KNOWN ISSUE: Expected {expected_class_count} classes, but got empty list")
 
     if symbols["imports"] and len(symbols["imports"]) > 0:
-        assert len(symbols["imports"]) == expected_import_count
+        # Our improved import detection now finds individual import names plus the statements
+        # So we'll just check that we found all expected import modules
+        import_texts = [imp.get("name", "") for imp in symbols["imports"]]
+        for module in ["os", "sys", "typing", "datetime"]:
+            assert any(
+                (isinstance(text, bytes) and module.encode() in text) or (isinstance(text, str) and module in text)
+                for text in import_texts
+            ), f"Should find '{module}' import"
     else:
         print(f"KNOWN ISSUE: Expected {expected_import_count} imports, but got empty list")
 
@@ -226,7 +253,10 @@ def test_dependency_analysis_diagnostics(test_project) -> None:
         if "module" in dependencies:
             # Modify test to be more flexible with datetime imports
             for dep in ["os", "sys", "typing"]:
-                assert any(dep in mod for mod in dependencies["module"]), f"Expected dependency '{dep}' not found"
+                assert any(
+                    (isinstance(mod, bytes) and dep.encode() in mod) or (isinstance(mod, str) and dep in mod)
+                    for mod in dependencies["module"]
+                ), f"Expected dependency '{dep}' not found"
         else:
             # Otherwise check in the entire dependencies dictionary
             for dep in expected_dependencies:
@@ -560,14 +590,21 @@ def test_debug_file_saving(test_project) -> None:
 
     dependencies = get_dependencies(project=test_project["name"], file_path="test.py")
 
+    # Define a custom JSON encoder for bytes objects
+    class BytesEncoder(json.JSONEncoder):
+        def default(self, obj):
+            if isinstance(obj, bytes):
+                return obj.decode("utf-8", errors="replace")
+            return super().default(obj)
+
     # Save the information to files
     with open(os.path.join(debug_dir, "ast.json"), "w") as f:
-        json.dump(ast_result, f, indent=2)
+        json.dump(ast_result, f, indent=2, cls=BytesEncoder)
 
     with open(os.path.join(debug_dir, "symbols.json"), "w") as f:
-        json.dump(symbols, f, indent=2)
+        json.dump(symbols, f, indent=2, cls=BytesEncoder)
 
     with open(os.path.join(debug_dir, "dependencies.json"), "w") as f:
-        json.dump(dependencies, f, indent=2)
+        json.dump(dependencies, f, indent=2, cls=BytesEncoder)
 
     print(f"\nDebug information saved to {debug_dir}")

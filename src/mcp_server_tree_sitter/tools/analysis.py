@@ -4,11 +4,8 @@ import os
 from collections import Counter, defaultdict
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from ..config import CONFIG
 from ..exceptions import SecurityError
 from ..language.query_templates import get_query_template
-from ..language.registry import LanguageRegistry
-from ..models.project import ProjectRegistry
 from ..utils.context import MCPContext
 from ..utils.file_io import get_comment_prefix, read_text_file
 from ..utils.security import validate_file_access
@@ -19,13 +16,11 @@ from ..utils.tree_sitter_helpers import (
     parse_with_cached_tree,
 )
 
-project_registry = ProjectRegistry()
-language_registry = LanguageRegistry()
-
 
 def extract_symbols(
-    project_name: str,
+    project: Any,
     file_path: str,
+    language_registry: Any,
     symbol_types: Optional[List[str]] = None,
     exclude_class_methods: bool = False,
 ) -> Dict[str, List[Dict[str, Any]]]:
@@ -33,15 +28,15 @@ def extract_symbols(
     Extract symbols (functions, classes, etc) from a file.
 
     Args:
-        project_name: Name of the registered project
+        project: Project object
         file_path: Path to the file relative to project root
+        language_registry: Language registry object
         symbol_types: Types of symbols to extract (functions, classes, imports, etc.)
         exclude_class_methods: Whether to exclude methods from function count
 
     Returns:
         Dictionary of symbols by type
     """
-    project = project_registry.get_project(project_name)
     abs_path = project.get_file_path(file_path)
 
     try:
@@ -146,6 +141,119 @@ def extract_symbols(
                 (class_ranges if exclude_class_methods and symbol_type == "functions" else None),
             )
 
+            # Handle aliased imports specifically for Python
+            if symbol_type == "imports" and language == "python":
+                # Look for aliased imports that might have been missed
+                aliased_query_string = """
+                (import_from_statement
+                    module_name: (dotted_name) @import.from
+                    name: (aliased_import)) @import
+                """
+
+                aliased_query = safe_lang.query(aliased_query_string)
+                aliased_matches = aliased_query.captures(tree.root_node)
+
+                for match in aliased_matches:
+                    node = None
+                    capture_name = ""
+
+                    # Handle different return types
+                    if isinstance(match, tuple) and len(match) == 2:
+                        node, capture_name = match
+                    elif hasattr(match, "node") and hasattr(match, "capture_name"):
+                        node, capture_name = match.node, match.capture_name
+                    elif isinstance(match, dict) and "node" in match and "capture" in match:
+                        node, capture_name = match["node"], match["capture"]
+                    else:
+                        continue
+
+                    if capture_name == "import.from":
+                        module_name = get_node_text(node, source_bytes)
+                        # Add this module to the import list
+                        symbols["imports"].append(
+                            {
+                                "name": module_name,
+                                "type": "imports",
+                                "location": {
+                                    "start": {
+                                        "row": node.start_point[0],
+                                        "column": node.start_point[1],
+                                    },
+                                    "end": {
+                                        "row": node.end_point[0],
+                                        "column": node.end_point[1],
+                                    },
+                                },
+                            }
+                        )
+
+                # Additionally, run a query to get all aliased imports directly
+                alias_query_string = "(aliased_import) @alias"
+                alias_query = safe_lang.query(alias_query_string)
+                alias_matches = alias_query.captures(tree.root_node)
+
+                for match in alias_matches:
+                    node = None
+                    capture_name = ""
+
+                    # Handle different return types
+                    if isinstance(match, tuple) and len(match) == 2:
+                        node, capture_name = match
+                    elif hasattr(match, "node") and hasattr(match, "capture_name"):
+                        node, capture_name = match.node, match.capture_name
+                    elif isinstance(match, dict) and "node" in match and "capture" in match:
+                        node, capture_name = match["node"], match["capture"]
+                    else:
+                        continue
+
+                    if capture_name == "alias":
+                        alias_text = get_node_text(node, source_bytes)
+                        module_name = ""
+
+                        # Try to get the module name from parent
+                        if node.parent and node.parent.parent:
+                            for child in node.parent.parent.children:
+                                if hasattr(child, "type") and child.type == "dotted_name":
+                                    module_name = get_node_text(child, source_bytes)
+                                    break
+
+                        # Add this aliased import to the import list
+                        symbols["imports"].append(
+                            {
+                                "name": alias_text,
+                                "type": "imports",
+                                "location": {
+                                    "start": {
+                                        "row": node.start_point[0],
+                                        "column": node.start_point[1],
+                                    },
+                                    "end": {
+                                        "row": node.end_point[0],
+                                        "column": node.end_point[1],
+                                    },
+                                },
+                            }
+                        )
+
+                        # Also add the module if we found it
+                        if module_name:
+                            symbols["imports"].append(
+                                {
+                                    "name": module_name,
+                                    "type": "imports",
+                                    "location": {
+                                        "start": {
+                                            "row": node.start_point[0],
+                                            "column": 0,  # Set to beginning of line
+                                        },
+                                        "end": {
+                                            "row": node.end_point[0],
+                                            "column": node.end_point[1],
+                                        },
+                                    },
+                                }
+                            )
+
         return symbols
 
     except Exception as e:
@@ -194,11 +302,67 @@ def process_symbol_matches(
                 filtered_methods.append(safe_node.start_point[0])
                 return
 
-            # Skip non-name captures
-            if not capture_name.endswith(".name") and not capture_name == symbol_type:
+            # Special handling for imports
+            if symbol_type == "imports":
+                # For imports, accept more capture types (.module, .from, .item, .alias, etc.)
+                if not (capture_name.startswith("import.") or capture_name == "import"):
+                    return
+
+                # For aliased imports, we want to include both the original name and the alias
+                if capture_name == "import.alias":
+                    # This is an alias in an import statement like "from datetime import datetime as dt"
+                    # Get the module and item information
+                    module_name = None
+                    item_name = None
+
+                    # Get the parent import_from_statement node
+                    if safe_node.parent and safe_node.parent.parent:
+                        import_node = safe_node.parent.parent
+                        for child in import_node.children:
+                            if child.type == "dotted_name":
+                                # First dotted_name is usually the module
+                                if module_name is None:
+                                    module_name = get_node_text(child, source_bytes, decode=True)
+                                # Look for the imported item
+                                elif item_name is None and safe_node.parent and safe_node.parent.children:
+                                    for item_child in safe_node.parent.children:
+                                        if item_child.type == "dotted_name":
+                                            item_name = get_node_text(item_child, source_bytes, decode=True)
+                                            break
+
+                    # Create a descriptive name for the aliased import
+                    text = get_node_text(safe_node, source_bytes, decode=True)
+                    alias_text = text
+                    if module_name and item_name:
+                        # Handle both str and bytes cases
+                        if (
+                            isinstance(module_name, bytes)
+                            or isinstance(item_name, bytes)
+                            or isinstance(alias_text, bytes)
+                        ):
+                            module_name_str = (
+                                module_name.decode("utf-8") if isinstance(module_name, bytes) else module_name
+                            )
+                            item_name_str = item_name.decode("utf-8") if isinstance(item_name, bytes) else item_name
+                            alias_text_str = alias_text.decode("utf-8") if isinstance(alias_text, bytes) else alias_text
+                            text = f"{module_name_str}.{item_name_str} as {alias_text_str}"
+                        else:
+                            text = f"{module_name}.{item_name} as {alias_text}"
+                    elif module_name:
+                        # Handle both str and bytes cases
+                        if isinstance(module_name, bytes) or isinstance(alias_text, bytes):
+                            module_name_str = (
+                                module_name.decode("utf-8") if isinstance(module_name, bytes) else module_name
+                            )
+                            alias_text_str = alias_text.decode("utf-8") if isinstance(alias_text, bytes) else alias_text
+                            text = f"{module_name_str} as {alias_text_str}"
+                        else:
+                            text = f"{module_name} as {alias_text}"
+            # For other symbol types
+            elif not capture_name.endswith(".name") and not capture_name == symbol_type:
                 return
 
-            text = get_node_text(safe_node, source_bytes)
+            text = get_node_text(safe_node, source_bytes, decode=True)
 
             symbol = {
                 "name": text,
@@ -248,19 +412,21 @@ def process_symbol_matches(
             process_node(node, capture_name)
 
 
-def analyze_project_structure(project_name: str, scan_depth: int = 3, mcp_ctx: Optional[Any] = None) -> Dict[str, Any]:
+def analyze_project_structure(
+    project: Any, language_registry: Any, scan_depth: int = 3, mcp_ctx: Optional[Any] = None
+) -> Dict[str, Any]:
     """
     Analyze the overall structure of a project.
 
     Args:
-        project_name: Name of the registered project
+        project: Project object
+        language_registry: Language registry object
         scan_depth: Depth to scan for detailed analysis (higher is slower)
         mcp_ctx: Optional MCP context for progress reporting
 
     Returns:
         Project structure analysis
     """
-    project = project_registry.get_project(project_name)
     root = project.root_path
 
     # Create context for progress reporting
@@ -340,7 +506,11 @@ def analyze_project_structure(project_name: str, scan_depth: int = 3, mcp_ctx: O
             rel_dir = ""
 
         # Skip hidden directories and common excludes
-        dirs[:] = [d for d in dirs if not d.startswith(".") and d not in CONFIG.security.excluded_dirs]
+        # Get config from dependency injection
+        from ..api import get_config
+
+        config = get_config()
+        dirs[:] = [d for d in dirs if not d.startswith(".") and d not in config.security.excluded_dirs]
 
         # Count directories
         dir_counts[rel_dir] = len(dirs)
@@ -388,7 +558,7 @@ def analyze_project_structure(project_name: str, scan_depth: int = 3, mcp_ctx: O
 
                 for file_path in sample_files:
                     try:
-                        symbols = extract_symbols(project_name, file_path)
+                        symbols = extract_symbols(project, file_path, language_registry)
 
                         # Summarize symbols
                         symbol_counts = {
@@ -421,18 +591,22 @@ def analyze_project_structure(project_name: str, scan_depth: int = 3, mcp_ctx: O
     }
 
 
-def find_dependencies(project_name: str, file_path: str) -> Dict[str, List[str]]:
+def find_dependencies(
+    project: Any,
+    file_path: str,
+    language_registry: Any,
+) -> Dict[str, List[str]]:
     """
     Find dependencies of a file.
 
     Args:
-        project_name: Name of the registered project
+        project: Project object
         file_path: Path to the file relative to project root
+        language_registry: Language registry object
 
     Returns:
         Dictionary of dependencies (imports, includes, etc.)
     """
-    project = project_registry.get_project(project_name)
     abs_path = project.get_file_path(file_path)
 
     try:
@@ -463,7 +637,7 @@ def find_dependencies(project_name: str, file_path: str) -> Dict[str, List[str]]
         matches = query.captures(tree.root_node)
 
         # Organize imports by type
-        imports = defaultdict(list)
+        imports: Dict[str, List[str]] = defaultdict(list)
         # Track additional import information to handle aliased imports
         module_imports: Set[str] = set()
 
@@ -479,24 +653,58 @@ def find_dependencies(project_name: str, file_path: str) -> Dict[str, List[str]]
                 else:
                     category = "import"
 
-                imports[category].append(text)
+                # Ensure we're adding a string to the list
+                text_str = text.decode("utf-8") if isinstance(text, bytes) else text
+                imports[category].append(text_str)
 
                 # Add to module_imports for tracking all imported modules
                 if category == "from":
                     # Handle 'from X import Y' cases
-                    module_imports.add(text.split()[0].strip())
+                    parts = text_str.split()
+
+                    if parts:
+                        module_part = parts[0].strip()
+                        module_imports.add(module_part)
                 elif category == "module":
                     # Handle 'import X' cases
-                    module_imports.add(text.strip())
-                elif "import" in text:
+                    text_str = text_str.strip()
+                    module_imports.add(text_str)
+                elif category == "alias":
+                    # Handle explicitly captured aliases from 'from X import Y as Z' cases
+                    # The module itself will be captured separately via the 'from' capture
+                    pass
+                elif category == "item" and text:
+                    # For individual imported items, make sure to add the module name if it exists
+                    if hasattr(safe_node, "parent") and safe_node.parent:
+                        parent_node = safe_node.parent  # The import_from_statement node
+                        # Find the module_name node
+                        for child in parent_node.children:
+                            if (
+                                hasattr(child, "type")
+                                and child.type == "dotted_name"
+                                and child != safe_node
+                                and hasattr(child, "text")
+                            ):
+                                module_name_text = get_node_text(child, source_bytes)
+                                module_name_str = (
+                                    module_name_text.decode("utf-8")
+                                    if isinstance(module_name_text, bytes)
+                                    else module_name_text
+                                )
+                                module_imports.add(module_name_str)
+                                break
+                elif "import" in text_str:
                     # Fallback for raw import statements
-                    parts = text.split()
+                    parts = text_str.split()
                     if len(parts) > 1 and parts[0] == "from":
                         # Handle 'from datetime import datetime as dt' case
-                        module_imports.add(parts[1].strip())
-                    elif "from" in text and "import" in text:
+                        part = parts[1].strip()
+                        module_imports.add(str(part))
+                    elif "from" in text_str and "import" in text_str:
                         # Another way to handle 'from X import Y' patterns
-                        from_parts = text.split("from", 1)[1].split("import", 1)
+                        # text_str is already properly decoded
+
+                        from_parts = text_str.split("from", 1)[1].split("import", 1)
                         if len(from_parts) > 0:
                             module_name = from_parts[0].strip()
                             module_imports.add(module_name)
@@ -535,7 +743,52 @@ def find_dependencies(project_name: str, file_path: str) -> Dict[str, List[str]]
 
         # Add all detected modules to the result
         if module_imports:
-            imports["module"] = list(set(imports.get("module", []) + list(module_imports)))
+            # Convert module_imports Set[str] to List[str]
+            module_list = list(module_imports)
+            imports["module"] = list(set(imports.get("module", []) + module_list))
+
+        # For Python, specifically check for aliased imports
+        if language == "python":
+            # Look for aliased imports directly
+            aliased_query_string = "(aliased_import) @alias"
+            aliased_query = safe_lang.query(aliased_query_string)
+            aliased_matches = aliased_query.captures(tree.root_node)
+
+            # Process aliased imports
+            for match in aliased_matches:
+                # Initialize variables
+                aliased_node: Optional[Any] = None
+                # We're not using aliased_capture_name but need to unpack it
+                _: str = ""
+
+                # Handle different return types
+                if isinstance(match, tuple) and len(match) == 2:
+                    aliased_node, _ = match
+                elif hasattr(match, "node") and hasattr(match, "capture_name"):
+                    aliased_node, _ = match.node, match.capture_name
+                elif isinstance(match, dict) and "node" in match and "capture" in match:
+                    aliased_node, _ = match["node"], match["capture"]
+                else:
+                    continue
+
+                # Extract module name from parent
+                if aliased_node is not None and aliased_node.parent and aliased_node.parent.parent:
+                    for child in aliased_node.parent.parent.children:
+                        if hasattr(child, "type") and child.type == "dotted_name":
+                            module_name_text = get_node_text(child, source_bytes)
+                            if module_name_text:
+                                module_name_str = (
+                                    module_name_text.decode("utf-8")
+                                    if isinstance(module_name_text, bytes)
+                                    else module_name_text
+                                )
+                                module_imports.add(module_name_str)
+                            break
+
+            # Update the module list with any new module imports
+            if module_imports:
+                module_list = list(module_imports)
+                imports["module"] = list(set(imports.get("module", []) + module_list))
 
         return dict(imports)
 
@@ -543,18 +796,22 @@ def find_dependencies(project_name: str, file_path: str) -> Dict[str, List[str]]
         raise ValueError(f"Error finding dependencies in {file_path}: {e}") from e
 
 
-def analyze_code_complexity(project_name: str, file_path: str) -> Dict[str, Any]:
+def analyze_code_complexity(
+    project: Any,
+    file_path: str,
+    language_registry: Any,
+) -> Dict[str, Any]:
     """
     Analyze code complexity.
 
     Args:
-        project_name: Name of the registered project
+        project: Project object
         file_path: Path to the file relative to project root
+        language_registry: Language registry object
 
     Returns:
         Complexity metrics
     """
-    project = project_registry.get_project(project_name)
     abs_path = project.get_file_path(file_path)
 
     try:
@@ -591,8 +848,9 @@ def analyze_code_complexity(project_name: str, file_path: str) -> Dict[str, Any]
 
         # Get function and class definitions, excluding methods from count
         symbols = extract_symbols(
-            project_name,
+            project,
             file_path,
+            language_registry,
             ["functions", "classes"],
             exclude_class_methods=True,
         )

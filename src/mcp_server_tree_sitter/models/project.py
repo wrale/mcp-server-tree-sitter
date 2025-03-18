@@ -101,24 +101,27 @@ class Project:
 
 
 class ProjectRegistry:
-    """Manages projects for code analysis. Implements singleton pattern."""
+    """Manages projects for code analysis."""
 
-    # Class-level instance for singleton pattern
-    _instance = None
-    _class_lock = threading.RLock()
-
-    # Instance variables - declare here for mypy
-    projects: Dict[str, Project]
-    _instance_lock: threading.Lock
+    # Class variables for singleton pattern
+    _instance: Optional["ProjectRegistry"] = None
+    _global_lock = threading.RLock()
 
     def __new__(cls) -> "ProjectRegistry":
-        """Ensure only one instance exists."""
-        with cls._class_lock:
+        """Implement singleton pattern with proper locking."""
+        with cls._global_lock:
             if cls._instance is None:
-                cls._instance = super(ProjectRegistry, cls).__new__(cls)
-                cls._instance.projects = {}
-                cls._instance._instance_lock = threading.Lock()
+                instance = super(ProjectRegistry, cls).__new__(cls)
+                # We need to set attributes on the instance, not the class
+                instance._projects = {}
+                cls._instance = instance
             return cls._instance
+
+    def __init__(self) -> None:
+        """Initialize the registry only once."""
+        # The actual initialization is done in __new__ to ensure it happens exactly once
+        if not hasattr(self, "_projects"):
+            self._projects: Dict[str, Project] = {}
 
     def register_project(self, name: str, path: str, description: Optional[str] = None) -> Project:
         """
@@ -135,8 +138,8 @@ class ProjectRegistry:
         Raises:
             ProjectError: If project already exists or path is invalid
         """
-        with self._instance_lock:
-            if name in self.projects:
+        with self._global_lock:
+            if name in self._projects:
                 raise ProjectError(f"Project '{name}' already exists")
 
             try:
@@ -149,7 +152,7 @@ class ProjectRegistry:
                 # Try to find project root
                 project_root = get_project_root(norm_path)
                 project = Project(name, project_root, description)
-                self.projects[name] = project
+                self._projects[name] = project
                 return project
             except Exception as e:
                 raise ProjectError(f"Failed to register project: {e}") from e
@@ -167,10 +170,11 @@ class ProjectRegistry:
         Raises:
             ProjectError: If project doesn't exist
         """
-        with self._instance_lock:
-            if name not in self.projects:
+        with self._global_lock:
+            if name not in self._projects:
                 raise ProjectError(f"Project '{name}' not found")
-            return self.projects[name]
+            project = self._projects[name]
+            return project
 
     def list_projects(self) -> List[Dict[str, Any]]:
         """
@@ -179,8 +183,8 @@ class ProjectRegistry:
         Returns:
             List of project dictionaries
         """
-        with self._instance_lock:
-            return [project.to_dict() for project in self.projects.values()]
+        with self._global_lock:
+            return [project.to_dict() for project in self._projects.values()]
 
     def remove_project(self, name: str) -> None:
         """
@@ -192,7 +196,7 @@ class ProjectRegistry:
         Raises:
             ProjectError: If project doesn't exist
         """
-        with self._instance_lock:
-            if name not in self.projects:
+        with self._global_lock:
+            if name not in self._projects:
                 raise ProjectError(f"Project '{name}' not found")
-            del self.projects[name]
+            del self._projects[name]

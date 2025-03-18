@@ -5,22 +5,15 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from ..cache.parser_cache import tree_cache
-from ..config import CONFIG
 from ..exceptions import QueryError, SecurityError
-from ..language.registry import LanguageRegistry
-from ..models.project import ProjectRegistry
 from ..utils.security import validate_file_access
-
-project_registry = ProjectRegistry()
-language_registry = LanguageRegistry()
 
 
 def search_text(
-    project_name: str,
+    project: Any,
     pattern: str,
     file_pattern: Optional[str] = None,
-    max_results: Optional[int] = None,
+    max_results: int = 100,
     case_sensitive: bool = False,
     whole_word: bool = False,
     use_regex: bool = False,
@@ -30,7 +23,7 @@ def search_text(
     Search for text pattern in project files.
 
     Args:
-        project_name: Name of the registered project
+        project: Project object
         pattern: Text pattern to search for
         file_pattern: Optional glob pattern to filter files (e.g. "**/*.py")
         max_results: Maximum number of results to return
@@ -42,10 +35,6 @@ def search_text(
     Returns:
         List of matches with file, line number, and text
     """
-    if max_results is None:
-        max_results = CONFIG.max_results_default
-
-    project = project_registry.get_project(project_name)
     root = project.root_path
 
     results: List[Dict[str, Any]] = []
@@ -86,11 +75,13 @@ def search_text(
                     match_result = pattern_obj.search(line)
                     match = bool(match_result)
                 elif case_sensitive:
-                    # Simple case-sensitive search
-                    match = pattern in line
+                    # Simple case-sensitive search - check both original and stripped versions
+                    match = pattern in line or pattern.strip() in line.strip()
                 else:
-                    # Simple case-insensitive search
-                    match = pattern in line.lower()
+                    # Simple case-insensitive search - check both original and stripped versions
+                    line_lower = line.lower()
+                    pattern_lower = pattern.lower()
+                    match = pattern_lower in line_lower or pattern_lower.strip() in line_lower.strip()
 
                 if match:
                     # Calculate context lines
@@ -146,19 +137,23 @@ def search_text(
 
 
 def query_code(
-    project_name: str,
+    project: Any,
     query_string: str,
+    language_registry: Any,
+    tree_cache: Any,
     file_path: Optional[str] = None,
     language: Optional[str] = None,
-    max_results: Optional[int] = None,
+    max_results: int = 100,
     include_snippets: bool = True,
 ) -> List[Dict[str, Any]]:
     """
     Run a tree-sitter query on code files.
 
     Args:
-        project_name: Name of the registered project
+        project: Project object
         query_string: Tree-sitter query string
+        language_registry: Language registry
+        tree_cache: Tree cache instance
         file_path: Optional specific file to query
         language: Language to use (required if file_path not provided)
         max_results: Maximum number of results to return
@@ -167,10 +162,6 @@ def query_code(
     Returns:
         List of query matches
     """
-    if max_results is None:
-        max_results = CONFIG.max_results_default
-
-    project = project_registry.get_project(project_name)
     root = project.root_path
     results: List[Dict[str, Any]] = []
 
@@ -202,16 +193,13 @@ def query_code(
                 with open(abs_path, "rb") as f:
                     source_bytes = f.read()
 
-                assert language is not None  # For type checking
                 parser = language_registry.get_parser(language)
                 tree = parser.parse(source_bytes)
 
                 # Cache the tree
-                assert language is not None  # For type checking
                 tree_cache.put(abs_path, language, tree, source_bytes)
 
             # Execute query
-            assert language is not None  # For type checking
             lang = language_registry.get_language(language)
             query = lang.query(query_string)
 
@@ -227,7 +215,9 @@ def query_code(
                             break
 
                         try:
-                            text = source_bytes[node.start_byte : node.end_byte].decode("utf-8", errors="replace")
+                            from ..utils.tree_sitter_helpers import get_node_text
+
+                            text = get_node_text(node, source_bytes, decode=True)
                         except Exception:
                             text = "<binary data>"
 
@@ -270,7 +260,9 @@ def query_code(
                         break
 
                     try:
-                        text = source_bytes[node.start_byte : node.end_byte].decode("utf-8", errors="replace")
+                        from ..utils.tree_sitter_helpers import get_node_text
+
+                        text = get_node_text(node, source_bytes, decode=True)
                     except Exception:
                         text = "<binary data>"
 
@@ -306,12 +298,14 @@ def query_code(
             try:
                 # Use single-file version of query_code
                 file_results = query_code(
-                    project_name,
+                    project,
                     query_string,
+                    language_registry,
+                    tree_cache,
                     rel_path,
                     language,
-                    max_results=(max_results if max_results is None else max_results - len(results)),
-                    include_snippets=include_snippets,
+                    max_results if max_results is None else max_results - len(results),
+                    include_snippets,
                 )
                 return file_results
             except Exception:

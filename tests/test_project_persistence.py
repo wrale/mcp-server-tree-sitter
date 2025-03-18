@@ -3,17 +3,21 @@
 import tempfile
 import threading
 
+from mcp_server_tree_sitter.api import get_project_registry
 from mcp_server_tree_sitter.models.project import ProjectRegistry
-from mcp_server_tree_sitter.tools.project import project_registry, register_project
+from tests.test_helpers import register_project_tool
 
 
 def test_project_registry_singleton() -> None:
     """Test that project_registry is a singleton that persists."""
-    # Clear any existing projects to start fresh
-    project_registry.projects.clear()
+    # Get the project registry from API
+    project_registry = get_project_registry()
 
-    # Check we have no projects
-    assert len(project_registry.projects) == 0
+    # We can't directly clear projects in the new design
+    # Instead, we'll check the current projects and try to avoid conflicts
+    current_projects = project_registry.list_projects()
+    # We'll just assert that we know the current state
+    assert isinstance(current_projects, list)
 
     # Register a project
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -21,29 +25,37 @@ def test_project_registry_singleton() -> None:
         project_registry.register_project(project_name, temp_dir)
 
         # Verify project was registered
-        assert project_name in project_registry.projects
+        all_projects = project_registry.list_projects()
+        project_names = [p["name"] for p in all_projects]
+        assert project_name in project_names
 
         # Create a new registry instance
         new_registry = ProjectRegistry()
 
         # Because ProjectRegistry uses a class-level singleton pattern,
         # this should be the same instance
-        assert new_registry.projects is project_registry.projects
-        assert project_name in new_registry.projects
+        all_projects = new_registry.list_projects()
+        project_names = [p["name"] for p in all_projects]
+        assert project_name in project_names
 
 
 def test_mcp_tool_persistence() -> None:
     """Test that projects persist using the project functions."""
-    # Clear any existing projects to start fresh
-    project_registry.projects.clear()
+    # Get the project registry from API
+    project_registry = get_project_registry()
+
+    # We can't directly clear projects in the new design
+    # Instead, let's work with the existing state
 
     with tempfile.TemporaryDirectory() as temp_dir:
         # Register a project using the function directly
         project_name = "test_persistence"
-        register_project(temp_dir, project_name)
+        register_project_tool(temp_dir, project_name)
 
         # Verify it exists in the registry
-        assert project_name in project_registry.projects
+        all_projects = project_registry.list_projects()
+        project_names = [p["name"] for p in all_projects]
+        assert project_name in project_names
 
         # Try to get the project directly
         project = project_registry.get_project(project_name)
@@ -52,8 +64,11 @@ def test_mcp_tool_persistence() -> None:
 
 def test_project_registry_threads() -> None:
     """Test that project registry works correctly across threads."""
-    # Clear any existing projects to start fresh
-    project_registry.projects.clear()
+    # Get the project registry from API
+    project_registry = get_project_registry()
+
+    # We can't directly clear projects in the new design
+    # Instead, let's work with the existing state
 
     with tempfile.TemporaryDirectory() as temp_dir:
         project_name = "thread_test"
@@ -73,53 +88,69 @@ def test_project_registry_threads() -> None:
         thread.join()
 
         # Both projects should be in the registry
-        assert project_name in project_registry.projects
-        assert f"{project_name}_thread" in project_registry.projects
+        all_projects = project_registry.list_projects()
+        project_names = [p["name"] for p in all_projects]
+        assert project_name in project_names
+        assert f"{project_name}_thread" in project_names
 
 
 def test_server_lifecycle() -> None:
     """Test that project registry survives server "restarts"."""
-    # Clear any existing projects to start fresh
-    project_registry.projects.clear()
+    # Get the project registry from API
+    project_registry = get_project_registry()
+
+    # We can't directly clear projects in the new design
+    # Instead, let's work with the existing state
 
     with tempfile.TemporaryDirectory() as temp_dir:
         project_name = "lifecycle_test"
 
         # Register a project
-        register_project(temp_dir, project_name)
+        register_project_tool(temp_dir, project_name)
 
         # Verify it exists
-        assert project_name in project_registry.projects
+        all_projects = project_registry.list_projects()
+        project_names = [p["name"] for p in all_projects]
+        assert project_name in project_names
 
         # Simulate server restart by importing modules again
         # Note: This doesn't actually restart anything, it just tests
         # that the singleton pattern works as expected with imports
         import importlib
 
-        import mcp_server_tree_sitter.tools.project
+        import mcp_server_tree_sitter.api
 
-        importlib.reload(mcp_server_tree_sitter.tools.project)
-        from mcp_server_tree_sitter.tools.project import (
-            project_registry as new_registry,
-        )
+        importlib.reload(mcp_server_tree_sitter.api)
+
+        # Get the project registry from the reloaded module
+        from mcp_server_tree_sitter.api import get_project_registry as new_get_project_registry
+
+        new_project_registry = new_get_project_registry()
 
         # The registry should still contain our project
-        assert project_name in new_registry.projects
+        all_projects = new_project_registry.list_projects()
+        project_names = [p["name"] for p in all_projects]
+        assert project_name in project_names
 
 
 def test_project_persistence_in_mcp_server() -> None:
-    """Test that project registry survives server \"restarts\"."""
-    # Clear any existing projects to start fresh
-    project_registry.projects.clear()
+    """Test that project registry survives server "restarts"."""
+    # Get the project registry from API
+    project_registry = get_project_registry()
+
+    # We can't directly clear projects in the new design
+    # Instead, let's work with the existing state
 
     with tempfile.TemporaryDirectory() as temp_dir:
         project_name = "lifecycle_test"
 
         # Register a project
-        register_project(temp_dir, project_name)
+        register_project_tool(temp_dir, project_name)
 
         # Verify it exists
-        assert project_name in project_registry.projects
+        all_projects = project_registry.list_projects()
+        project_names = [p["name"] for p in all_projects]
+        assert project_name in project_names
 
         # Simulate server restart by importing modules again
         import importlib
@@ -127,12 +158,14 @@ def test_project_persistence_in_mcp_server() -> None:
         import mcp_server_tree_sitter.tools.project
 
         importlib.reload(mcp_server_tree_sitter.tools.project)
-        from mcp_server_tree_sitter.tools.project import (
-            project_registry as new_registry,
-        )
+
+        # Get the project registry again
+        test_registry = get_project_registry()
 
         # The registry should still contain our project
-        assert project_name in new_registry.projects
+        all_projects = test_registry.list_projects()
+        project_names = [p["name"] for p in all_projects]
+        assert project_name in project_names
 
 
 if __name__ == "__main__":

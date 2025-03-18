@@ -2,21 +2,21 @@
 
 import tempfile
 
-from mcp_server_tree_sitter.config import CONFIG, load_config
+from mcp_server_tree_sitter.config import ServerConfig
 from mcp_server_tree_sitter.language.registry import LanguageRegistry
 from mcp_server_tree_sitter.models.project import ProjectRegistry
 
 
 def test_config_default() -> None:
     """Test that default configuration is loaded."""
-    # Reset to default
-    load_config()
+    # Create a default configuration
+    config = ServerConfig()
 
     # Check defaults
-    assert CONFIG.cache.enabled is True
-    assert CONFIG.cache.max_size_mb == 100
-    assert CONFIG.security.max_file_size_mb == 5
-    assert ".git" in CONFIG.security.excluded_dirs
+    assert config.cache.enabled is True
+    assert config.cache.max_size_mb == 100
+    assert config.security.max_file_size_mb == 5
+    assert ".git" in config.security.excluded_dirs
 
 
 def test_project_registry() -> None:
@@ -48,7 +48,8 @@ def test_project_registry() -> None:
 
         # Remove project
         registry.remove_project("test")
-        assert len(registry.projects) == 0
+        projects = registry.list_projects()
+        assert len(projects) == 0
 
 
 def test_language_registry() -> None:

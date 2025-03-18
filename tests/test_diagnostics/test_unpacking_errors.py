@@ -6,13 +6,8 @@ from typing import Any, Dict, Generator
 
 import pytest
 
-from mcp_server_tree_sitter.models.project import ProjectRegistry
-from mcp_server_tree_sitter.server import (
-    analyze_complexity,
-    get_dependencies,
-    get_symbols,
-    run_query,
-)
+from mcp_server_tree_sitter.api import get_project_registry
+from tests.test_helpers import analyze_complexity, get_dependencies, get_symbols, register_project_tool, run_query
 
 
 @pytest.fixture
@@ -49,15 +44,18 @@ if __name__ == "__main__":
             )
 
         # Register project
-        project_registry = ProjectRegistry()
         project_name = "unpacking_test_project"
-        project_registry.register_project(project_name, str(project_path))
+        register_project_tool(path=str(project_path), name=project_name)
 
         # Yield the project info
         yield {"name": project_name, "path": project_path, "file": "test.py"}
 
         # Clean up
-        project_registry.remove_project(project_name)
+        project_registry = get_project_registry()
+        try:
+            project_registry.remove_project(project_name)
+        except Exception:
+            pass
 
 
 @pytest.mark.diagnostic

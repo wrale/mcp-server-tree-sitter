@@ -15,6 +15,8 @@ A Model Context Protocol (MCP) server that provides code analysis capabilities u
 - 🧩 **State Persistence**: Maintains project registrations and cached data between invocations
 - 🔒 **Secure**: Built-in security boundaries and input validation
 
+For a comprehensive list of all available commands, their current implementation status, and detailed feature matrix, please refer to the [FEATURES.md](FEATURES.md) document.
+
 ## Installation
 
 ### Prerequisites
@@ -210,26 +212,65 @@ run_query(
 analyze_complexity(project="my-project", path="src/main.py")
 ```
 
+## Direct Python Usage
+
+While the primary intended use is through the MCP server, you can also use the library directly in Python code:
+
+```python
+# Import from the API module
+from mcp_server_tree_sitter.api import (
+    register_project, list_projects, get_config, get_language_registry
+)
+
+# Register a project
+project_info = register_project(
+    path="/path/to/project", 
+    name="my-project", 
+    description="Description"
+)
+
+# List projects
+projects = list_projects()
+
+# Get configuration
+config = get_config()
+
+# Access components through dependency injection
+from mcp_server_tree_sitter.di import get_container
+container = get_container()
+project_registry = container.project_registry
+language_registry = container.language_registry
+```
+
 ## Configuration
 
 Create a YAML configuration file:
 
 ```yaml
 cache:
-  enabled: true
-  max_size_mb: 100
-  ttl_seconds: 300
+  enabled: true                # Enable/disable caching (default: true)
+  max_size_mb: 100             # Maximum cache size in MB (default: 100)
+  ttl_seconds: 300             # Cache entry time-to-live in seconds (default: 300)
 
 security:
-  max_file_size_mb: 5
-  excluded_dirs:
+  max_file_size_mb: 5          # Maximum file size to process in MB (default: 5)
+  excluded_dirs:               # Directories to exclude from processing
     - .git
     - node_modules
     - __pycache__
+  allowed_extensions:          # Optional list of allowed file extensions
+    # - py
+    # - js
+    # Leave empty or omit for all extensions
 
 language:
-  auto_install: false
-  default_max_depth: 5
+  default_max_depth: 5         # Default max depth for AST traversal (default: 5)
+  preferred_languages:         # List of languages to pre-load at startup for faster performance
+    - python                   # Pre-loading reduces latency for first operations
+    - javascript
+
+log_level: INFO                # Logging level (DEBUG, INFO, WARNING, ERROR)
+max_results_default: 100       # Default maximum results for search operations
 ```
 
 Load it with:
@@ -237,6 +278,35 @@ Load it with:
 ```
 configure(config_path="/path/to/config.yaml")
 ```
+
+### About preferred_languages
+
+The `preferred_languages` setting controls which language parsers are pre-loaded at server startup rather than on-demand. This provides several benefits:
+
+- **Faster initial analysis**: No delay when first analyzing a file of a pre-loaded language
+- **Early error detection**: Issues with parsers are discovered at startup, not during use
+- **Predictable memory allocation**: Memory for frequently used parsers is allocated upfront
+
+By default, all parsers are loaded on-demand when first needed. For optimal performance, specify the languages you use most frequently in your projects.
+
+You can also configure specific settings:
+
+```
+configure(cache_enabled=True, max_file_size_mb=10, log_level="DEBUG")
+```
+
+Or use environment variables:
+
+```bash
+export MCP_TS_CACHE_MAX_SIZE_MB=256
+export MCP_TS_LOG_LEVEL=DEBUG
+export MCP_TS_CONFIG_PATH=/path/to/config.yaml
+```
+
+The server will look for configuration in:
+1. Path specified in `configure()` call
+2. Path specified by `MCP_TS_CONFIG_PATH` environment variable
+3. Default location: `~/.config/tree-sitter/config.yaml`
 
 ## Available Resources
 
@@ -260,8 +330,12 @@ The server provides tools for:
 - Code search: `find_text`, `run_query`
 - Symbol extraction: `get_symbols`, `find_usage`
 - Project analysis: `analyze_project`, `get_dependencies`, `analyze_complexity`
-- Query building: `get_query_template_tool`, `list_query_templates_tool`, `build_query`, `adapt_query`
+- Query building: `get_query_template_tool`, `list_query_templates_tool`, `build_query`, `adapt_query`, `get_node_types`
+- Similar code detection: `find_similar_code`
 - Cache management: `clear_cache`
+- Configuration diagnostics: `diagnose_config`
+
+See [FEATURES.md](FEATURES.md) for detailed information about each tool's implementation status, dependencies, and usage examples.
 
 ## Available Prompts
 

@@ -7,7 +7,7 @@ from typing import Any, Dict, Generator
 
 import pytest
 
-from mcp_server_tree_sitter.server import (
+from tests.test_helpers import (
     get_ast,
     get_dependencies,
     get_symbols,
@@ -191,9 +191,26 @@ def test_rust_ast_parsing(rust_project) -> None:
 
     find_nodes(tree, ["struct_item", "function_item", "impl_item"])
 
-    assert "Person" in structs_found, "Should find Person struct"
-    assert "main" in functions_found, "Should find main function"
-    assert "calculate_ages" in functions_found, "Should find calculate_ages function"
+    # Check for Person struct - handle both bytes and strings
+    person_found = False
+    for name in structs_found:
+        if (isinstance(name, bytes) and b"Person" in name) or (isinstance(name, str) and "Person" in name):
+            person_found = True
+            break
+    assert person_found, "Should find Person struct"
+    # Check for main and calculate_ages functions - handle both bytes and strings
+    main_found = False
+    calc_found = False
+    for name in functions_found:
+        if (isinstance(name, bytes) and b"main" in name) or (isinstance(name, str) and "main" in name):
+            main_found = True
+        if (isinstance(name, bytes) and b"calculate_ages" in name) or (
+            isinstance(name, str) and "calculate_ages" in name
+        ):
+            calc_found = True
+
+    assert main_found, "Should find main function"
+    assert calc_found, "Should find calculate_ages function"
     assert len(impl_blocks_found) > 0, "Should find impl blocks"
 
 
@@ -211,9 +228,26 @@ def test_rust_symbol_extraction(rust_project) -> None:
     struct_names = [s.get("name", "") for s in symbols.get("structs", [])]
     function_names = [f.get("name", "") for f in symbols.get("functions", [])]
 
-    assert "Person" in struct_names, "Should find Person struct"
-    assert "main" in function_names, "Should find main function"
-    assert "calculate_ages" in function_names, "Should find calculate_ages function"
+    # Check for Person struct - handle both bytes and strings
+    person_found = False
+    for name in struct_names:
+        if (isinstance(name, bytes) and b"Person" in name) or (isinstance(name, str) and "Person" in name):
+            person_found = True
+            break
+    assert person_found, "Should find Person struct"
+    # Check for main and calculate_ages functions - handle both bytes and strings
+    main_found = False
+    calc_found = False
+    for name in function_names:
+        if (isinstance(name, bytes) and b"main" in name) or (isinstance(name, str) and "main" in name):
+            main_found = True
+        if (isinstance(name, bytes) and b"calculate_ages" in name) or (
+            isinstance(name, str) and "calculate_ages" in name
+        ):
+            calc_found = True
+
+    assert main_found, "Should find main function"
+    assert calc_found, "Should find calculate_ages function"
 
 
 def test_rust_dependency_analysis(rust_project) -> None:
@@ -370,6 +404,21 @@ fn main() {
 
     find_specific_nodes(ast_result["tree"])
 
-    assert "Display" in traits_found, "Should find Display trait"
-    assert "Calculate" in traits_found, "Should find Calculate trait"
-    assert "create_value" in macros_found, "Should find create_value macro"
+    # Check for Display and Calculate traits, and create_value macro - handle both bytes and strings
+    display_found = False
+    calculate_found = False
+    macro_found = False
+
+    for name in traits_found:
+        if (isinstance(name, bytes) and b"Display" in name) or (isinstance(name, str) and "Display" in name):
+            display_found = True
+        if (isinstance(name, bytes) and b"Calculate" in name) or (isinstance(name, str) and "Calculate" in name):
+            calculate_found = True
+
+    for name in macros_found:
+        if (isinstance(name, bytes) and b"create_value" in name) or (isinstance(name, str) and "create_value" in name):
+            macro_found = True
+
+    assert display_found, "Should find Display trait"
+    assert calculate_found, "Should find Calculate trait"
+    assert macro_found, "Should find create_value macro"

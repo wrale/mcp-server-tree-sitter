@@ -2,14 +2,29 @@
 
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, Generator
+from typing import Any, Dict, Generator, Tuple
 
 import pytest
 
-from mcp_server_tree_sitter.language.registry import LanguageRegistry
+from mcp_server_tree_sitter.api import get_language_registry, get_project_registry
 from mcp_server_tree_sitter.models.ast import node_to_dict
-from mcp_server_tree_sitter.models.project import ProjectRegistry
-from mcp_server_tree_sitter.resources.ast import parse_file
+from mcp_server_tree_sitter.models.ast_cursor import node_to_dict_cursor
+from tests.test_helpers import register_project_tool
+
+
+def parse_file(file_path: Path, language: str) -> Tuple[Any, bytes]:
+    """Replacement for the relocated parse_file function."""
+    language_registry = get_language_registry()
+
+    # Get language object
+    # We don't need to store language_obj directly as it's used by ast_parse_file
+    _ = language_registry.get_language(language)
+
+    # Use the tools.ast_operations.parse_file function
+    from mcp_server_tree_sitter.api import get_tree_cache
+    from mcp_server_tree_sitter.tools.ast_operations import parse_file as ast_parse_file
+
+    return ast_parse_file(file_path, language, language_registry, get_tree_cache())
 
 
 @pytest.fixture
@@ -25,15 +40,18 @@ def test_project() -> Generator[Dict[str, Any], None, None]:
             f.write("def hello():\n    print('Hello, world!')\n\nhello()\n")
 
         # Register project
-        project_registry = ProjectRegistry()
+        project_registry = get_project_registry()
         project_name = "cursor_test_project"
-        project_registry.register_project(project_name, str(project_path))
+        register_project_tool(path=str(project_path), name=project_name)
 
         # Yield the project info
         yield {"name": project_name, "path": project_path, "file": "test.py"}
 
         # Clean up
-        project_registry.remove_project(project_name)
+        try:
+            project_registry.remove_project(project_name)
+        except Exception:
+            pass
 
 
 @pytest.mark.diagnostic
@@ -45,7 +63,7 @@ def test_cursor_ast_implementation(test_project, diagnostic) -> None:
 
     try:
         # Get language
-        registry = LanguageRegistry()
+        registry = get_language_registry()
         language = registry.language_for_file(test_project["file"])
         assert language is not None, "Could not detect language for file"
         _language_obj = registry.get_language(language)
@@ -55,7 +73,7 @@ def test_cursor_ast_implementation(test_project, diagnostic) -> None:
         tree, source_bytes = parse_file(file_path, language)
 
         # Get AST using cursor-based approach
-        cursor_ast = node_to_dict(tree.root_node, source_bytes, max_depth=3)
+        cursor_ast = node_to_dict_cursor(tree.root_node, source_bytes, max_depth=3)
 
         # Add results to diagnostic data
         diagnostic.add_detail("cursor_ast_keys", list(cursor_ast.keys()))
@@ -83,7 +101,11 @@ def test_cursor_ast_implementation(test_project, diagnostic) -> None:
 
             # Verify text extraction works if available
             if "text" in function_node:
-                assert "hello" in function_node["text"], "Function text should contain 'hello'"
+                # Check for 'hello' in the text, handling both string and bytes
+                if isinstance(function_node["text"], bytes):
+                    assert b"hello" in function_node["text"], "Function text should contain 'hello'"
+                else:
+                    assert "hello" in function_node["text"], "Function text should contain 'hello'"
 
         # Success!
         diagnostic.add_detail("cursor_ast_success", True)
@@ -163,7 +185,7 @@ if __name__ == "__main__":
             )
 
         # Get language
-        registry = LanguageRegistry()
+        registry = get_language_registry()
         language = registry.language_for_file("large.py")
         assert language is not None, "Could not detect language for large.py"
         _language_obj = registry.get_language(language)

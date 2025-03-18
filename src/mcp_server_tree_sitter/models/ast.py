@@ -69,8 +69,10 @@ def summarize_node(node: Any, source_bytes: Optional[bytes] = None) -> Dict[str,
     # Add a short text snippet if source is available
     if source_bytes:
         try:
-            # Use helper function to get text safely
-            text = get_node_text(safe_node, source_bytes)
+            # Use helper function to get text safely - make sure to decode
+            text = get_node_text(safe_node, source_bytes, decode=True)
+            if isinstance(text, bytes):
+                text = text.decode("utf-8", errors="replace")
             lines = text.splitlines()
             if lines:
                 snippet = lines[0][:50]
@@ -106,10 +108,34 @@ def find_node_at_position(root_node: Any, row: int, column: int) -> Optional[Any
     cursor = walk_tree(safe_node)
     current_best = cursor.node
 
+    # Special handling for function definitions and identifiers
+    def check_for_specific_nodes(node: Any) -> Optional[Any]:
+        # For function definitions, check if position is over the function name
+        if node.type == "function_definition":
+            for child in node.children:
+                if child.type in ["identifier", "name"]:
+                    if (
+                        child.start_point[0] <= row <= child.end_point[0]
+                        and child.start_point[1] <= column <= child.end_point[1]
+                    ):
+                        return child
+        return None
+
+    # First check if we have a specific node like a function name
+    specific_node = check_for_specific_nodes(safe_node)
+    if specific_node:
+        return specific_node
+
     while cursor.goto_first_child():
         # If current node contains the point, it's better than the parent
         if cursor.node is not None and cursor.node.start_point <= point <= cursor.node.end_point:
             current_best = cursor.node
+
+            # Check for specific nodes like identifiers
+            specific_node = check_for_specific_nodes(cursor.node)
+            if specific_node:
+                return specific_node
+
             continue  # Continue to first child
 
         # If first child doesn't contain point, try siblings
@@ -121,6 +147,12 @@ def find_node_at_position(root_node: Any, row: int, column: int) -> Optional[Any
         while cursor.goto_next_sibling():
             if cursor.node is not None and cursor.node.start_point <= point <= cursor.node.end_point:
                 current_best = cursor.node
+
+                # Check for specific nodes
+                specific_node = check_for_specific_nodes(cursor.node)
+                if specific_node:
+                    return specific_node
+
                 found_in_sibling = True
                 break
 
