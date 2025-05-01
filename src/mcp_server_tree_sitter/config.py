@@ -112,6 +112,47 @@ class ServerConfig(BaseModel):
             if log_level is not None:
                 config.log_level = log_level
 
+        # ------------------------------------------------------------------
+        # Generic 12-factor env support: MCP_TS_<SECTION>__<KEY>=VALUE
+        # e.g. MCP_TS_CACHE__MAX_SIZE_MB=512
+        # ------------------------------------------------------------------
+        for env_key, env_val in os.environ.items():
+            if not env_key.startswith("MCP_TS_") or "__" not in env_key:
+                continue
+
+            raw_key = env_key[len("MCP_TS_") :]
+            section, key = raw_key.split("__", 1)
+            section = section.lower()
+            key = key.lower()
+
+            # Try nested section first
+            if hasattr(config, section):
+                section_obj = getattr(config, section)
+                if hasattr(section_obj, key):
+                    current_val = getattr(section_obj, key)
+
+                    # Convert to the existing field type
+                    if isinstance(current_val, bool):
+                        converted_val = str(env_val).lower() == "true"
+                    elif isinstance(current_val, int):
+                        try:
+                            converted_val = int(env_val)
+                        except ValueError:
+                            # Skip invalid integer
+                            continue
+                    elif isinstance(current_val, list):
+                        # Comma-separated list
+                        converted_val = [item.strip() for item in env_val.split(",") if item.strip()]
+                    else:
+                        converted_val = env_val
+
+                    setattr(section_obj, key, converted_val)
+                    continue  # done; go to next env var
+
+            # Fallback: top-level attribute with single key
+            if hasattr(config, section):
+                setattr(config, section, env_val)
+
         return config
 
 
@@ -120,7 +161,8 @@ class ConfigurationManager:
 
     def __init__(self, initial_config: Optional[ServerConfig] = None):
         """Initialize with optional initial configuration."""
-        self._config = initial_config or ServerConfig()
+        # Load defaults overridden by environment variables (12-factor style)
+        self._config = initial_config or ServerConfig.from_env()
         self._logger = logging.getLogger(__name__)
 
     def get_config(self) -> ServerConfig:
