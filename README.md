@@ -2,6 +2,10 @@
 
 A Model Context Protocol (MCP) server that provides code analysis capabilities using tree-sitter, designed to give Claude intelligent access to codebases with appropriate context management.
 
+<a href="https://glama.ai/mcp/servers/@wrale/mcp-server-tree-sitter">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@wrale/mcp-server-tree-sitter/badge" alt="mcp-server-tree-sitter MCP server" />
+</a>
+
 ## Features
 
 - 🔍 **Flexible Exploration**: Examine code at multiple levels of granularity
