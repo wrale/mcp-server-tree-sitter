@@ -87,3 +87,34 @@ def test_config_manager_to_dict():
     assert "security" in config_dict
     assert "language" in config_dict
     assert config_dict["cache"]["max_size_mb"] == 100
+
+
+def test_env_overrides_defaults(monkeypatch):
+    """Environment variables should override hard-coded defaults."""
+    monkeypatch.setenv("MCP_TS_CACHE_MAX_SIZE_MB", "512")
+
+    from mcp_server_tree_sitter.config import ConfigurationManager
+
+    mgr = ConfigurationManager()
+    cfg = mgr.get_config()
+
+    assert cfg.cache.max_size_mb == 512, "Environment variable should override default value"
+    # ensure other defaults stay intact
+    assert cfg.security.max_file_size_mb == 5
+    assert cfg.language.default_max_depth == 5
+
+
+def test_env_overrides_yaml(temp_yaml_file, monkeypatch):
+    """Environment variables should take precedence over YAML values."""
+    # YAML sets 256; env var must win with 1024
+    monkeypatch.setenv("MCP_TS_CACHE_MAX_SIZE_MB", "1024")
+    monkeypatch.setenv("MCP_TS_SECURITY_MAX_FILE_SIZE_MB", "15")
+
+    from mcp_server_tree_sitter.config import ConfigurationManager
+
+    mgr = ConfigurationManager()
+    mgr.load_from_file(temp_yaml_file)
+    cfg = mgr.get_config()
+
+    assert cfg.cache.max_size_mb == 1024, "Environment variable should override YAML value"
+    assert cfg.security.max_file_size_mb == 15, "Environment variable should override YAML value"

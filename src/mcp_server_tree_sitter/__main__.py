@@ -1,16 +1,16 @@
 """Main entry point for mcp-server-tree-sitter."""
 
 import argparse
-import logging
+import os
 import sys
 
+from .bootstrap import get_logger, update_log_levels
 from .config import load_config
 from .context import global_context
 from .server import mcp
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-logger = logging.getLogger(__name__)
+# Get a properly configured logger
+logger = get_logger(__name__)
 
 
 def main() -> int:
@@ -25,7 +25,10 @@ def main() -> int:
 
     # Set up logging level
     if args.debug:
-        logging.getLogger().setLevel(logging.DEBUG)
+        # Override with command-line debug flag
+        update_log_levels("DEBUG")
+        # Set environment variable for consistency with other modules
+        os.environ["MCP_TS_LOG_LEVEL"] = "DEBUG"
         logger.debug("Debug logging enabled")
 
     # Load configuration

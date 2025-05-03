@@ -5,9 +5,10 @@ and provide a cleaner interface for interacting with the application's
 components while supporting dependency injection.
 """
 
-import logging
 from typing import Any, Dict, List, Optional
 
+# Import logging from bootstrap package
+from .bootstrap import get_logger, update_log_levels
 from .cache.parser_cache import TreeCache
 from .config import ConfigurationManager, ServerConfig
 from .di import get_container
@@ -15,7 +16,7 @@ from .exceptions import ProjectError
 from .language.registry import LanguageRegistry
 from .models.project import ProjectRegistry
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ServerContext:
@@ -111,33 +112,10 @@ class ServerContext:
         if log_level is not None:
             logger.info(f"Setting log_level to {log_level}")
             self.config_manager.update_value("log_level", log_level)
-            # Apply log level to logger
-            log_level_value = getattr(logging, log_level, None)
-            if log_level_value:
-                # Get the package root logger
-                root_logger = logging.getLogger("mcp_server_tree_sitter")
 
-                # Get all existing loggers in our package
-                existing_loggers = []
-                for name in logging.root.manager.loggerDict:
-                    if name == "mcp_server_tree_sitter" or name.startswith("mcp_server_tree_sitter."):
-                        existing_loggers.append(logging.getLogger(name))
-
-                # Set level on the root logger
-                root_logger.setLevel(log_level_value)
-
-                # Set level on all package loggers and adjust propagation
-                for logger_obj in existing_loggers:
-                    logger_obj.setLevel(log_level_value)
-
-                    # For non-DEBUG levels, disable propagation to ensure our level setting takes effect
-                    if log_level in ["INFO", "WARNING", "ERROR", "CRITICAL"]:
-                        logger_obj.propagate = False
-
-                logger.info(
-                    f"Applied log level {log_level} to all mcp_server_tree_sitter loggers "
-                    f"({len(existing_loggers)} found)"
-                )
+            # Apply log level using centralized bootstrap function
+            update_log_levels(log_level)
+            logger.info(f"Applied log level {log_level} to mcp_server_tree_sitter loggers")
 
         # Return current config as dict
         return self.config_manager.to_dict()

@@ -4,15 +4,16 @@ This module provides a central container for managing all application dependenci
 replacing the global variables and singletons previously used throughout the codebase.
 """
 
-import logging
 from typing import Any, Dict
 
+# Import logging from bootstrap package
+from .bootstrap import get_logger
 from .cache.parser_cache import TreeCache
 from .config import ConfigurationManager, ServerConfig
 from .language.registry import LanguageRegistry
 from .models.project import ProjectRegistry
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class DependencyContainer:

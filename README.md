@@ -1,6 +1,6 @@
 # MCP Tree-sitter Server
 
-A Model Context Protocol (MCP) server that provides code analysis capabilities using tree-sitter, designed to give Claude intelligent access to codebases with appropriate context management.
+A Model Context Protocol (MCP) server that provides code analysis capabilities using tree-sitter, designed to give AI assistants intelligent access to codebases with appropriate context management. Claude Desktop is the reference implementation target.
 
 <a href="https://glama.ai/mcp/servers/@wrale/mcp-server-tree-sitter">
   <img width="380" height="200" src="https://glama.ai/mcp/servers/@wrale/mcp-server-tree-sitter/badge" alt="mcp-server-tree-sitter MCP server" />
@@ -283,6 +283,23 @@ Load it with:
 configure(config_path="/path/to/config.yaml")
 ```
 
+### Logging Configuration
+
+The server's logging verbosity can be controlled using environment variables:
+
+```bash
+# Enable detailed debug logging
+export MCP_TS_LOG_LEVEL=DEBUG
+
+# Use normal informational logging (default)
+export MCP_TS_LOG_LEVEL=INFO
+
+# Only show warning and error messages
+export MCP_TS_LOG_LEVEL=WARNING
+```
+
+For comprehensive information about logging configuration, please refer to the [logging documentation](docs/logging.md).
+
 ### About preferred_languages
 
 The `preferred_languages` setting controls which language parsers are pre-loaded at server startup rather than on-demand. This provides several benefits:
@@ -307,10 +324,38 @@ export MCP_TS_LOG_LEVEL=DEBUG
 export MCP_TS_CONFIG_PATH=/path/to/config.yaml
 ```
 
+Environment variables use the format `MCP_TS_SECTION_SETTING` (e.g., `MCP_TS_CACHE_MAX_SIZE_MB`) for section settings, or `MCP_TS_SETTING` (e.g., `MCP_TS_LOG_LEVEL`) for top-level settings.
+
+Configuration values are applied in this order of precedence:
+1. Environment variables (highest)
+2. Values set via `configure()` calls
+3. YAML configuration file
+4. Default values (lowest)
+
 The server will look for configuration in:
 1. Path specified in `configure()` call
 2. Path specified by `MCP_TS_CONFIG_PATH` environment variable
 3. Default location: `~/.config/tree-sitter/config.yaml`
+
+## For Developers
+
+### Diagnostic Capabilities
+
+The MCP Tree-sitter Server includes a diagnostic framework to help identify and fix issues:
+
+```bash
+# Run diagnostic tests
+make test-diagnostics
+
+# CI-friendly version (won't fail the build on diagnostic issues)
+make test-diagnostics-ci
+```
+
+Diagnostic tests provide detailed information about the server's behavior and can help isolate specific issues. For more information about the diagnostic framework, please see the [diagnostics documentation](docs/diagnostics.md).
+
+### Type Safety Considerations
+
+The MCP Tree-sitter Server maintains type safety when interfacing with tree-sitter libraries through careful design patterns and protocols. If you're extending the codebase, please review the [type safety guide](docs/tree-sitter-type-safety.md) for important information about handling tree-sitter API variations.
 
 ## Available Resources
 

@@ -235,6 +235,40 @@ export MCP_TS_CONFIG_PATH=/path/to/config.yaml
 mcp run mcp_server_tree_sitter.server
 ```
 
+Environment variables use the format `MCP_TS_SECTION_SETTING` where:
+- `MCP_TS_` is the required prefix for all environment variables
+- `SECTION` corresponds to a configuration section (e.g., `CACHE`, `SECURITY`, `LANGUAGE`)
+- `SETTING` corresponds to a specific setting within that section (e.g., `MAX_SIZE_MB`, `MAX_FILE_SIZE_MB`)
+
+For top-level settings like `log_level`, the format is simply `MCP_TS_SETTING` (e.g., `MCP_TS_LOG_LEVEL`).
+
+#### Configuration Precedence
+
+The server follows this precedence order when determining configuration values:
+
+1. **Environment Variables** (highest precedence)
+2. **Explicit Updates** via `update_value()`
+3. **YAML Configuration** from file
+4. **Default Values** (lowest precedence)
+
+This means environment variables will always override values from other sources.
+
+##### Reasoning for this Precedence Order
+
+This precedence model was chosen for several important reasons:
+
+1. **Containerization compatibility**: Environment variables are the standard way to configure applications in containerized environments like Docker and Kubernetes. Having them at the highest precedence ensures compatibility with modern deployment practices.
+
+2. **Operational control**: System administrators and DevOps teams can set environment variables to enforce certain behaviors without worrying about code accidentally or intentionally overriding those settings.
+
+3. **Security boundaries**: Critical security settings like `max_file_size_mb` are better protected when environment variables take precedence, creating a hard boundary that code cannot override.
+
+4. **Debugging convenience**: Setting `MCP_TS_LOG_LEVEL=DEBUG` should reliably increase logging verbosity regardless of other configuration sources, making troubleshooting easier.
+
+5. **Runtime adjustability**: Having explicit updates second in precedence allows for runtime configuration changes that don't persist beyond the current session, unlike environment variables which might be set system-wide.
+
+6. **Fallback clarity**: With this model, it's clear that YAML provides the persistent configuration and defaults serve as the ultimate fallback, leading to predictable behavior.
+
 ## Default Configuration Locations
 
 The server will look for configuration files in the following locations:

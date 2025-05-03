@@ -1,11 +1,11 @@
 """MCP server implementation for Tree-sitter with dependency injection."""
 
-import logging
 import os
 from typing import Any, Dict, Optional, Tuple
 
 from mcp.server.fastmcp import FastMCP
 
+from .bootstrap import get_logger, update_log_levels
 from .config import ServerConfig
 from .di import DependencyContainer, get_container
 
@@ -13,7 +13,7 @@ from .di import DependencyContainer, get_container
 mcp = FastMCP("tree_sitter")
 
 # Set up logger
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def configure_with_context(
@@ -82,19 +82,9 @@ def configure_with_context(
         logger.info(f"Setting log_level to {log_level}")
         config_manager.update_value("log_level", log_level)
 
-        # Apply log level directly to loggers
-        log_level_value = getattr(logging, log_level, None)
-        if log_level_value is not None:
-            # Apply to root logger - this should cascade to all child loggers unless they override it
-            root_logger = logging.getLogger("mcp_server_tree_sitter")
-            root_logger.setLevel(log_level_value)
-
-            # Override on all existing loggers to ensure immediate propagation
-            for name in logging.root.manager.loggerDict:
-                if name == "mcp_server_tree_sitter" or name.startswith("mcp_server_tree_sitter."):
-                    logging.getLogger(name).setLevel(log_level_value)
-
-            logger.info(f"Applied log level {log_level} to mcp_server_tree_sitter loggers")
+        # Apply log level using already imported update_log_levels
+        update_log_levels(log_level)
+        logger.info(f"Applied log level {log_level} to mcp_server_tree_sitter loggers")
 
     # Get final configuration
     config = config_manager.get_config()

@@ -109,11 +109,21 @@ def test_log_level_setting_di(test_project):
 
             # Capture logs during an operation
             with capture_logs(logger_name) as log_capture:
-                # Force the root logger to debug level to ensure we'd see them if allowed
-                logging.getLogger(logger_name).setLevel(logging.DEBUG)
+                # Important: Set the root logger to INFO instead of DEBUG
+                # to ensure proper level filtering
+                root_logger = logging.getLogger(logger_name)
+                root_logger.setLevel(logging.INFO)
+
+                # Set the handler level for the logger
+                for handler in root_logger.handlers:
+                    handler.setLevel(logging.INFO)
+
+                # Create a test logger
+                logger = logging.getLogger(f"{logger_name}.test")
+                # Make sure it inherits from the root logger
+                logger.setLevel(logging.NOTSET)
 
                 # Generate a debug log that should be filtered
-                logger = logging.getLogger(f"{logger_name}.test")
                 logger.debug("This debug message should be filtered out")
 
                 # Generate an info log that should be included

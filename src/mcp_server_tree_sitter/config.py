@@ -1,4 +1,15 @@
-"""Configuration management with explicit manager class."""
+"""Configuration management with explicit manager class.
+
+Environment variables can be used to override configuration settings with the following format:
+- MCP_TS_SECTION_SETTING - For section settings (e.g., MCP_TS_CACHE_MAX_SIZE_MB)
+- MCP_TS_SETTING - For top-level settings (e.g., MCP_TS_LOG_LEVEL)
+
+The precedence order for configuration is:
+1. Environment variables (highest)
+2. Explicit updates via update_value()
+3. YAML configuration from file
+4. Default values (lowest)
+"""
 
 import logging
 import os
@@ -7,6 +18,11 @@ from typing import Any, Dict, List, Optional, Union
 
 import yaml
 from pydantic import BaseModel, Field
+
+# Import logging from bootstrap package
+from .bootstrap import get_logger, update_log_levels
+
+logger = get_logger(__name__)
 
 
 class CacheConfig(BaseModel):
@@ -63,7 +79,13 @@ class ServerConfig(BaseModel):
                 logger.warning(f"Config file is empty or contains only comments: {path}")
                 return cls()
 
-            return cls(**config_data)
+            # Create config from file
+            config = cls(**config_data)
+
+            # Apply environment variables on top of file config
+            update_config_from_env(config)
+
+            return config
         except Exception as e:
             logger.error(f"Error loading configuration from {path}: {e}")
             import traceback
@@ -75,44 +97,103 @@ class ServerConfig(BaseModel):
     def from_env(cls) -> "ServerConfig":
         """Load configuration from environment variables."""
         config = cls()
-
-        # Example of loading from env vars
-        if os.environ.get("MCP_TS_CACHE_ENABLED"):
-            cache_enabled = os.environ.get("MCP_TS_CACHE_ENABLED")
-            if cache_enabled is not None:
-                config.cache.enabled = cache_enabled.lower() == "true"
-
-        if os.environ.get("MCP_TS_CACHE_MAX_SIZE_MB"):
-            max_size = os.environ.get("MCP_TS_CACHE_MAX_SIZE_MB")
-            if max_size is not None:
-                config.cache.max_size_mb = int(max_size)
-
-        if os.environ.get("MCP_TS_CACHE_TTL_SECONDS"):
-            ttl = os.environ.get("MCP_TS_CACHE_TTL_SECONDS")
-            if ttl is not None:
-                config.cache.ttl_seconds = int(ttl)
-
-        if os.environ.get("MCP_TS_SECURITY_MAX_FILE_SIZE_MB"):
-            max_file_size = os.environ.get("MCP_TS_SECURITY_MAX_FILE_SIZE_MB")
-            if max_file_size is not None:
-                config.security.max_file_size_mb = int(max_file_size)
-
-        if os.environ.get("MCP_TS_LANGUAGE_AUTO_INSTALL"):
-            auto_install = os.environ.get("MCP_TS_LANGUAGE_AUTO_INSTALL")
-            if auto_install is not None:
-                config.language.auto_install = auto_install.lower() == "true"
-
-        if os.environ.get("MCP_TS_LANGUAGE_DEFAULT_MAX_DEPTH"):
-            default_max_depth = os.environ.get("MCP_TS_LANGUAGE_DEFAULT_MAX_DEPTH")
-            if default_max_depth is not None:
-                config.language.default_max_depth = int(default_max_depth)
-
-        if os.environ.get("MCP_TS_LOG_LEVEL"):
-            log_level = os.environ.get("MCP_TS_LOG_LEVEL")
-            if log_level is not None:
-                config.log_level = log_level
-
+        update_config_from_env(config)
         return config
+
+
+def update_config_from_env(config: ServerConfig) -> None:
+    """Update configuration from environment variables.
+
+    This function applies all environment variables with the MCP_TS_ prefix
+    to the provided config object, using the single underscore format only.
+
+    Args:
+        config: The ServerConfig object to update with environment variables
+    """
+    logger = logging.getLogger(__name__)
+    env_prefix = "MCP_TS_"
+
+    # Get all environment variables with our prefix
+    env_vars = {k: v for k, v in os.environ.items() if k.startswith(env_prefix)}
+
+    # Process the environment variables
+    for env_name, env_value in env_vars.items():
+        # Remove the prefix
+        key = env_name[len(env_prefix) :]
+        logger.debug(f"Processing environment variable: {env_name}, key after prefix removal: {key}")
+
+        # Single underscore format only (MCP_TS_CACHE_MAX_SIZE_MB)
+        # If the config has a section matching the first part, use it
+        # Otherwise, it might be a top-level setting
+        parts = key.lower().split("_")
+
+        # Check if first part is a valid section
+        if len(parts) > 1 and hasattr(config, parts[0]):
+            section = parts[0]
+            # All remaining parts form the setting name
+            setting = "_".join(parts[1:])
+            logger.debug(f"Single underscore format: section={section}, setting={setting}")
+        else:
+            # No section match found, treat as top-level setting
+            section = None
+            setting = key.lower()
+            logger.debug(f"Top-level setting: {setting}")
+
+        # Apply the setting to the configuration
+        if section is None:
+            # Top-level setting
+            if hasattr(config, setting):
+                orig_value = getattr(config, setting)
+                new_value = _convert_value(env_value, orig_value)
+                setattr(config, setting, new_value)
+                logger.info(f"Applied environment variable {env_name} to {setting}: {orig_value} -> {new_value}")
+            else:
+                logger.warning(f"Unknown top-level setting in environment variable {env_name}: {setting}")
+        elif hasattr(config, section):
+            # Section setting
+            section_obj = getattr(config, section)
+            if hasattr(section_obj, setting):
+                # Convert the value to the appropriate type
+                orig_value = getattr(section_obj, setting)
+                new_value = _convert_value(env_value, orig_value)
+                setattr(section_obj, setting, new_value)
+                logger.info(
+                    f"Applied environment variable {env_name} to {section}.{setting}: {orig_value} -> {new_value}"
+                )
+            else:
+                logger.warning(f"Unknown setting {setting} in section {section} from environment variable {env_name}")
+
+
+def _convert_value(value_str: str, current_value: Any) -> Any:
+    """Convert string value from environment variable to the appropriate type.
+
+    Args:
+        value_str: The string value from the environment variable
+        current_value: The current value to determine the type
+
+    Returns:
+        The converted value with the appropriate type, or the original value if conversion fails
+    """
+    logger = logging.getLogger(__name__)
+
+    # Handle different types
+    try:
+        if isinstance(current_value, bool):
+            return value_str.lower() in ("true", "yes", "1", "y", "t", "on")
+        elif isinstance(current_value, int):
+            return int(value_str)
+        elif isinstance(current_value, float):
+            return float(value_str)
+        elif isinstance(current_value, list):
+            # Convert comma-separated string to list
+            return [item.strip() for item in value_str.split(",")]
+        else:
+            # Default to string
+            return value_str
+    except (ValueError, TypeError) as e:
+        # If conversion fails, log a warning and return the original value
+        logger.warning(f"Failed to convert value '{value_str}' to type {type(current_value).__name__}: {e}")
+        return current_value
 
 
 class ConfigurationManager:
@@ -122,6 +203,22 @@ class ConfigurationManager:
         """Initialize with optional initial configuration."""
         self._config = initial_config or ServerConfig()
         self._logger = logging.getLogger(__name__)
+
+        # Apply environment variables to the initial configuration
+        # Log before state for debugging
+        self._logger.debug(
+            f"Before applying env vars in __init__: cache.max_size_mb = {self._config.cache.max_size_mb}, "
+            f"security.max_file_size_mb = {self._config.security.max_file_size_mb}"
+        )
+
+        # Apply environment variables
+        update_config_from_env(self._config)
+
+        # Log after state for debugging
+        self._logger.debug(
+            f"After applying env vars in __init__: cache.max_size_mb = {self._config.cache.max_size_mb}, "
+            f"security.max_file_size_mb = {self._config.security.max_file_size_mb}"
+        )
 
     def get_config(self) -> ServerConfig:
         """Get the current configuration."""
@@ -196,6 +293,17 @@ class ConfigurationManager:
                 f"security.max_file_size_mb = {self._config.security.max_file_size_mb}"
             )
 
+            # Apply environment variables AFTER loading YAML
+            # This ensures environment variables have highest precedence
+            self._logger.info("Applying environment variables to override YAML settings")
+            update_config_from_env(self._config)
+
+            # Log after applying environment variables to show final state
+            self._logger.info(
+                f"After applying env vars: cache.max_size_mb = {self._config.cache.max_size_mb}, "
+                f"security.max_file_size_mb = {self._config.security.max_file_size_mb}"
+            )
+
             # Apply configuration to dependencies
             try:
                 from .di import get_container
@@ -211,21 +319,9 @@ class ConfigurationManager:
                 container.tree_cache.set_max_size_mb(self._config.cache.max_size_mb)
                 container.tree_cache.set_ttl_seconds(self._config.cache.ttl_seconds)
 
-                # Update logging configuration
-                log_level_value = getattr(logging, self._config.log_level, None)
-                if log_level_value:
-                    # Apply to root logger and all existing loggers
-                    root_logger = logging.getLogger("mcp_server_tree_sitter")
-                    root_logger.setLevel(log_level_value)
-
-                    # Override on all existing loggers to ensure immediate propagation
-                    for name in logging.root.manager.loggerDict:
-                        if name == "mcp_server_tree_sitter" or name.startswith("mcp_server_tree_sitter."):
-                            logging.getLogger(name).setLevel(log_level_value)
-
-                    self._logger.info(
-                        f"Applied log level {self._config.log_level} to all mcp_server_tree_sitter loggers"
-                    )
+                # Update logging configuration using centralized bootstrap module
+                update_log_levels(self._config.log_level)
+                self._logger.info(f"Applied log level {self._config.log_level} to mcp_server_tree_sitter loggers")
 
                 self._logger.info("Applied configuration to dependencies")
             except (ImportError, AttributeError) as e:
@@ -246,6 +342,9 @@ class ConfigurationManager:
         """Update a specific configuration value by dot-notation path."""
         parts = path.split(".")
 
+        # Store original value for logging
+        old_value = None
+
         # Handle two levels deep for now (e.g., "cache.max_size_mb")
         if len(parts) == 2:
             section, key = parts
@@ -253,8 +352,9 @@ class ConfigurationManager:
             if hasattr(self._config, section):
                 section_obj = getattr(self._config, section)
                 if hasattr(section_obj, key):
+                    old_value = getattr(section_obj, key)
                     setattr(section_obj, key, value)
-                    self._logger.debug(f"Updated config value {path} to {value}")
+                    self._logger.debug(f"Updated config value {path} from {old_value} to {value}")
                 else:
                     self._logger.warning(f"Unknown config key: {key} in section {section}")
             else:
@@ -262,25 +362,22 @@ class ConfigurationManager:
         else:
             # Handle top-level attributes
             if hasattr(self._config, path):
+                old_value = getattr(self._config, path)
                 setattr(self._config, path, value)
-                self._logger.debug(f"Updated config value {path} to {value}")
+                self._logger.debug(f"Updated config value {path} from {old_value} to {value}")
 
-                # If updating log_level, apply it to the logger
+                # If updating log_level, apply it using centralized bootstrap function
                 if path == "log_level":
-                    log_level_value = getattr(logging, value, None)
-                    if log_level_value:
-                        # Apply to root logger and all existing loggers
-                        root_logger = logging.getLogger("mcp_server_tree_sitter")
-                        root_logger.setLevel(log_level_value)
-
-                        # Override on all existing loggers to ensure immediate propagation
-                        for name in logging.root.manager.loggerDict:
-                            if name == "mcp_server_tree_sitter" or name.startswith("mcp_server_tree_sitter."):
-                                logging.getLogger(name).setLevel(log_level_value)
-
-                        self._logger.debug(f"Applied log level {value} to all mcp_server_tree_sitter loggers")
+                    # Use centralized bootstrap module
+                    update_log_levels(value)
+                    self._logger.debug(f"Applied log level {value} to mcp_server_tree_sitter loggers")
             else:
                 self._logger.warning(f"Unknown config path: {path}")
+
+        # After direct updates, ensure environment variables still have precedence
+        # by reapplying them - this ensures consistency in the precedence model
+        # Environment variables > Explicit updates > YAML > Defaults
+        update_config_from_env(self._config)
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert configuration to a dictionary."""
@@ -413,52 +510,53 @@ def load_config(config_path: Optional[str] = None) -> ServerConfig:
         if default_path:
             path_to_load = default_path
             logger.info(f"Using default configuration from {path_to_load}")
-        else:
-            # No config file available, use environment variables
-            logger.info("No configuration file found, using environment variables")
-            env_config = ServerConfig.from_env()
-            update_config_from_new(config, env_config)
-            return config
 
     # Load configuration from the determined path
-    if path_to_load:
+    if path_to_load and path_to_load.exists():
         try:
             logger.info(f"Loading configuration from file: {path_to_load}")
-            if not path_to_load.exists():
-                logger.error(f"Config file does not exist: {path_to_load}")
-                return config
 
             with open(path_to_load, "r") as f:
                 content = f.read()
                 logger.debug(f"File content:\n{content}")
                 if not content.strip():
                     logger.warning("Config file is empty")
-                    return config
+                    # Continue to apply environment variables below
+                else:
+                    # Load new configuration
+                    logger.info(f"Loading configuration from {str(path_to_load)}")
+                    new_config = ServerConfig.from_file(str(path_to_load))
 
-            # Load new configuration
-            logger.info(f"Loading configuration from {str(path_to_load)}")
-            new_config = ServerConfig.from_file(str(path_to_load))
+                    # Debug output before update
+                    logger.info(
+                        f"New configuration loaded: cache.max_size_mb = {new_config.cache.max_size_mb}, "
+                        f"security.max_file_size_mb = {new_config.security.max_file_size_mb}"
+                    )
 
-            # Debug output before update
-            logger.info(
-                f"New configuration loaded: cache.max_size_mb = {new_config.cache.max_size_mb}, "
-                f"security.max_file_size_mb = {new_config.security.max_file_size_mb}"
-            )
+                    # Update the config by copying all attributes
+                    update_config_from_new(config, new_config)
 
-            # Update the config by copying all attributes
-            update_config_from_new(config, new_config)
-
-            # Debug output after update
-            logger.info(f"Successfully loaded configuration from {path_to_load}")
-            logger.debug(
-                f"Updated config: cache.max_size_mb = {config.cache.max_size_mb}, "
-                f"security.max_file_size_mb = {config.security.max_file_size_mb}"
-            )
+                    # Debug output after update
+                    logger.info(f"Successfully loaded configuration from {path_to_load}")
+                    logger.debug(
+                        f"Updated config: cache.max_size_mb = {config.cache.max_size_mb}, "
+                        f"security.max_file_size_mb = {config.security.max_file_size_mb}"
+                    )
 
         except Exception as e:
             logger.error(f"Error loading configuration from {path_to_load}: {e}")
             import traceback
 
             logger.debug(traceback.format_exc())
+
+    # Apply environment variables to configuration
+    # This ensures that environment variables have the highest precedence
+    # regardless of whether a config file was found
+    update_config_from_env(config)
+
+    logger.info(
+        f"Final configuration: cache.max_size_mb = {config.cache.max_size_mb}, "
+        f"security.max_file_size_mb = {config.security.max_file_size_mb}"
+    )
 
     return config
