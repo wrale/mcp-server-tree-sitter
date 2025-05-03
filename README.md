@@ -144,14 +144,79 @@ This persistence is maintained in-memory during the server's lifetime using sing
 
 ### Running as a standalone server
 
+There are several ways to run the server:
+
+#### Using the MCP CLI directly:
+
 ```bash
-mcp run mcp_server_tree_sitter.server
+python -m mcp run mcp_server_tree_sitter.server
+```
+
+#### Using Makefile targets:
+
+```bash
+# Show available targets
+make
+
+# Run the server with default settings
+make mcp-run
+
+# Show help information
+make mcp-run ARGS="--help"
+
+# Show version information
+make mcp-run ARGS="--version"
+
+# Run with custom configuration file
+make mcp-run ARGS="--config /path/to/config.yaml"
+
+# Enable debug logging
+make mcp-run ARGS="--debug"
+
+# Disable parse tree caching
+make mcp-run ARGS="--disable-cache"
+```
+
+#### Using the installed script:
+
+```bash
+# Run the server with default settings
+mcp-server-tree-sitter
+
+# Show help information
+mcp-server-tree-sitter --help
+
+# Show version information
+mcp-server-tree-sitter --version
+
+# Run with custom configuration file
+mcp-server-tree-sitter --config /path/to/config.yaml
+
+# Enable debug logging
+mcp-server-tree-sitter --debug
+
+# Disable parse tree caching
+mcp-server-tree-sitter --disable-cache
 ```
 
 ### Using with the MCP Inspector
 
+Using the MCP CLI directly:
+
 ```bash
-mcp dev mcp_server_tree_sitter.server
+python -m mcp dev mcp_server_tree_sitter.server
+```
+
+Or using the Makefile target:
+
+```bash
+make mcp-dev
+```
+
+You can also pass arguments:
+
+```bash
+make mcp-dev ARGS="--debug"
 ```
 
 ## Usage
@@ -298,7 +363,7 @@ export MCP_TS_LOG_LEVEL=INFO
 export MCP_TS_LOG_LEVEL=WARNING
 ```
 
-For comprehensive information about logging configuration, please refer to the [logging documentation](docs/logging.md).
+For comprehensive information about logging configuration, please refer to the [logging documentation](docs/logging.md). For details on the command-line interface, see the [CLI documentation](docs/cli.md).
 
 ### About preferred_languages
 

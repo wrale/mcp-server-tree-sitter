@@ -16,12 +16,24 @@ logger = get_logger(__name__)
 def main() -> int:
     """Run the server with optional arguments."""
     # Parse command line arguments
-    parser = argparse.ArgumentParser(description="MCP Tree-sitter Server")
+    parser = argparse.ArgumentParser(description="MCP Tree-sitter Server - Code analysis with tree-sitter")
     parser.add_argument("--config", help="Path to configuration file")
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
     parser.add_argument("--disable-cache", action="store_true", help="Disable parse tree caching")
+    parser.add_argument("--version", action="store_true", help="Show version and exit")
 
     args = parser.parse_args()
+
+    # Handle version display
+    if args.version:
+        import importlib.metadata
+
+        try:
+            version = importlib.metadata.version("mcp-server-tree-sitter")
+            print(f"mcp-server-tree-sitter version {version}")
+        except importlib.metadata.PackageNotFoundError:
+            print("mcp-server-tree-sitter (version unknown - package not installed)")
+        return 0
 
     # Set up logging level
     if args.debug:

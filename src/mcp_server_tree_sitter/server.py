@@ -101,9 +101,48 @@ def configure_with_context(
 
 
 def main() -> None:
-    """Run the server"""
+    """Run the server with command-line argument handling"""
+    import argparse
+    import sys
+
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="MCP Tree-sitter Server - Code analysis with tree-sitter")
+    parser.add_argument("--config", help="Path to configuration file")
+    parser.add_argument("--debug", action="store_true", help="Enable debug logging")
+    parser.add_argument("--disable-cache", action="store_true", help="Disable parse tree caching")
+    parser.add_argument("--version", action="store_true", help="Show version and exit")
+
+    # Parse arguments - this handles --help automatically
+    args = parser.parse_args()
+
+    # Handle version display
+    if args.version:
+        import importlib.metadata
+
+        try:
+            version = importlib.metadata.version("mcp-server-tree-sitter")
+            print(f"mcp-server-tree-sitter version {version}")
+        except importlib.metadata.PackageNotFoundError:
+            print("mcp-server-tree-sitter (version unknown - package not installed)")
+        sys.exit(0)
+
+    # Set up debug logging if requested
+    if args.debug:
+        update_log_levels("DEBUG")
+        logger.debug("Debug logging enabled")
+
     # Get the container
     container = get_container()
+
+    # Configure with provided options
+    if args.config:
+        logger.info(f"Loading configuration from {args.config}")
+        container.config_manager.load_from_file(args.config)
+
+    if args.disable_cache:
+        logger.info("Disabling parse tree cache as requested")
+        container.config_manager.update_value("cache.enabled", False)
+        container.tree_cache.set_enabled(False)
 
     # Register capabilities and tools
     from .capabilities import register_capabilities
@@ -120,6 +159,7 @@ def main() -> None:
     container.tree_cache.set_enabled(config.cache.enabled)
 
     # Run the server
+    logger.info("Starting MCP Tree-sitter Server")
     mcp.run()
 
 
