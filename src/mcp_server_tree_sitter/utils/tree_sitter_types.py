@@ -72,6 +72,20 @@ class CursorProtocol(Protocol):
     def goto_parent(self) -> bool: ...
 
 
+class QueryProtocol(Protocol):
+    """Protocol for Tree-sitter Query class."""
+
+    def captures(self, node: Any) -> Any: ...
+    def matches(self, node: Any) -> Any: ...
+
+
+class QueryCursorProtocol(Protocol):
+    """Protocol for Tree-sitter QueryCursor class."""
+
+    def captures(self, node: Any, source: bytes = b"") -> Any: ...
+    def matches(self, node: Any) -> Any: ...
+
+
 # Type variables for type safety
 T = TypeVar("T")
 
@@ -80,6 +94,8 @@ try:
     from tree_sitter import Language as _Language
     from tree_sitter import Node as _Node
     from tree_sitter import Parser as _Parser
+    from tree_sitter import Query as _Query
+    from tree_sitter import QueryCursor as _QueryCursor
     from tree_sitter import Tree as _Tree
     from tree_sitter import TreeCursor as _TreeCursor
 
@@ -89,10 +105,14 @@ try:
     Tree = _Tree
     Node = _Node
     TreeCursor = _TreeCursor
+    Query = _Query
+    QueryCursor = _QueryCursor
     HAS_TREE_SITTER = True
+    HAS_QUERY_CURSOR = True
 except ImportError:
     # Create stub classes if tree-sitter is not available
     HAS_TREE_SITTER = False
+    HAS_QUERY_CURSOR = False
 
     class DummyLanguage:
         """Dummy implementation when tree-sitter is not available."""
@@ -196,6 +216,32 @@ except ImportError:
         def root_node(self) -> Any:
             return DummyNode()
 
+    class DummyQuery:
+        """Dummy implementation when tree-sitter is not available."""
+
+        def captures(self, node: Any) -> Any:
+            """Dummy captures method."""
+            return []
+
+        def matches(self, node: Any) -> Any:
+            """Dummy matches method."""
+            return []
+
+    class DummyQueryCursor:
+        """Dummy implementation when tree-sitter is not available."""
+
+        def __init__(self, query: Any = None) -> None:
+            """Initialize with optional query."""
+            self.query = query
+
+        def captures(self, node: Any, source: bytes = b"") -> Any:
+            """Dummy captures method."""
+            return []
+
+        def matches(self, node: Any) -> Any:
+            """Dummy matches method."""
+            return []
+
     # Export dummy types for type checking
     # Declare dummy types for when tree-sitter is not available
     Language = DummyLanguage  # type: ignore
@@ -203,6 +249,8 @@ except ImportError:
     Tree = DummyTree  # type: ignore
     Node = DummyNode  # type: ignore
     TreeCursor = DummyTreeCursor  # type: ignore
+    Query = DummyQuery  # type: ignore
+    QueryCursor = DummyQueryCursor  # type: ignore
 
 
 # Helper function to safely cast to tree-sitter types
@@ -229,3 +277,13 @@ def ensure_node(obj: Any) -> "Node":
 def ensure_cursor(obj: Any) -> "TreeCursor":
     """Safely cast to TreeCursor type."""
     return cast(TreeCursor, obj)
+
+
+def ensure_query(obj: Any) -> "Query":
+    """Safely cast to Query type."""
+    return cast(Query, obj)
+
+
+def ensure_query_cursor(obj: Any) -> "QueryCursor":
+    """Safely cast to QueryCursor type."""
+    return cast(QueryCursor, obj)

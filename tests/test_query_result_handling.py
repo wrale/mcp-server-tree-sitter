@@ -10,6 +10,7 @@ from typing import Any, Dict, Generator, List, Optional
 
 import pytest
 
+from mcp_server_tree_sitter.utils.tree_sitter_helpers import execute_query_captures
 from tests.test_helpers import register_project_tool, run_query
 
 
@@ -186,8 +187,9 @@ def test_direct_query_with_language_pack() -> None:
         query_string = "(function_definition name: (identifier) @name)"
         query = language.query(query_string)
 
-        # Execute the query
-        captures = query.captures(root_node)
+        # Execute the query using the compatibility helper
+        source_bytes = python_code.encode("utf-8")
+        captures = execute_query_captures(query, root_node, source_bytes)
 
         # Verify captures
         assert len(captures) > 0, "Query should return captures"

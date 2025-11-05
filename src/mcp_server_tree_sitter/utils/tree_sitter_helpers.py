@@ -10,15 +10,20 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, Union, c
 # Import tree_cache at runtime as needed to avoid circular imports
 from ..utils.file_io import read_binary_file
 from ..utils.tree_sitter_types import (
+    HAS_QUERY_CURSOR,
     Language,
     Node,
     Parser,
+    Query,
+    QueryCursor,
     Tree,
     TreeCursor,
     ensure_cursor,
     ensure_language,
     ensure_node,
     ensure_parser,
+    ensure_query,
+    ensure_query_cursor,
     ensure_tree,
 )
 
@@ -678,3 +683,57 @@ def find_all_descendants(node: Node, max_depth: Optional[int] = None) -> List[No
         List of all descendant nodes
     """
     return get_node_descendants(node, max_depth)
+
+
+def execute_query_captures(query: Any, node: Any, source_bytes: bytes = b"") -> Any:
+    """
+    Execute a tree-sitter query and return captures using the correct API.
+
+    This function provides compatibility with both tree-sitter 0.25.1+ (which requires
+    QueryCursor) and older versions (which had captures() directly on Query objects).
+
+    Args:
+        query: Query object from language.query()
+        node: Root node to query (typically tree.root_node)
+        source_bytes: Source code as bytes (optional, for some query cursor operations)
+
+    Returns:
+        Query captures in a consistent format (can be dict or list depending on version)
+
+    Raises:
+        Exception: If query execution fails
+
+    Example:
+        >>> language = get_language("python")
+        >>> query = language.query("(function_definition name: (identifier) @name)")
+        >>> captures = execute_query_captures(query, tree.root_node, source_bytes)
+    """
+    # Type-safe casting
+    safe_query = ensure_query(query)
+    safe_node = ensure_node(node)
+
+    # Try to use QueryCursor API (tree-sitter 0.25.1+)
+    if HAS_QUERY_CURSOR:
+        try:
+            # Create a QueryCursor with the query - the query is passed to constructor
+            cursor = QueryCursor(safe_query)
+            safe_cursor = ensure_query_cursor(cursor)
+
+            # Execute query with cursor - just pass the node
+            captures = safe_cursor.captures(safe_node)
+            return captures
+        except (AttributeError, TypeError):
+            # If QueryCursor doesn't work as expected, fall through to old API
+            pass
+
+    # Fall back to old API (direct query.captures())
+    try:
+        captures = safe_query.captures(safe_node)
+        return captures
+    except AttributeError as e:
+        # If neither API works, raise a clear error
+        raise RuntimeError(
+            "Unable to execute query: neither QueryCursor API nor direct "
+            "Query.captures() method is available. Please ensure tree-sitter "
+            "is properly installed and up to date."
+        ) from e

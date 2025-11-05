@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional
 
 from ..exceptions import QueryError, SecurityError
 from ..utils.security import validate_file_access
+from ..utils.tree_sitter_helpers import execute_query_captures
 
 
 def search_text(
@@ -203,7 +204,7 @@ def query_code(
             lang = language_registry.get_language(language)
             query = lang.query(query_string)
 
-            captures = query.captures(tree.root_node)
+            captures = execute_query_captures(query, tree.root_node, source_bytes)
 
             # Handle different return formats from query.captures()
             if isinstance(captures, dict):

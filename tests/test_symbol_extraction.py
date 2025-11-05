@@ -437,14 +437,17 @@ def test_query_based_symbol_extraction(test_project) -> None:
             ) @import
         """
 
-        # Run the queries
+        # Import the helper function
+        from mcp_server_tree_sitter.utils.tree_sitter_helpers import execute_query_captures
+
+        # Run the queries using the compatibility helper
         functions_q = Query(language_obj, function_query)
         classes_q = Query(language_obj, class_query)
         imports_q = Query(language_obj, import_query)
 
-        function_captures = functions_q.captures(tree.root_node)
-        class_captures = classes_q.captures(tree.root_node)
-        import_captures = imports_q.captures(tree.root_node)
+        function_captures = execute_query_captures(functions_q, tree.root_node, content)
+        class_captures = execute_query_captures(classes_q, tree.root_node, content)
+        import_captures = execute_query_captures(imports_q, tree.root_node, content)
 
         # Process and extract unique symbols
         functions: Dict[str, Dict[str, Any]] = {}
