@@ -20,12 +20,12 @@ def test_makefile_target_syntax():
     # We should find at least 3 matches (run, dev, install)
     assert len(mcp_targets) >= 3, "Missing proper mcp invocation in Makefile targets"
 
-    # Check for correct server module reference
-    assert "$(PACKAGE).server" in makefile_content, "Server module reference is incorrect"
+    # MCP CLI expects a file path; we use the launcher run_mcp_server.py:mcp
+    assert "run_mcp_server.py:mcp" in makefile_content, "mcp dev/run should use launcher run_mcp_server.py:mcp"
 
-    # Custom test for mcp-run
-    mcp_run_pattern = r"mcp-run:.*\n\t\$\(UV\) run mcp run \$\(PACKAGE\)\.server"
-    assert re.search(mcp_run_pattern, makefile_content), "mcp-run target is incorrectly formed"
+    # mcp-run and mcp-dev should invoke mcp with the launcher
+    mcp_run_pattern = r"mcp-run:.*\n\t\$\(UV\) run mcp run run_mcp_server\.py:mcp"
+    assert re.search(mcp_run_pattern, makefile_content), "mcp-run target should use run_mcp_server.py:mcp"
 
     # Test that help is the default target
     assert ".PHONY: all help" in makefile_content, "help is not properly declared as .PHONY"
