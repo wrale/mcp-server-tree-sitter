@@ -210,3 +210,28 @@ def extract_node_path(
 
     # Reverse to get root->target order
     return list(reversed(path))
+
+
+def find_enclosing_scope(
+    root_node: Any,
+    source_bytes: bytes,
+    row: int,
+    column: int,
+    language: str,
+) -> Dict[str, Any]:
+    """
+    Find the enclosing scope (function, class, or module) for a position and return its block info.
+
+    Used by get_enclosing_scope(project, path, row, column); does not depend on project or file path.
+
+    Args:
+        root_node: Root node of the parsed tree.
+        source_bytes: Source code bytes.
+        row: Row (0-based).
+        column: Column (0-based).
+        language: Language id (e.g. "python", "javascript").
+
+    Returns:
+        Dict with keys: kind, name, text, start_line, end_line.
+    """
+    raise NotImplementedError("find_enclosing_scope not implemented")

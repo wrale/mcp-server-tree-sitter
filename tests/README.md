@@ -77,6 +77,7 @@ Tests for the MCP Tree-sitter Server. Run with `make test` or `uv run --extra de
 | File | Purpose |
 |------|---------|
 | **test_scope_node_types.py** | Canonical scope kind → per-language node type mapping: Python/JavaScript function/class/module and unknown language/kind. |
+| **test_find_enclosing_scope.py** | Core helper find_enclosing_scope: position in function, on import (module), in class body (class). |
 
 ---
 
