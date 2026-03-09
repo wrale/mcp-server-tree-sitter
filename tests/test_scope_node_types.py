@@ -44,7 +44,7 @@ def test_unknown_language_returns_none():
     assert result is None
 
 
-# --- Enclosure order (Task 2) ---
+# --- Enclosure order ---
 
 
 def test_python_enclosure_order():
@@ -65,7 +65,7 @@ def test_unknown_language_enclosure_returns_default():
     assert result == []
 
 
-# --- node_type_to_kind (Task 2.4) ---
+# --- node_type_to_kind ---
 
 
 def test_node_type_to_kind_python():
