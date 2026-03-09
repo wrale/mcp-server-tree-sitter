@@ -2,6 +2,7 @@
 
 from mcp_server_tree_sitter.language.scope_node_types import (
     ScopeKind,
+    get_enclosure_node_types,
     get_scope_node_type,
 )
 
@@ -40,3 +41,24 @@ def test_unknown_language_returns_none():
     """For unknown language, getter returns None and does not raise."""
     result = get_scope_node_type("unknown_lang", ScopeKind.FUNCTION)
     assert result is None
+
+
+# --- Enclosure order (Task 2) ---
+
+
+def test_python_enclosure_order():
+    """Python returns function_definition, class_definition, module in that order."""
+    result = get_enclosure_node_types("python")
+    assert result == ["function_definition", "class_definition", "module"]
+
+
+def test_javascript_enclosure_order():
+    """JavaScript returns function_declaration, class_declaration, program in that order."""
+    result = get_enclosure_node_types("javascript")
+    assert result == ["function_declaration", "class_declaration", "program"]
+
+
+def test_unknown_language_enclosure_returns_default():
+    """Unknown language returns documented default and does not raise."""
+    result = get_enclosure_node_types("unknown_lang")
+    assert result == []
