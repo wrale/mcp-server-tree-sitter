@@ -203,7 +203,8 @@ def query_code(
             lang = language_registry.get_language(language)
             query = lang.query(query_string)
 
-            captures = query.captures(tree.root_node)
+            from ..utils.tree_sitter_helpers import query_captures
+            captures = query_captures(query, tree.root_node)
 
             # Handle different return formats from query.captures()
             if isinstance(captures, dict):
