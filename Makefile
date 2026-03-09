@@ -180,14 +180,16 @@ run:
 	$(UV) run python -m $(PACKAGE) $(ARGS)
 
 # MCP specific targets
+# The MCP CLI expects a Python file path, not a module name. Use the launcher
+# so that mcp dev / mcp run work from repo root (see run_mcp_server.py).
 # ARGS can be passed like: make mcp-dev ARGS="--help"
 .PHONY: mcp-dev
 mcp-dev:
-	$(UV) run mcp dev $(PACKAGE).server $(ARGS)
+	$(UV) run mcp dev run_mcp_server.py:mcp $(ARGS)
 
 .PHONY: mcp-run
 mcp-run:
-	$(UV) run mcp run $(PACKAGE).server $(ARGS)
+	$(UV) run mcp run run_mcp_server.py:mcp $(ARGS)
 
 .PHONY: mcp-install
 mcp-install:

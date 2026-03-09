@@ -49,24 +49,24 @@ mcp-server-tree-sitter --disable-cache
 
 ## Running with MCP
 
-The server can also be run using the MCP command-line interface:
+The server can also be run using the MCP command-line interface. The MCP CLI expects a **Python file path**, not a module name. From the repo root, use the launcher script:
 
 ```bash
 # Run the server
-mcp run mcp_server_tree_sitter.server
+mcp run run_mcp_server.py:mcp
 
 # Run with the MCP Inspector
-mcp dev mcp_server_tree_sitter.server
+mcp dev run_mcp_server.py:mcp
 ```
 
 You can pass the same arguments to these commands:
 
 ```bash
 # Enable debug logging
-mcp run mcp_server_tree_sitter.server --debug
+mcp run run_mcp_server.py:mcp --debug
 
 # Use a custom configuration file with the inspector
-mcp dev mcp_server_tree_sitter.server --config /path/to/config.yaml
+mcp dev run_mcp_server.py:mcp --config /path/to/config.yaml
 ```
 
 ## Using Makefile Targets

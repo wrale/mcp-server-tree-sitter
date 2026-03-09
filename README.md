@@ -148,10 +148,11 @@ This persistence is maintained in-memory during the server's lifetime using sing
 
 There are several ways to run the server:
 
-#### Using the MCP CLI directly:
+#### Using the MCP CLI directly (from repo root):
 
 ```bash
-python -m mcp run mcp_server_tree_sitter.server
+# The MCP CLI expects a file path; use the launcher script
+python -m mcp run run_mcp_server.py:mcp
 ```
 
 #### Using Makefile targets:
@@ -203,13 +204,14 @@ mcp-server-tree-sitter --disable-cache
 
 ### Using with the MCP Inspector
 
-Using the MCP CLI directly:
+Using the MCP CLI directly (from repo root):
 
 ```bash
-python -m mcp dev mcp_server_tree_sitter.server
+# The MCP CLI expects a file path; use the launcher script
+python -m mcp dev run_mcp_server.py:mcp
 ```
 
-Or using the Makefile target:
+Or using the Makefile target (recommended):
 
 ```bash
 make mcp-dev
