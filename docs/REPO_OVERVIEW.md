@@ -1,8 +1,5 @@
 # MCP Tree-sitter Server — Repository Overview
 
-**Temporary file.** This file lives in `results/` which is in `.gitignore`, so it will not be committed.
-
----
 
 ## What It Is
 
