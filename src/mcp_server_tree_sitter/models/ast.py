@@ -8,7 +8,6 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from ..language.scope_node_types import get_enclosure_node_types, node_type_to_kind
 from ..utils.tree_sitter_helpers import (
-    collect_with_cursor,
     get_node_text,
     walk_tree,
 )
@@ -140,10 +139,6 @@ def find_node_at_position(root_node: Any, row: int, column: int) -> Optional[Any
 
             continue  # Continue to first child
 
-        # If first child doesn't contain point, try siblings
-        cursor.goto_parent()
-        current_best = cursor.node  # Reset current best to parent
-
         # Try siblings
         found_in_sibling = False
         while cursor.goto_next_sibling():
@@ -219,8 +214,9 @@ def find_enclosing_scope(
     source_bytes: bytes,
     row: int,
     column: int,
+    label: str,
     language: str,
-) -> Dict[str, Any]:
+) -> Dict[str, Any] | None:
     """
     Find the enclosing scope (function, class, or module) for a position and return its block info.
 
@@ -231,84 +227,49 @@ def find_enclosing_scope(
         source_bytes: Source code bytes.
         row: Row (0-based).
         column: Column (0-based).
+        label: Text label at the position
         language: Language id (e.g. "python", "javascript").
 
     Returns:
-        Dict with keys: kind, name, text, start_line, end_line.
+        Dict with keys: kind, text, start_line, end_line.
+
+    TODO:
+    - We are not checking the label against the node text. This could be an enhancement to ensure we are returning
+      a scope that actually contains the label, or find nearest scope that contains the label if the position is not
+      accurate.
     """
     safe_root = ensure_node(root_node)
     node = find_node_at_position(safe_root, row, column)
-    if node is None:
-        text = get_node_text(safe_root, source_bytes, decode=True)
-        if isinstance(text, bytes):
-            text = text.decode("utf-8", errors="replace")
-        return {
-            "kind": "module",
-            "name": None,
-            "text": text,
-            "start_line": safe_root.start_point[0],
-            "end_line": safe_root.end_point[0],
-        }
-    # 3.4: Find the smallest node that is in the enclosure list and contains (row, column).
-    # (We don't rely on node.parent; collect all containing scopes from root and pick smallest.)
-    enclosure_types = set(get_enclosure_node_types(language))
-    point = (row, column)
 
-    def containing_scopes(n: Any, _f: Any, _d: Any) -> Any:
-        if n is None or n.type not in enclosure_types:
-            return None
-        if n.start_point <= point <= n.end_point:
-            return n
+    if node is None:
+        # We didn't find any node. This should only happen if the position is outside the root node's span.
+        # In that case, we will return None.
         return None
 
-    candidates = collect_with_cursor(safe_root, containing_scopes)
-    if not candidates:
-        scope_node = safe_root
-    else:
-        # Smallest span = most specific enclosing scope
-        def span_size(n: Any) -> tuple:
-            return (n.end_point[0] - n.start_point[0], n.end_point[1] - n.start_point[1])
+    enclosure_types = set(get_enclosure_node_types(language))
 
-        scope_node = min(candidates, key=span_size)
+    # Lookup the node and its ancestors until we find one that is in the enclosure list (function, class, module), or we reach the root.
+    while node is not None:
+        if node.type in enclosure_types:
+            break
+        node = node.parent
 
-    # 3.5: Resolve kind from node type; extract name (e.g. Python/JS: "name" or "identifier" child).
+    # If we reached the root without finding an enclosure node, we will use the root as the scope node.
+    scope_node = safe_root if node is None else node
+
+    # Resolve kind from node type; extract name (e.g. Python/JS: "name" or "identifier" child).
     scope_kind = node_type_to_kind(language, scope_node.type)
-    kind = scope_kind.value
-    name = _extract_scope_name(scope_node, source_bytes)
-    if name is not None and isinstance(name, bytes):
-        name = name.decode("utf-8", errors="replace")
 
-    # 3.6: Set text and start_line/end_line (0-based), return dict.
+    # Set text and start_line/end_line (0-based), return dict.
     text = get_node_text(scope_node, source_bytes, decode=True)
     if isinstance(text, bytes):
         text = text.decode("utf-8", errors="replace")
+
     start_line = scope_node.start_point[0]
     end_line = scope_node.end_point[0]
     return {
-        "kind": kind,
-        "name": name,
+        "kind": scope_kind.value,
         "text": text,
         "start_line": start_line,
         "end_line": end_line,
     }
-
-
-def _extract_scope_name(scope_node: Any, source_bytes: bytes) -> Optional[str]:
-    """
-    Extract the name of a scope node (function/class). Module has no name.
-
-    Python/JavaScript: child with field "name" or first child of type "identifier".
-    """
-    name_node = None
-    child_by_field = getattr(scope_node, "child_by_field_name", None)
-    if callable(child_by_field):
-        name_node = child_by_field("name")
-    if name_node is None:
-        for child in scope_node.children:
-            if child.type in ("identifier", "name"):
-                name_node = child
-                break
-    if name_node is None:
-        return None
-    name_text = get_node_text(name_node, source_bytes, decode=True)
-    return name_text if isinstance(name_text, str) else name_text.decode("utf-8", errors="replace")
