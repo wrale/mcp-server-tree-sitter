@@ -4,6 +4,7 @@ from mcp_server_tree_sitter.language.scope_node_types import (
     ScopeKind,
     get_enclosure_node_types,
     get_scope_node_type,
+    node_type_to_kind,
 )
 
 
@@ -62,3 +63,26 @@ def test_unknown_language_enclosure_returns_default():
     """Unknown language returns documented default and does not raise."""
     result = get_enclosure_node_types("unknown_lang")
     assert result == []
+
+
+# --- node_type_to_kind (Task 2.4) ---
+
+
+def test_node_type_to_kind_python():
+    """Python: function_definition→FUNCTION, class_definition→CLASS, module→MODULE."""
+    assert node_type_to_kind("python", "function_definition") == ScopeKind.FUNCTION
+    assert node_type_to_kind("python", "class_definition") == ScopeKind.CLASS
+    assert node_type_to_kind("python", "module") == ScopeKind.MODULE
+
+
+def test_node_type_to_kind_javascript():
+    """JavaScript: function_declaration→FUNCTION, class_declaration→CLASS, program→MODULE."""
+    assert node_type_to_kind("javascript", "function_declaration") == ScopeKind.FUNCTION
+    assert node_type_to_kind("javascript", "class_declaration") == ScopeKind.CLASS
+    assert node_type_to_kind("javascript", "program") == ScopeKind.MODULE
+
+
+def test_node_type_to_kind_unknown_returns_default():
+    """Unknown language or unknown node type returns ScopeKind.MODULE and does not raise."""
+    assert node_type_to_kind("unknown_lang", "function_definition") == ScopeKind.MODULE
+    assert node_type_to_kind("python", "unknown_node_type") == ScopeKind.MODULE

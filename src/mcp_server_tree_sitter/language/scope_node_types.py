@@ -1,7 +1,9 @@
 """Canonical scope kind → per-language tree-sitter node type mapping.
 
 Single source of truth for which node type means function/class/module per language.
-Used by enclosure logic (find_enclosing_scope) to be language-agnostic.
+The enclosure order (get_enclosure_node_types) and kind mapping (node_type_to_kind) from
+this module are used by the core helper find_enclosing_scope when walking up the AST
+to find the enclosing scope and resolve its kind.
 
 Supported languages: python, javascript.
 
@@ -63,3 +65,22 @@ def get_enclosure_node_types(language: str) -> List[str]:
         if node_type is not None:
             result.append(node_type)
     return result
+
+
+def node_type_to_kind(language: str, node_type: str) -> ScopeKind:
+    """
+    Return the canonical scope kind for a node type in a language.
+
+    Used when resolving the enclosing scope node to the return kind. Callers can use .value for the string (e.g. in API responses).
+
+    Args:
+        language: Language id (e.g. "python", "javascript").
+        node_type: Tree-sitter node type name (e.g. "function_definition").
+
+    Returns:
+        ScopeKind. For unknown language or unknown node type, returns ScopeKind.MODULE.
+    """
+    for kind in _ENCLOSURE_ORDER:
+        if get_scope_node_type(language, kind) == node_type:
+            return kind
+    return ScopeKind.MODULE
