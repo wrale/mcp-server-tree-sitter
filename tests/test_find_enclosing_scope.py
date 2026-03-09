@@ -37,13 +37,14 @@ def test_position_inside_function_returns_function_scope(python_tree_and_source)
     """T3.1: Position inside function body → dict has five keys, kind function/method, name matches, text contains function, start_line <= row <= end_line."""
     tree, source_bytes = python_tree_and_source
     root = tree.root_node
-    # Row 4 is "    return 1" (inside foo body)
-    result = find_enclosing_scope(root, source_bytes, 4, 4, "python")
+    # Row 3 is "    return 1" (inside foo body)
+    row, col = 3, 4
+    result = find_enclosing_scope(root, source_bytes, row, col, "python")
     assert set(result.keys()) == {"kind", "name", "text", "start_line", "end_line"}
     assert result["kind"] in ("function", "method")
     assert result["name"] == "foo"
     assert "def foo()" in result["text"] and "return 1" in result["text"]
-    assert result["start_line"] <= 4 <= result["end_line"]
+    assert result["start_line"] <= row <= result["end_line"]
 
 
 def test_position_on_import_returns_module_scope(python_tree_and_source):
@@ -59,7 +60,7 @@ def test_position_in_class_body_not_in_method_returns_class_scope(python_tree_an
     """T3.3: Position inside class body but not inside a method → kind is class, text contains class definition."""
     tree, source_bytes = python_tree_and_source
     root = tree.root_node
-    # Row 7 is "    z = 0" (inside Bar, not inside meth)
-    result = find_enclosing_scope(root, source_bytes, 7, 4, "python")
+    # Row 6 is "    z = 0" (inside Bar, not inside meth)
+    result = find_enclosing_scope(root, source_bytes, 6, 4, "python")
     assert result["kind"] == "class"
     assert "class Bar" in result["text"]
