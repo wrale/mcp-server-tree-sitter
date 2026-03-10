@@ -5,6 +5,8 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from tree_sitter import QueryCursor
+
 from ..exceptions import QueryError, SecurityError
 from ..utils.security import validate_file_access
 
@@ -203,7 +205,8 @@ def query_code(
             lang = language_registry.get_language(language)
             query = lang.query(query_string)
 
-            captures = query.captures(tree.root_node)
+            cursor = QueryCursor(query)
+            captures = cursor.captures(tree.root_node)
 
             # Handle different return formats from query.captures()
             if isinstance(captures, dict):
