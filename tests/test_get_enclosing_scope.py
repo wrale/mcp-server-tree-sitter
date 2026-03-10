@@ -303,6 +303,24 @@ function bar() {
         scope = get_enclosing_scope_tool(project_with_multi_scope_js, "test.js", 99, 0, None)
         assert_scope_empty(scope)
 
+    def test_js_constructor_returns_function_scope(self, project_with_constructor_js):
+        """Position inside a JS class constructor() body → function scope (constructor is method_definition)."""
+        # Position inside constructor body block (line with "this.n = n;")
+        scope = get_enclosing_scope_tool(project_with_constructor_js, "box.js", 2, 8, "this")
+        assert_scope_is_function_or_method(scope, "constructor", "this.n = n", row=2)
+
+    @pytest.fixture
+    def project_with_constructor_js(self, tmp_path):
+        source = """class Box {
+    constructor(n) {
+        this.n = n;
+    }
+}
+"""
+        (tmp_path / "box.js").write_text(source, encoding="utf-8")
+        register_project_tool(str(tmp_path), name="enclosing_scope_js_ctor_test", description="JS constructor scope")
+        yield "enclosing_scope_js_ctor_test"
+
 
 class TestGetEnclosingScopeTypeScript:
     """Tests for get_enclosing_scope on TypeScript. Same structure as JavaScript (program, function_declaration, method_definition, class_declaration)."""
@@ -354,6 +372,23 @@ function bar(): number {
 
     def test_ts_outside_bounds(self, project_with_multi_scope_ts):
         assert_scope_empty(get_enclosing_scope_tool(project_with_multi_scope_ts, "test.ts", 99, 0, None))
+
+    def test_ts_constructor_returns_function_scope(self, project_with_constructor_ts):
+        """Position inside a TS class constructor() body → function scope (constructor is method_definition)."""
+        scope = get_enclosing_scope_tool(project_with_constructor_ts, "box.ts", 2, 8, "this")
+        assert_scope_is_function_or_method(scope, "constructor", "this.n = n", row=2)
+
+    @pytest.fixture
+    def project_with_constructor_ts(self, tmp_path):
+        source = """class Box {
+    constructor(n: number) {
+        this.n = n;
+    }
+}
+"""
+        (tmp_path / "box.ts").write_text(source, encoding="utf-8")
+        register_project_tool(str(tmp_path), name="enclosing_scope_ts_ctor_test", description="TS constructor scope")
+        yield "enclosing_scope_ts_ctor_test"
 
 
 class TestGetEnclosingScopeRust:
@@ -558,6 +593,33 @@ int bar() {
     def test_cpp_outside_bounds(self, project_with_multi_scope_cpp):
         assert_scope_empty(get_enclosing_scope_tool(project_with_multi_scope_cpp, "main.cpp", 99, 0, None))
 
+    def test_cpp_constructor_returns_function_scope(self, project_with_constructor_destructor_cpp):
+        """Position inside a C++ constructor body → function scope (grammar aliases it to function_definition)."""
+        scope = get_enclosing_scope_tool(project_with_constructor_destructor_cpp, "box.cpp", 4, 8, "n")
+        assert_scope_is_function(scope, "Box(", "n = 0", row=4)
+
+    def test_cpp_destructor_returns_function_scope(self, project_with_constructor_destructor_cpp):
+        """Position inside a C++ destructor body → function scope (grammar aliases it to function_definition)."""
+        scope = get_enclosing_scope_tool(project_with_constructor_destructor_cpp, "box.cpp", 8, 4, "delete")
+        assert_scope_is_function(scope, "~Box()", "delete", row=8)
+
+    @pytest.fixture
+    def project_with_constructor_destructor_cpp(self, tmp_path):
+        source = """class Box {
+public:
+    int n;
+    Box() {
+        n = 0;
+    }
+    ~Box() {
+        delete[] p;
+    }
+};
+"""
+        (tmp_path / "box.cpp").write_text(source, encoding="utf-8")
+        register_project_tool(str(tmp_path), name="enclosing_scope_cpp_ctor_test", description="C++ constructor/destructor scope")
+        yield "enclosing_scope_cpp_ctor_test"
+
 
 class TestGetEnclosingScopeJava:
     """Tests for get_enclosing_scope on Java (method_declaration, constructor_declaration, class_declaration, program)."""
@@ -606,6 +668,26 @@ public class Test {
 
     def test_java_outside_bounds(self, project_with_multi_scope_java):
         assert_scope_empty(get_enclosing_scope_tool(project_with_multi_scope_java, "Test.java", 99, 0, None))
+
+    def test_java_constructor_returns_function_scope(self, project_with_constructor_java):
+        """Position inside a Java constructor body → function scope (constructor is constructor_declaration)."""
+        # Position inside constructor body: line 4 is "        this.n = n;" (0-based)
+        scope = get_enclosing_scope_tool(project_with_constructor_java, "Box.java", 4, 14, "this")
+        assert_scope_is_function(scope, "public Box(int n)", "this.n = n", row=4)
+
+    @pytest.fixture
+    def project_with_constructor_java(self, tmp_path):
+        source = """public class Box {
+    private int n;
+
+    public Box(int n) {
+        this.n = n;
+    }
+}
+"""
+        (tmp_path / "Box.java").write_text(source, encoding="utf-8")
+        register_project_tool(str(tmp_path), name="enclosing_scope_java_ctor_test", description="Java constructor scope")
+        yield "enclosing_scope_java_ctor_test"
 
 
 class TestGetEnclosingScopeSwift:
@@ -660,6 +742,29 @@ func bar() -> Int {
     def test_swift_outside_bounds(self, project_with_multi_scope_swift):
         assert_scope_empty(get_enclosing_scope_tool(project_with_multi_scope_swift, "main.swift", 99, 0, None))
 
+    def test_swift_getter_returns_function_scope(self, project_with_accessors_swift):
+        """Position inside a Swift computed property get block → function scope (computed_getter)."""
+        scope = get_enclosing_scope_tool(project_with_accessors_swift, "props.swift", 2, 14, "return")
+        assert_scope_is_function(scope, "get", "return 0", row=2)
+
+    def test_swift_setter_returns_function_scope(self, project_with_accessors_swift):
+        """Position inside a Swift computed property set block → function scope (computed_setter)."""
+        scope = get_enclosing_scope_tool(project_with_accessors_swift, "props.swift", 3, 10, "x")
+        assert_scope_is_function(scope, "set", "x = newValue", row=3)
+
+    @pytest.fixture
+    def project_with_accessors_swift(self, tmp_path):
+        source = """struct S {
+    var x: Int {
+        get { return 0 }
+        set { x = newValue }
+    }
+}
+"""
+        (tmp_path / "props.swift").write_text(source, encoding="utf-8")
+        register_project_tool(str(tmp_path), name="enclosing_scope_swift_accessors_test", description="Swift getter/setter scope")
+        yield "enclosing_scope_swift_accessors_test"
+
 
 class TestGetEnclosingScopeKotlin:
     """Tests for get_enclosing_scope on Kotlin (function_declaration, class_declaration, kotlin_file)."""
@@ -712,6 +817,28 @@ fun bar(): Int {
 
     def test_kotlin_outside_bounds(self, project_with_multi_scope_kotlin):
         assert_scope_empty(get_enclosing_scope_tool(project_with_multi_scope_kotlin, "main.kt", 99, 0, None))
+
+    def test_kotlin_getter_returns_function_scope(self, project_with_accessors_kotlin):
+        """Position inside a Kotlin property get() → function scope (getter)."""
+        scope = get_enclosing_scope_tool(project_with_accessors_kotlin, "props.kt", 2, 10, "0")
+        assert_scope_is_function(scope, "get()", "= 0", row=2)
+
+    def test_kotlin_setter_returns_function_scope(self, project_with_accessors_kotlin):
+        """Position inside a Kotlin property set(value) body → function scope (setter)."""
+        scope = get_enclosing_scope_tool(project_with_accessors_kotlin, "props.kt", 3, 18, "value")
+        assert_scope_is_function(scope, "set(value)", "field = value", row=3)
+
+    @pytest.fixture
+    def project_with_accessors_kotlin(self, tmp_path):
+        source = """class C {
+    var x: Int
+        get() = 0
+        set(value) { field = value }
+}
+"""
+        (tmp_path / "props.kt").write_text(source, encoding="utf-8")
+        register_project_tool(str(tmp_path), name="enclosing_scope_kotlin_accessors_test", description="Kotlin getter/setter scope")
+        yield "enclosing_scope_kotlin_accessors_test"
 
 
 class TestGetEnclosingScopeJulia:

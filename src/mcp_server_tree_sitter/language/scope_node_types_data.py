@@ -18,8 +18,8 @@ SCOPE_NODE_TYPES: dict[str, dict[str, list[str]]] = {
         "c": ["function_definition"],
         "cpp": ["function_definition", "method_definition"],
         "java": ["method_declaration", "constructor_declaration"],
-        "swift": ["function_declaration"],
-        "kotlin": ["function_declaration"],
+        "swift": ["function_declaration", "computed_getter", "computed_setter"],
+        "kotlin": ["function_declaration", "getter", "setter"],
         "julia": ["function_definition"],
     },
     "class": {
