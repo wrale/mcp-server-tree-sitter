@@ -5,10 +5,9 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from tree_sitter import QueryCursor
-
 from ..exceptions import QueryError, SecurityError
 from ..utils.security import validate_file_access
+from ..utils.tree_sitter_helpers import run_query_captures
 
 
 def search_text(
@@ -203,10 +202,7 @@ def query_code(
 
             # Execute query
             lang = language_registry.get_language(language)
-            query = lang.query(query_string)
-
-            cursor = QueryCursor(query)
-            captures = cursor.captures(tree.root_node)
+            captures = run_query_captures(lang, query_string, tree.root_node)
 
             # Handle different return formats from query.captures()
             if isinstance(captures, dict):
@@ -238,7 +234,11 @@ def query_code(
                         }
 
                         if include_snippets:
-                            result["text"] = text
+                            result["text"] = (
+                                text.decode("utf-8", errors="replace")
+                                if isinstance(text, bytes)
+                                else text
+                            )
 
                         results.append(result)
             else:
@@ -280,7 +280,11 @@ def query_code(
                     }
 
                     if include_snippets:
-                        result["text"] = text
+                        result["text"] = (
+                            text.decode("utf-8", errors="replace")
+                            if isinstance(text, bytes)
+                            else text
+                        )
 
                     results.append(result)
         except Exception as e:

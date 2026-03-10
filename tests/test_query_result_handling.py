@@ -182,14 +182,15 @@ def test_direct_query_with_language_pack() -> None:
         # Assert we found a function in the parsed tree
         assert function_found, "Should find a function definition in the parsed tree"
 
-        # Define a query to find the function name
+        # Define a query to find the function name (use Query + QueryCursor API)
+        from tree_sitter import Query, QueryCursor
+
         query_string = "(function_definition name: (identifier) @name)"
-        query = language.query(query_string)
+        query = Query(language, query_string)
+        cursor = QueryCursor(query)
+        captures = cursor.captures(root_node)
 
-        # Execute the query
-        captures = query.captures(root_node)
-
-        # Verify captures
+        # Verify captures (dict format: {capture_name: [nodes, ...]})
         assert len(captures) > 0, "Query should return captures"
 
         # Find the 'hello' function name

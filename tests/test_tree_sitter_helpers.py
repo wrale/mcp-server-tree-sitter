@@ -1,8 +1,7 @@
 """Tests for tree_sitter_helpers.py module."""
 
-import tempfile
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 import pytest
 
@@ -24,15 +23,14 @@ from mcp_server_tree_sitter.utils.tree_sitter_helpers import (
 
 # Fixtures
 @pytest.fixture
-def test_files() -> Dict[str, Path]:
+def test_files(tmp_path: Path) -> Dict[str, Path]:
     """Create temporary test files for different languages."""
-    python_file = Path(tempfile.mktemp(suffix=".py"))
-    js_file = Path(tempfile.mktemp(suffix=".js"))
+    python_file = tmp_path / "test.py"
+    js_file = tmp_path / "test.js"
 
     # Write Python test file
-    with open(python_file, "w") as f:
-        f.write(
-            """def hello(name):
+    python_file.write_text(
+        """def hello(name):
     print(f"Hello, {name}!")
 
 class Person:
@@ -47,12 +45,11 @@ if __name__ == "__main__":
     person = Person("Alice", 30)
     print(person.greet())
 """
-        )
+    )
 
     # Write JavaScript test file
-    with open(js_file, "w") as f:
-        f.write(
-            """
+    js_file.write_text(
+        """
 function hello(name) {
     return `Hello, ${name}!`;
 }
@@ -71,7 +68,7 @@ class Person {
 const person = new Person("Alice", 30);
 console.log(person.greet());
 """
-        )
+    )
 
     return {"python": python_file, "javascript": js_file}
 
@@ -196,6 +193,7 @@ def test_parse_source_incremental(parsed_files):
     assert incremental_tree is not None
     assert incremental_tree.root_node is not None
     node_text = get_node_text(incremental_tree.root_node, modified_source, decode=False)
+    assert isinstance(node_text, bytes)
     assert b"Greetings" in node_text
 
 
@@ -230,6 +228,7 @@ def test_edit_tree(parsed_files):
 
     # Verify the edited tree works with the modified source
     root_text = get_node_text(py_tree.root_node, modified_source, decode=False)
+    assert isinstance(root_text, bytes)
     assert b"Greetings" in root_text
 
 
@@ -270,7 +269,7 @@ def test_get_node_text(parsed_files):
     function_node = None
     cursor = walk_tree(py_tree.root_node)
     while cursor.goto_first_child():
-        if cursor.node.type == "function_definition":
+        if cursor.node is not None and cursor.node.type == "function_definition":
             function_node = cursor.node
             break
 
@@ -290,6 +289,7 @@ def test_get_node_with_text(parsed_files):
     hello_node = get_node_with_text(py_tree.root_node, py_source, b"Hello")
     assert hello_node is not None
     node_text = get_node_text(hello_node, py_source, decode=False)
+    assert isinstance(node_text, bytes)
     assert b"Hello" in node_text
 
 
@@ -301,18 +301,22 @@ def test_walk_tree(parsed_files):
     # Walk the tree and collect node types
     node_types = []
     cursor = walk_tree(py_tree.root_node)
+    assert cursor.node is not None
     node_types.append(cursor.node.type)
 
     # Go to first child (should be function_definition)
     assert cursor.goto_first_child()
+    assert cursor.node is not None
     node_types.append(cursor.node.type)
 
     # Go to next sibling
     while cursor.goto_next_sibling():
+        assert cursor.node is not None
         node_types.append(cursor.node.type)
 
     # Go back to parent
     assert cursor.goto_parent()
+    assert cursor.node is not None
     assert cursor.node.type == "module"
 
     # Verify we found some nodes
@@ -378,9 +382,9 @@ def test_get_node_text_with_invalid_byte_range(parsed_files):
             self.end_point = (999, 10)
             self.is_named = True
 
-    # Create mock node and try to get text
+    # Create mock node and try to get text (cast: mock has start_byte/end_byte for the helper)
     mock_node = MockNode()
-    result = get_node_text(mock_node, py_source, decode=False)
+    result = get_node_text(cast(Any, mock_node), py_source, decode=False)
 
     # Should return empty bytes for invalid range
     assert result == b""
@@ -410,7 +414,9 @@ def test_parse_file_incremental(test_files, tmp_path):
     assert tree2 is not None
     assert source2 is not None
     assert b"Greetings" in source2
-    assert b"Greetings" in get_node_text(tree2.root_node, source2, decode=False)
+    node_text = get_node_text(tree2.root_node, source2, decode=False)
+    assert isinstance(node_text, bytes)
+    assert b"Greetings" in node_text
 
 
 def test_parse_file_nonexistent():

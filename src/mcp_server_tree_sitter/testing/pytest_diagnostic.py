@@ -18,33 +18,33 @@ import pytest
 class DiagnosticJSONEncoder(JSONEncoder):
     """Custom JSON encoder that can handle bytes and other non-serializable types."""
 
-    def default(self, obj: Any) -> Any:
+    def default(self, o: Any) -> Any:
         """Convert bytes and other types to JSON-serializable objects."""
-        if isinstance(obj, bytes):
+        if isinstance(o, bytes):
             # Convert bytes to base64 string for JSON serialization
             import base64
 
-            return {"__bytes__": True, "value": base64.b64encode(obj).decode("ascii")}
+            return {"__bytes__": True, "value": base64.b64encode(o).decode("ascii")}
         # Handle Path objects
-        if isinstance(obj, Path):
-            return str(obj)
+        if isinstance(o, Path):
+            return str(o)
         # Handle tree-sitter specific types
-        if hasattr(obj, "start_point") and hasattr(obj, "end_point") and hasattr(obj, "type"):
+        if hasattr(o, "start_point") and hasattr(o, "end_point") and hasattr(o, "type"):
             # Probably a tree-sitter Node
             return {
-                "type": obj.type,
-                "start_point": obj.start_point,
-                "end_point": obj.end_point,
+                "type": o.type,
+                "start_point": o.start_point,
+                "end_point": o.end_point,
                 "_tsnode": True,
             }
         # Handle types with custom __dict__ but no standard serialization
-        if hasattr(obj, "__dict__"):
+        if hasattr(o, "__dict__"):
             try:
-                return obj.__dict__
+                return o.__dict__
             except (TypeError, AttributeError):
                 pass
         # Let the base class handle any other types
-        return super().default(obj)
+        return super().default(o)
 
 
 # Global storage for test context and diagnostic results

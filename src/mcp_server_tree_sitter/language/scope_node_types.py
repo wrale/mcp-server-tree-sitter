@@ -77,7 +77,8 @@ def node_type_to_kind(language: str, node_type: str) -> ScopeKind:
     """
     Return the canonical scope kind for a node type in a language.
 
-    Used when resolving the enclosing scope node to the return kind. Callers can use .value for the string (e.g. in API responses).
+    Used when resolving the enclosing scope node to the return kind.
+    Callers can use .value for the string (e.g. in API responses).
 
     Args:
         language: Language id (e.g. "python", "javascript").

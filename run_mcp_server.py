@@ -12,4 +12,3 @@ _src = _root / "src"
 if _src.exists() and str(_src) not in sys.path:
     sys.path.insert(0, str(_src))
 
-from mcp_server_tree_sitter.server import mcp  # noqa: E402

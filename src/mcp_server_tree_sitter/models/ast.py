@@ -248,7 +248,8 @@ def find_enclosing_scope(
 
     enclosure_types = set(get_enclosure_node_types(language))
 
-    # Lookup the node and its ancestors until we find one that is in the enclosure list (function, class, module), or we reach the root.
+    # Lookup the node and its ancestors until we find one in the enclosure list
+    # (function, class, module), or we reach the root.
     while node is not None:
         if node.type in enclosure_types:
             break

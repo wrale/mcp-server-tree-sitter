@@ -2,7 +2,7 @@
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from ..exceptions import FileAccessError, ProjectError
 from ..utils.security import validate_file_access
@@ -80,7 +80,7 @@ def get_file_content(
     as_bytes: bool = False,
     max_lines: Optional[int] = None,
     start_line: int = 0,
-) -> str:
+) -> Union[str, bytes]:
     """
     Get content of a file in a project.
 
@@ -133,7 +133,7 @@ def get_file_content(
             with open(file_path, "rb") as f:
                 if max_lines is None and start_line == 0:
                     # Simple case: read whole file
-                    return f.read()  # type: ignore
+                    return f.read()
 
                 # Read all lines
                 lines = f.readlines()
@@ -145,7 +145,7 @@ def get_file_content(
                 else:
                     end_idx = len(lines)
 
-                return b"".join(lines[start_idx:end_idx])  # type: ignore
+                return b"".join(lines[start_idx:end_idx])
         else:
             with open(file_path, "r", encoding="utf-8", errors="replace") as f:
                 if max_lines is None and start_line == 0:

@@ -8,9 +8,9 @@ import logging
 import os
 from typing import Any, Dict, List, Optional
 
-from .ast_operations import get_enclosing_scope_for_path
 from ..di import DependencyContainer
 from ..exceptions import ProjectError
+from .ast_operations import get_enclosing_scope_for_path
 
 logger = logging.getLogger(__name__)
 
@@ -211,7 +211,11 @@ def register_tools(mcp_server: Any, container: DependencyContainer) -> None:
         """
         from ..tools.file_operations import get_file_content
 
-        return get_file_content(project_registry.get_project(project), path, max_lines=max_lines, start_line=start_line)
+        content = get_file_content(
+            project_registry.get_project(project), path, as_bytes=False, max_lines=max_lines, start_line=start_line
+        )
+        assert isinstance(content, str), "as_bytes=False returns str"
+        return content
 
     @mcp_server.tool()
     def get_file_metadata(project: str, path: str) -> Dict[str, Any]:
@@ -357,10 +361,10 @@ def register_tools(mcp_server: Any, container: DependencyContainer) -> None:
 
         return get_enclosing_scope_for_path(
             project_registry.get_project(project),
-            path,
+            str(path),
             row,
             column,
-            label,
+            label if label is not None else "",
             language_registry,
             tree_cache,
         )

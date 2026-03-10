@@ -198,11 +198,11 @@ except ImportError:
 
     # Export dummy types for type checking
     # Declare dummy types for when tree-sitter is not available
-    Language = DummyLanguage  # type: ignore
-    Parser = DummyParser  # type: ignore
-    Tree = DummyTree  # type: ignore
-    Node = DummyNode  # type: ignore
-    TreeCursor = DummyTreeCursor  # type: ignore
+    Language = DummyLanguage
+    Parser = DummyParser
+    Tree = DummyTree
+    Node = DummyNode
+    TreeCursor = DummyTreeCursor
 
 
 # Helper function to safely cast to tree-sitter types

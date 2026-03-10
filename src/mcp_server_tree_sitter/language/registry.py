@@ -2,7 +2,7 @@
 
 import logging
 import threading
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 from tree_sitter_language_pack import get_language, get_parser
 
@@ -182,10 +182,8 @@ class LanguageRegistry:
                 return self.languages[language_name]
 
             try:
-                # Get language from language pack
-                # Type ignore: language_name is dynamic but tree-sitter-language-pack
-                # types expect a Literal with specific language names
-                language_obj = get_language(language_name)  # type: ignore
+                # Get language from language pack (pack expects Literal language name; we pass str)
+                language_obj = get_language(cast(Any, language_name))
 
                 # Cast to our Language type for type safety
                 language = ensure_language(language_obj)
@@ -207,10 +205,8 @@ class LanguageRegistry:
             Tree-sitter Parser configured for the language
         """
         try:
-            # Try to get a parser directly from the language pack
-            # Type ignore: language_name is dynamic but tree-sitter-language-pack
-            # types expect a Literal with specific language names
-            parser = get_parser(language_name)  # type: ignore
+            # Try to get a parser directly from the language pack (pack expects Literal language name)
+            parser = get_parser(cast(Any, language_name))
             return parser
         except Exception:
             # Fall back to older method, importing at runtime to avoid circular imports

@@ -9,7 +9,7 @@ import json
 import os
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, Generator
+from typing import Any, Dict, Generator, cast
 
 import pytest
 
@@ -387,7 +387,7 @@ def test_query_based_symbol_extraction(test_project) -> None:
     """
     try:
         # Import necessary components for direct query execution
-        from tree_sitter import Parser, Query
+        from tree_sitter import Parser, Query, QueryCursor
         from tree_sitter_language_pack import get_language
 
         # Get Python language
@@ -397,10 +397,10 @@ def test_query_based_symbol_extraction(test_project) -> None:
         parser = Parser()
         try:
             # Try set_language method first
-            parser.set_language(language_obj)  # type: ignore
+            cast(Any, parser).set_language(language_obj)
         except (AttributeError, TypeError):
             # Fall back to setting language property
-            parser.language = language_obj
+            cast(Any, parser).language = language_obj
 
         # Read the file content
         file_path = os.path.join(test_project["path"], "test.py")
@@ -442,9 +442,9 @@ def test_query_based_symbol_extraction(test_project) -> None:
         classes_q = Query(language_obj, class_query)
         imports_q = Query(language_obj, import_query)
 
-        function_captures = functions_q.captures(tree.root_node)
-        class_captures = classes_q.captures(tree.root_node)
-        import_captures = imports_q.captures(tree.root_node)
+        function_captures = QueryCursor(functions_q).captures(tree.root_node)
+        class_captures = QueryCursor(classes_q).captures(tree.root_node)
+        import_captures = QueryCursor(imports_q).captures(tree.root_node)
 
         # Process and extract unique symbols
         functions: Dict[str, Dict[str, Any]] = {}

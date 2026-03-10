@@ -6,7 +6,7 @@ from typing import Any, Dict, Optional
 from ..cache.parser_cache import TreeCache
 from ..exceptions import FileAccessError, ParsingError
 from ..language.registry import LanguageRegistry
-from ..models.ast import node_to_dict, find_enclosing_scope
+from ..models.ast import find_enclosing_scope, node_to_dict
 from ..models.project import Project
 from ..utils.file_io import read_binary_file
 from ..utils.security import validate_file_access

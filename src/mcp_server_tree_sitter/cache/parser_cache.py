@@ -5,7 +5,7 @@ import threading
 import time
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, cast
 
 # Import global_context at runtime to avoid circular imports
 from ..utils.tree_sitter_types import (
@@ -366,15 +366,13 @@ def get_cached_parser(language: Any) -> Parser:
     parser = Parser()
     safe_language = ensure_language(language)
 
-    # Try both set_language and language methods
+    # Try both set_language and language methods (DummyParser has no set_language; cast to Any for access)
     try:
-        parser.set_language(safe_language)  # type: ignore
+        cast(Any, parser).set_language(safe_language)
     except AttributeError:
         if hasattr(parser, "language"):
-            # Use the language method if available
-            parser.language = safe_language  # type: ignore
+            cast(Any, parser).language = safe_language
         else:
-            # Fallback to setting the attribute directly
-            parser.language = safe_language  # type: ignore
+            cast(Any, parser).language = safe_language
 
     return ensure_parser(parser)

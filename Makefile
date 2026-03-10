@@ -122,12 +122,11 @@ verify-global: build
 # Linting and formatting targets
 .PHONY: lint
 lint:
-	$(UV) run mypy .
 	$(UV) run ruff check .
 
-.PHONY: mypy
-mypy:
-	$(UV) run mypy .
+.PHONY: ty
+ty:
+	$(UV) run ty check src/
 
 .PHONY: format
 format:
@@ -222,7 +221,8 @@ show-help:
 	@echo "  verify-global         : Verify global installation (similar to CI verify-uvx job)"
 	@echo "  clean                 : Clean build artifacts and test results"
 	@echo "  ensure-diagnostic-dir : Create diagnostic results directory if it doesn't exist"
-	@echo "  lint                  : Run linting checks"
+	@echo "  lint                  : Run linting checks (ruff)"
+	@echo "  ty                    : Run type checker (ty)"
 	@echo "  format                : Format code using ruff"
 	@echo "  build                 : Build distribution packages"
 	@echo "  pre-release           : Run all pre-release checks (clean, lint, test, build, verify)"

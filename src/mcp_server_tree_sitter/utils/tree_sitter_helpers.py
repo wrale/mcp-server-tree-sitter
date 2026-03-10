@@ -7,6 +7,8 @@ to ensure type safety and consistent handling of tree-sitter objects.
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, Union, cast
 
+import tree_sitter
+
 # Import tree_cache at runtime as needed to avoid circular imports
 from ..utils.file_io import read_binary_file
 from ..utils.tree_sitter_types import (
@@ -25,6 +27,30 @@ from ..utils.tree_sitter_types import (
 T = TypeVar("T")
 
 
+def run_query_captures(language: Any, query_string: str, node: Any) -> Dict[str, List[Any]]:
+    """
+    Run a tree-sitter query on a node and return captures as a dict.
+
+    Uses Query + QueryCursor (tree-sitter 0.22+ API). Returns
+    {capture_name: [node1, node2, ...], ...} for downstream code that
+    supports both dict and list formats.
+
+    Args:
+        language: Tree-sitter Language instance
+        query_string: Query pattern string
+        node: Root node to run the query on (e.g. tree.root_node)
+
+    Returns:
+        Dict mapping capture names to lists of matching nodes
+    """
+    safe_lang = ensure_language(language)
+    safe_node = ensure_node(node)
+    # Cast for tree_sitter API (our Language|DummyLanguage, Node|DummyNode satisfy runtime)
+    query = tree_sitter.Query(cast(Any, safe_lang), query_string)
+    cursor = tree_sitter.QueryCursor(query)
+    return cursor.captures(cast(Any, safe_node))
+
+
 def create_parser(language_obj: Any) -> Parser:
     """
     Create a parser configured for a specific language.
@@ -38,16 +64,14 @@ def create_parser(language_obj: Any) -> Parser:
     parser = Parser()
     safe_language = ensure_language(language_obj)
 
-    # Try both set_language and language methods
+    # Try both set_language and language methods (DummyParser has no set_language; cast to Any for access)
     try:
-        parser.set_language(safe_language)  # type: ignore
+        cast(Any, parser).set_language(safe_language)
     except AttributeError:
         if hasattr(parser, "language"):
-            # Use the language method if available
-            parser.language = safe_language  # type: ignore
+            cast(Any, parser).language = safe_language
         else:
-            # Fallback to setting the attribute directly
-            parser.language = safe_language  # type: ignore
+            cast(Any, parser).language = safe_language
 
     return ensure_parser(parser)
 
@@ -81,7 +105,8 @@ def parse_source_incremental(source: bytes, old_tree: Optional[Tree], parser: Pa
         Parsed Tree
     """
     safe_parser = ensure_parser(parser)
-    tree = safe_parser.parse(source, old_tree)
+    # DummyParser has different parse signature; cast to call real Parser.parse(source, old_tree)
+    tree = cast(Any, safe_parser).parse(source, old_tree)
     return ensure_tree(tree)
 
 
@@ -111,10 +136,10 @@ def edit_tree(
     """
     safe_tree = ensure_tree(tree)
 
-    # Handle both dictionary and individual parameters
+    # Handle both dictionary and individual parameters (DummyTree has no edit; cast for type checker)
     if isinstance(edit_dict_or_start_byte, dict):
         edit_dict = edit_dict_or_start_byte
-        safe_tree.edit(
+        cast(Any, safe_tree).edit(
             start_byte=edit_dict["start_byte"],
             old_end_byte=edit_dict["old_end_byte"],
             new_end_byte=edit_dict["new_end_byte"],
@@ -131,7 +156,7 @@ def edit_tree(
         _old_end_point = (0, 0) if old_end_point is None else old_end_point
         _new_end_point = (0, 0) if new_end_point is None else new_end_point
 
-        safe_tree.edit(
+        cast(Any, safe_tree).edit(
             start_byte=edit_dict_or_start_byte,
             old_end_byte=_old_end_byte,
             new_end_byte=_new_end_byte,
@@ -192,14 +217,14 @@ def parse_file(
     if hasattr(parser_or_language, "parse"):
         parser = parser_or_language
         tree = parse_source(source_bytes, parser)
-        return cast(Tuple[Tree, bytes], (tree, source_bytes))
+        return (tree, source_bytes)
 
     # If we received a language string and registry, get the parser
     elif isinstance(parser_or_language, str) and registry is not None:
         try:
             parser = registry.get_parser(parser_or_language)
             tree = parse_source(source_bytes, parser)
-            return cast(Tuple[Tree, bytes], (tree, source_bytes))
+            return (tree, source_bytes)
         except Exception as e:
             raise ValueError(f"Could not get parser for language '{parser_or_language}': {e}") from e
 
@@ -418,7 +443,7 @@ def parse_with_cached_tree(
     # Cache the tree
     tree_cache.put(file_path, language, tree, source_bytes)
 
-    return cast(Tuple[Tree, bytes], (tree, source_bytes))
+    return (tree, source_bytes)
 
 
 def update_cached_tree(
@@ -483,7 +508,7 @@ def update_cached_tree(
         # Update cache
         tree_cache.put(file_path, language, new_tree, new_source)
 
-        return cast(Tuple[Tree, bytes], (new_tree, new_source))
+        return (new_tree, new_source)
     except Exception:
         # If incremental parsing fails, fall back to full parse
         return parse_with_cached_tree(file_path, language, language_obj, tree_cache=tree_cache)
@@ -578,7 +603,7 @@ def parse_file_with_detection(file_path: Path, language: Optional[str], registry
     source_bytes = read_binary_file(file_path)
     tree = parse_source(source_bytes, parser)
 
-    return cast(Tuple[Tree, bytes], (tree, source_bytes))
+    return (tree, source_bytes)
 
 
 def parse_file_incremental(file_path: Path, old_tree: Tree, language: str, registry: Any) -> Tuple[Tree, bytes]:
@@ -604,7 +629,7 @@ def parse_file_incremental(file_path: Path, old_tree: Tree, language: str, regis
     source_bytes = read_binary_file(file_path)
     tree = parse_source_incremental(source_bytes, old_tree, parser)
 
-    return cast(Tuple[Tree, bytes], (tree, source_bytes))
+    return (tree, source_bytes)
 
 
 def get_node_with_text(node: Node, source_bytes: bytes, text: bytes) -> Optional[Node]:
@@ -619,8 +644,11 @@ def get_node_with_text(node: Node, source_bytes: bytes, text: bytes) -> Optional
     Returns:
         Node containing the text or None if not found
     """
-    # Ensure we get bytes back from get_node_text
-    if text in get_node_text(node, source_bytes, decode=False):
+    # Ensure we get bytes back from get_node_text for `in` check
+    node_text = get_node_text(node, source_bytes, decode=False)
+    if not isinstance(node_text, bytes):
+        node_text = node_text.encode("utf-8", errors="replace")
+    if text in node_text:
         # Check if any child contains the text
         for child in node.children:
             result = get_node_with_text(child, source_bytes, text)
@@ -645,15 +673,21 @@ def is_node_inside(pos_or_node: Union[Node, Tuple[int, int]], container_node: No
     # Handle position case
     if isinstance(pos_or_node, tuple):
         row, column = pos_or_node
-        start_row, start_col = container_node.start_point
-        end_row, end_col = container_node.end_point
+        start_pt = container_node.start_point
+        end_pt = container_node.end_point
+        start_row = int(start_pt[0])
+        start_col = int(start_pt[1])
+        end_row = int(end_pt[0])
+        end_col = int(end_pt[1])
+        row_int = row if isinstance(row, int) else int(cast(Any, row))
+        col_int = column if isinstance(column, int) else int(cast(Any, column))
 
         # Check if position is within node boundaries
-        if row < start_row or row > end_row:
+        if row_int < start_row or row_int > end_row:
             return False
-        if row == start_row and column < start_col:
+        if row_int == start_row and col_int < start_col:
             return False
-        if row == end_row and column > end_col:
+        if row_int == end_row and col_int > end_col:
             return False
         return True
 

@@ -108,7 +108,7 @@ def test_register_tools_registers_all_tools(mock_mcp_server, mock_container):
 
 
 def test_get_enclosing_scope_tool_registered_with_correct_contract(mock_mcp_server, mock_container):
-    """T6.1: After registration, get_enclosing_scope exists and signature/docstring mention project, path, row, column."""
+    """After registration, get_enclosing_scope exists and signature/docstring mention project, path, row, column."""
     register_tools(mock_mcp_server, mock_container)
 
     assert "get_enclosing_scope" in mock_mcp_server.tools, "Tool get_enclosing_scope was not registered"
