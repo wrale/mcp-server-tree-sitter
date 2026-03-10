@@ -216,7 +216,7 @@ def find_enclosing_scope(
     column: int,
     label: str,
     language: str,
-) -> Dict[str, Any] | None:
+) -> Dict[str, Any]:
     """
     Find the enclosing scope (function, class, or module) for a position and return its block info.
 
@@ -244,7 +244,7 @@ def find_enclosing_scope(
     if node is None:
         # We didn't find any node. This should only happen if the position is outside the root node's span.
         # In that case, we will return None.
-        return None
+        return dict()
 
     enclosure_types = set(get_enclosure_node_types(language))
 

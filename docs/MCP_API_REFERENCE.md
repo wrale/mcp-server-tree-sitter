@@ -198,6 +198,33 @@ Get the AST node at a given position.
 
 **Returns:** `Dict` or `null` — Same node shape as in `get_ast` (limited depth), or `null` if no node.
 
+### `get_enclosing_scope`
+
+Find the enclosing scope (function, class, or module) for a given position. All line/column values are 0-based.
+
+| Argument | Type | Required | Description |
+|----------|------|----------|-------------|
+| `project` | `str` | Yes | Project name |
+| `file_path` | `str` | Yes | Path relative to project root |
+| `row` | `int` | Yes | Line (0-based) |
+| `column` | `int` | Yes | Column (0-based) |
+| `label` | `str` | No | Optional text label at the position (e.g. variable name) |
+
+**Returns:** `Dict` — Enclosing scope info, or empty dict if no scope (e.g. position outside valid code).
+
+```json
+{
+  "kind": "function",
+  "text": "def foo():\n    return 1",
+  "start_line": 0,
+  "end_line": 1
+}
+```
+
+- `kind`: One of `function`, `class`, `module` (or language-specific equivalent).
+- `text`: Source text of the scope node.
+- `start_line`, `end_line`: 0-based inclusive line range of the scope.
+
 ---
 
 ## Search and queries

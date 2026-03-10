@@ -27,6 +27,8 @@ class ScopeKind(str, Enum):
 def get_scope_node_type(language: str, kind: ScopeKind) -> Optional[str]:
     """
     Return the tree-sitter node type name for a canonical scope kind in a language.
+    When a language maps to a list of node types (e.g. function_declaration + method_definition),
+    returns the first one (used for enclosure order).
 
     Args:
         language: Language id (e.g. "python", "javascript").
@@ -35,8 +37,10 @@ def get_scope_node_type(language: str, kind: ScopeKind) -> Optional[str]:
     Returns:
         Node type name for that language, or None if unknown language.
     """
-    kinds = SCOPE_NODE_TYPES.get(kind.value, {})
-    return kinds.get(language)
+    node_types = SCOPE_NODE_TYPES.get(kind.value, {}).get(language)
+    if not node_types:
+        return None
+    return node_types[0]
 
 
 # Enclosure order: most specific first (function, class, module). Built from SCOPE_NODE_TYPES.
@@ -52,6 +56,8 @@ def get_enclosure_node_types(language: str) -> List[str]:
     Return the ordered list of node types that count as enclosing scopes (most specific first).
 
     Used when walking up the AST to find the enclosing scope: function, then class, then module.
+    When a kind maps to multiple node types (e.g. function_declaration + method_definition),
+    all are included in order so the most specific scope is found first.
 
     Args:
         language: Language id (e.g. "python", "javascript").
@@ -61,9 +67,9 @@ def get_enclosure_node_types(language: str) -> List[str]:
     """
     result: List[str] = []
     for kind in _ENCLOSURE_ORDER:
-        node_type = get_scope_node_type(language, kind)
-        if node_type is not None:
-            result.append(node_type)
+        node_types = SCOPE_NODE_TYPES.get(kind.value, {}).get(language)
+        if node_types:
+            result.extend(node_types)
     return result
 
 
@@ -81,6 +87,7 @@ def node_type_to_kind(language: str, node_type: str) -> ScopeKind:
         ScopeKind. For unknown language or unknown node type, returns ScopeKind.MODULE.
     """
     for kind in _ENCLOSURE_ORDER:
-        if get_scope_node_type(language, kind) == node_type:
+        node_types = SCOPE_NODE_TYPES.get(kind.value, {}).get(language)
+        if node_types and node_type in node_types:
             return kind
     return ScopeKind.MODULE

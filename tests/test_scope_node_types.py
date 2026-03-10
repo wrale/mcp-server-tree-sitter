@@ -54,9 +54,9 @@ def test_python_enclosure_order():
 
 
 def test_javascript_enclosure_order():
-    """JavaScript returns function_declaration, class_declaration, program in that order."""
+    """JavaScript returns function_declaration, method_definition, class_declaration, program in that order."""
     result = get_enclosure_node_types("javascript")
-    assert result == ["function_declaration", "class_declaration", "program"]
+    assert result == ["function_declaration", "method_definition", "class_declaration", "program"]
 
 
 def test_unknown_language_enclosure_returns_default():
@@ -76,8 +76,9 @@ def test_node_type_to_kind_python():
 
 
 def test_node_type_to_kind_javascript():
-    """JavaScript: function_declaration→FUNCTION, class_declaration→CLASS, program→MODULE."""
+    """JavaScript: function_declaration and method_definition→FUNCTION, class_declaration→CLASS, program→MODULE."""
     assert node_type_to_kind("javascript", "function_declaration") == ScopeKind.FUNCTION
+    assert node_type_to_kind("javascript", "method_definition") == ScopeKind.FUNCTION
     assert node_type_to_kind("javascript", "class_declaration") == ScopeKind.CLASS
     assert node_type_to_kind("javascript", "program") == ScopeKind.MODULE
 

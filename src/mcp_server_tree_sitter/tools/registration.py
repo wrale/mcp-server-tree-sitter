@@ -8,6 +8,7 @@ import logging
 import os
 from typing import Any, Dict, List, Optional
 
+from .ast_operations import get_enclosing_scope_for_path
 from ..di import DependencyContainer
 from ..exceptions import ProjectError
 
@@ -328,6 +329,40 @@ def register_tools(mcp_server: Any, container: DependencyContainer) -> None:
             whole_word,
             use_regex,
             context_lines,
+        )
+
+    @mcp_server.tool()
+    def get_enclosing_scope(
+        project: str,
+        file_path: str,
+        row: int,
+        column: int,
+        label: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Find the enclosing scope (function, class, or module) for a position.
+
+        Args:
+            project: Project name
+            file_path: Path to the file
+            row: Line number (0-based)
+            column: Column number (0-based)
+            label: Optional text label at the position (e.g., variable name)
+
+        Returns:
+            Information about the enclosing scope, including type, name, and range
+            Empty if no scope found (e.g., point outside valid code)
+        """
+        project_obj = project_registry.get_project(project)
+        path = project_obj.get_file_path(file_path)
+
+        return get_enclosing_scope_for_path(
+            project_registry.get_project(project),
+            path,
+            row,
+            column,
+            label,
+            language_registry,
+            tree_cache,
         )
 
     @mcp_server.tool()

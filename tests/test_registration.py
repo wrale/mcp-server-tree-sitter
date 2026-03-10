@@ -1,5 +1,6 @@
 """Tests for the tools.registration module."""
 
+import inspect
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -85,6 +86,7 @@ def test_register_tools_registers_all_tools(mock_mcp_server, mock_container):
         "get_file_metadata",
         "get_ast",
         "get_node_at_position",
+        "get_enclosing_scope",
         "find_text",
         "run_query",
         "get_query_template_tool",
@@ -103,6 +105,24 @@ def test_register_tools_registers_all_tools(mock_mcp_server, mock_container):
 
     for tool_name in expected_tools:
         assert tool_name in mock_mcp_server.tools, f"Tool {tool_name} was not registered"
+
+
+def test_get_enclosing_scope_tool_registered_with_correct_contract(mock_mcp_server, mock_container):
+    """T6.1: After registration, get_enclosing_scope exists and signature/docstring mention project, path, row, column."""
+    register_tools(mock_mcp_server, mock_container)
+
+    assert "get_enclosing_scope" in mock_mcp_server.tools, "Tool get_enclosing_scope was not registered"
+    tool_fn = mock_mcp_server.tools["get_enclosing_scope"]
+
+    # Signature or docstring must mention project, path (or file_path), row, column
+    doc = (tool_fn.__doc__ or "").lower()
+    sig = str(inspect.signature(tool_fn)).lower()
+    combined = doc + " " + sig
+
+    assert "project" in combined, "get_enclosing_scope contract should mention project"
+    assert "path" in combined or "file_path" in combined, "get_enclosing_scope contract should mention path/file_path"
+    assert "row" in combined, "get_enclosing_scope contract should mention row"
+    assert "column" in combined, "get_enclosing_scope contract should mention column"
 
 
 def test_register_prompts_registers_all_prompts(mock_mcp_server, mock_container):

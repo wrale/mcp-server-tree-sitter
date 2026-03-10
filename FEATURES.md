@@ -129,6 +129,7 @@ These commands perform abstract syntax tree (AST) operations.
 |---------|--------|--------------|-------|
 | `get_ast` | ✅ | Project registration | Returns AST using efficient cursor-based traversal with proper node IDs |
 | `get_node_at_position` | ✅ | Project registration | Successfully retrieves nodes at a specific position in a file |
+| `get_enclosing_scope` | ✅ | Project registration | Returns enclosing scope (function, class, or module) for a position: `kind`, `text`, `start_line`, `end_line` (0-based) |
 
 **Example Usage:**
 ```python
@@ -137,6 +138,9 @@ get_ast(project="my-project", path="src/main.py", max_depth=5, include_text=True
 
 # Find node at position
 get_node_at_position(project="my-project", path="src/main.py", row=10, column=5)
+
+# Get enclosing scope for a position (function, class, or module)
+get_enclosing_scope(project="my-project", file_path="src/main.py", row=10, column=5)
 ```
 
 ### Search and Query Commands
