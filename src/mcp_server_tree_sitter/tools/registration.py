@@ -750,11 +750,12 @@ def _register_prompts(mcp_server: Any, container: DependencyContainer) -> None:
         except Exception:
             pass
 
+        text = content.decode(errors="replace") if isinstance(content, bytes) else content
         return f"""
         Please review this {language} code file:
 
         ```{language}
-        {content}
+        {text}
         ```
 
         {structure}
@@ -779,11 +780,12 @@ def _register_prompts(mcp_server: Any, container: DependencyContainer) -> None:
         if focus:
             focus_prompt = f"\nPlease focus specifically on explaining: {focus}"
 
+        text = content.decode(errors="replace") if isinstance(content, bytes) else content
         return f"""
         Please explain this {language} code file:
 
         ```{language}
-        {content}
+        {text}
         ```
 
         Provide a clear explanation of:
@@ -842,11 +844,12 @@ def _register_prompts(mcp_server: Any, container: DependencyContainer) -> None:
         except Exception:
             complexity_info = ""
 
+        text = content.decode(errors="replace") if isinstance(content, bytes) else content
         return f"""
         Please suggest improvements for this {language} code:
 
         ```{language}
-        {content}
+        {text}
         ```
 
         {complexity_info}

@@ -1,7 +1,22 @@
-"""Query templates for C# language."""
+"""C# language data."""
 
-TEMPLATES = {
-    "functions": """
+from ..schema import LanguageDataBase
+
+
+class Csharp(LanguageDataBase):
+    id = "csharp"
+    extensions = ["cs"]
+    scope_node_types = {
+        "function": [
+            "method_declaration",
+            "constructor_declaration",
+            "local_function_statement",
+        ],
+        "class": ["class_declaration", "struct_declaration", "interface_declaration"],
+        "module": ["compilation_unit"],
+    }
+    query_templates = {
+        "functions": """
         (method_declaration
             (identifier) @function.name
             (parameter_list) @function.params
@@ -17,30 +32,31 @@ TEMPLATES = {
             (parameter_list) @function.params
             (block) @function.body) @function.def
     """,
-    "classes": """
+        "classes": """
         (class_declaration
             (identifier) @class.name
             (declaration_list) @class.body) @class.def
     """,
-    "structs": """
+        "structs": """
         (struct_declaration
             (identifier) @struct.name
             (declaration_list) @struct.body) @struct.def
     """,
-    "interfaces": """
+        "interfaces": """
         (interface_declaration
             (identifier) @interface.name
             (declaration_list) @interface.body) @interface.def
     """,
-    "enums": """
+        "enums": """
         (enum_declaration
             (identifier) @enum.name
             (enum_member_declaration_list) @enum.body) @enum.def
     """,
-    "imports": """
+        "imports": """
         (using_directive) @import
 
         (using_directive
             (qualified_name) @import.name) @import.qualified
     """,
-}
+    }
+    node_type_descriptions = {}

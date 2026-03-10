@@ -2,8 +2,8 @@
 
 This project uses [tree-sitter-language-pack](https://pypi.org/project/tree-sitter-language-pack/) (>=0.13.0) for parsing. The pack provides **165+** tree-sitter languages. Below we track which of those languages have extra support in this server:
 
-- **Templates**: query templates in `src/mcp_server_tree_sitter/language/templates/` (e.g. functions, classes, imports) used by tools like `run_query` and symbol extraction.
-- **get_enclosing_scope**: scope node types defined in `scope_node_types_data.py` so the `get_enclosing_scope` tool returns function/class/module scope for a given position.
+- **Templates**: query templates in per-language data under `src/mcp_server_tree_sitter/language/data/` (e.g. functions, classes, imports) used by tools like `run_query` and symbol extraction.
+- **get_enclosing_scope**: scope node types defined in per-language data under `language/data/` so the `get_enclosing_scope` tool returns function/class/module scope for a given position.
 
 We add support for more languages over time and update this table as we go.
 
@@ -14,7 +14,7 @@ We add support for more languages over time and update this table as we go.
 | actionscript        | ❌         | ❌                   |
 | ada                 | ❌         | ❌                   |
 | agda                | ❌         | ❌                   |
-| apl                 | ✅         | ❌                   |
+| apl                 | ❌         | ❌                   |
 | apex                | ❌         | ❌                   |
 | arduino             | ❌         | ❌                   |
 | asm                 | ❌         | ❌                   |
@@ -187,7 +187,7 @@ We add support for more languages over time and update this table as we go.
 
 ## Summary
 
-- **Templates**: 13 languages (apl, c, cpp, csharp, go, java, javascript, julia, kotlin, python, rust, swift, typescript).
+- **Templates**: 12 languages (c, cpp, csharp, go, java, javascript, julia, kotlin, python, rust, swift, typescript).
 - **get_enclosing_scope**: 12 languages (c, cpp, csharp, go, java, javascript, julia, kotlin, python, rust, swift, typescript).
 
 Languages available in the pack but not listed above (e.g. `fsharp_signature`, `ocaml_interface`) can be added to the table when we add support for them.

@@ -1,7 +1,18 @@
-"""Query templates for TypeScript."""
+"""TypeScript language data."""
 
-TEMPLATES = {
-    "functions": """
+from ..schema import LanguageDataBase
+
+
+class TypeScript(LanguageDataBase):
+    id = "typescript"
+    extensions = ["ts", "tsx"]
+    scope_node_types = {
+        "function": ["function_declaration", "method_definition"],
+        "class": ["class_declaration"],
+        "module": ["program"],
+    }
+    query_templates = {
+        "functions": """
         (function_declaration
             name: (identifier) @function.name
             parameters: (formal_parameters) @function.params
@@ -16,12 +27,12 @@ TEMPLATES = {
             parameters: (formal_parameters) @method.params
             body: (statement_block) @method.body) @method.def
     """,
-    "classes": """
+        "classes": """
         (class_declaration
             name: (type_identifier) @class.name
             body: (class_body) @class.body) @class.def
     """,
-    "interfaces": """
+        "interfaces": """
         (interface_declaration
             name: (type_identifier) @interface.name
             body: (object_type) @interface.body) @interface.def
@@ -30,7 +41,7 @@ TEMPLATES = {
             name: (type_identifier) @alias.name
             value: (_) @alias.value) @alias.def
     """,
-    "imports": """
+        "imports": """
         (import_statement) @import
 
         (import_statement
@@ -47,4 +58,5 @@ TEMPLATES = {
             specifier: (namespace_import
                 name: (identifier) @import.namespace)) @import.namespace
     """,
-}
+    }
+    node_type_descriptions = {}

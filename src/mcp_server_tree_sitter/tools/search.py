@@ -234,11 +234,7 @@ def query_code(
                         }
 
                         if include_snippets:
-                            result["text"] = (
-                                text.decode("utf-8", errors="replace")
-                                if isinstance(text, bytes)
-                                else text
-                            )
+                            result["text"] = text.decode("utf-8", errors="replace") if isinstance(text, bytes) else text
 
                         results.append(result)
             else:
@@ -280,11 +276,7 @@ def query_code(
                     }
 
                     if include_snippets:
-                        result["text"] = (
-                            text.decode("utf-8", errors="replace")
-                            if isinstance(text, bytes)
-                            else text
-                        )
+                        result["text"] = text.decode("utf-8", errors="replace") if isinstance(text, bytes) else text
 
                     results.append(result)
         except Exception as e:

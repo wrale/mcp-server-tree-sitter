@@ -1,7 +1,18 @@
-"""Query templates for C++ language."""
+"""C++ language data."""
 
-TEMPLATES = {
-    "functions": """
+from ..schema import LanguageDataBase
+
+
+class Cpp(LanguageDataBase):
+    id = "cpp"
+    extensions = ["cpp", "cc", "hpp"]
+    scope_node_types = {
+        "function": ["function_definition", "method_definition"],
+        "class": ["class_specifier", "struct_specifier"],
+        "module": ["translation_unit"],
+    }
+    query_templates = {
+        "functions": """
         (function_definition
             declarator: (function_declarator
                 declarator: (identifier) @function.name)) @function.def
@@ -14,11 +25,11 @@ TEMPLATES = {
             declarator: (function_declarator
                 declarator: (field_identifier) @method.name)) @method.def
     """,
-    "classes": """
+        "classes": """
         (class_specifier
             name: (type_identifier) @class.name) @class.def
     """,
-    "structs": """
+        "structs": """
         (struct_specifier
             name: (type_identifier) @struct.name) @struct.def
 
@@ -28,7 +39,7 @@ TEMPLATES = {
         (enum_specifier
             name: (type_identifier) @enum.name) @enum.def
     """,
-    "imports": """
+        "imports": """
         (preproc_include) @import
 
         (preproc_include
@@ -40,11 +51,12 @@ TEMPLATES = {
         (namespace_definition
             name: (namespace_identifier) @import.namespace) @import.namespace_def
     """,
-    "templates": """
+        "templates": """
         (template_declaration) @template.def
 
         (template_declaration
             declaration: (class_specifier
                 name: (type_identifier) @template.class)) @template.class_def
     """,
-}
+    }
+    node_type_descriptions = {}

@@ -1,7 +1,18 @@
-"""Query templates for Swift language."""
+"""Swift language data."""
 
-TEMPLATES = {
-    "functions": """
+from ..schema import LanguageDataBase
+
+
+class Swift(LanguageDataBase):
+    id = "swift"
+    extensions = ["swift"]
+    scope_node_types = {
+        "function": ["function_declaration", "computed_getter", "computed_setter"],
+        "class": ["class_declaration", "struct_declaration"],
+        "module": ["source_file"],
+    }
+    query_templates = {
+        "functions": """
         (function_declaration
             name: (identifier) @function.name) @function.def
 
@@ -9,7 +20,7 @@ TEMPLATES = {
             name: (identifier) @function.name
             body: (code_block) @function.body) @function.def
     """,
-    "classes": """
+        "classes": """
         (class_declaration
             name: (type_identifier) @class.name) @class.def
 
@@ -17,7 +28,7 @@ TEMPLATES = {
             name: (type_identifier) @class.name
             body: (class_body) @class.body) @class.def
     """,
-    "structs": """
+        "structs": """
         (struct_declaration
             name: (type_identifier) @struct.name) @struct.def
 
@@ -25,7 +36,7 @@ TEMPLATES = {
             name: (type_identifier) @struct.name
             body: (struct_body) @struct.body) @struct.def
     """,
-    "imports": """
+        "imports": """
         (import_declaration) @import
 
         (import_declaration
@@ -34,7 +45,7 @@ TEMPLATES = {
         (import_declaration
             path: (_) @import.path) @import.complex
     """,
-    "protocols": """
+        "protocols": """
         (protocol_declaration
             name: (type_identifier) @protocol.name) @protocol.def
 
@@ -42,7 +53,7 @@ TEMPLATES = {
             name: (type_identifier) @protocol.name
             body: (protocol_body) @protocol.body) @protocol.def
     """,
-    "extensions": """
+        "extensions": """
         (extension_declaration
             name: (type_identifier) @extension.name) @extension.def
 
@@ -50,4 +61,5 @@ TEMPLATES = {
             name: (type_identifier) @extension.name
             body: (extension_body) @extension.body) @extension.def
     """,
-}
+    }
+    node_type_descriptions = {}

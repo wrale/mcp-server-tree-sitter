@@ -1,7 +1,18 @@
-"""Query templates for C language."""
+"""C language data."""
 
-TEMPLATES = {
-    "functions": """
+from ..schema import LanguageDataBase
+
+
+class C(LanguageDataBase):
+    id = "c"
+    extensions = ["c", "h"]
+    scope_node_types = {
+        "function": ["function_definition"],
+        "class": ["struct_specifier"],
+        "module": ["translation_unit"],
+    }
+    query_templates = {
+        "functions": """
         (function_definition
             declarator: (function_declarator
                 declarator: (identifier) @function.name)) @function.def
@@ -10,7 +21,7 @@ TEMPLATES = {
             declarator: (function_declarator
                 declarator: (identifier) @function.name)) @function.decl
     """,
-    "structs": """
+        "structs": """
         (struct_specifier
             name: (type_identifier) @struct.name) @struct.def
 
@@ -20,7 +31,7 @@ TEMPLATES = {
         (enum_specifier
             name: (type_identifier) @enum.name) @enum.def
     """,
-    "imports": """
+        "imports": """
         (preproc_include) @import
 
         (preproc_include
@@ -29,8 +40,9 @@ TEMPLATES = {
         (preproc_include
             path: (system_lib_string) @import.system) @import.system
     """,
-    "macros": """
+        "macros": """
         (preproc_function_def
             name: (identifier) @macro.name) @macro.def
     """,
-}
+    }
+    node_type_descriptions = {}

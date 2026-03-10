@@ -1,7 +1,18 @@
-"""Query templates for Julia language."""
+"""Julia language data."""
 
-TEMPLATES = {
-    "functions": """
+from ..schema import LanguageDataBase
+
+
+class Julia(LanguageDataBase):
+    id = "julia"
+    extensions = ["jl"]
+    scope_node_types = {
+        "function": ["function_definition"],
+        "class": ["struct_definition", "mutable_struct_definition"],
+        "module": ["source_file"],
+    }
+    query_templates = {
+        "functions": """
         (function_definition
             name: (identifier) @function.name) @function.def
 
@@ -13,12 +24,12 @@ TEMPLATES = {
         (short_function_definition
             name: (identifier) @function.name) @function.short_def
     """,
-    "modules": """
+        "modules": """
         (module_definition
             name: (identifier) @module.name
             body: (block) @module.body) @module.def
     """,
-    "structs": """
+        "structs": """
         (struct_definition
             name: (identifier) @struct.name
             body: (block) @struct.body) @struct.def
@@ -27,7 +38,7 @@ TEMPLATES = {
             name: (identifier) @struct.name
             body: (block) @struct.body) @struct.mutable_def
     """,
-    "imports": """
+        "imports": """
         (import_statement) @import
 
         (import_statement
@@ -41,13 +52,14 @@ TEMPLATES = {
         (import_statement
             name: (dot_expression) @import.qualified) @import.qualified
     """,
-    "macros": """
+        "macros": """
         (macro_definition
             name: (identifier) @macro.name
             body: (block) @macro.body) @macro.def
     """,
-    "abstractTypes": """
+        "abstractTypes": """
         (abstract_definition
             name: (identifier) @abstract.name) @abstract.def
     """,
-}
+    }
+    node_type_descriptions = {}

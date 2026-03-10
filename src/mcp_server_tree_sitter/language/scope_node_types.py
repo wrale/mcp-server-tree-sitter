@@ -5,15 +5,15 @@ The enclosure order (get_enclosure_node_types) and kind mapping (node_type_to_ki
 this module are used by the core helper find_enclosing_scope when walking up the AST
 to find the enclosing scope and resolve its kind.
 
-Supported languages: python, javascript.
-
-To add a new language: edit SCOPE_NODE_TYPES in scope_node_types_data.py.
+Data is loaded from language/data/ per-language modules via the loader.
 """
 
 from enum import Enum
 from typing import List, Optional
 
-from .scope_node_types_data import SCOPE_NODE_TYPES
+from .loader import get_scope_node_types
+
+SCOPE_NODE_TYPES = get_scope_node_types()
 
 
 class ScopeKind(str, Enum):

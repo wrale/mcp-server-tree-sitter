@@ -196,13 +196,12 @@ except ImportError:
         def root_node(self) -> Any:
             return DummyNode()
 
-    # Export dummy types for type checking
-    # Declare dummy types for when tree-sitter is not available
-    Language = DummyLanguage
-    Parser = DummyParser
-    Tree = DummyTree
-    Node = DummyNode
-    TreeCursor = DummyTreeCursor
+    # Export dummy types for type checking (mypy: conditional assignment)
+    Language = DummyLanguage  # type: ignore[assignment,misc]
+    Parser = DummyParser  # type: ignore[assignment,misc]
+    Tree = DummyTree  # type: ignore[assignment,misc]
+    Node = DummyNode  # type: ignore[assignment,misc]
+    TreeCursor = DummyTreeCursor  # type: ignore[assignment,misc]
 
 
 # Helper function to safely cast to tree-sitter types

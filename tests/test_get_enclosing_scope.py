@@ -74,13 +74,11 @@ class TestFindEnclosingScope:
 
 
 class TestEnclosingScopeForPath:
-
     # Fixed source: def hello(): on line 0, return on line 1 (0-based).
     # Position (1, 4) is inside the function body.
     PROJECT_SOURCE = """def hello():
         return 1
     """
-
 
     @pytest.fixture
     def project_with_python_file(self):
@@ -93,7 +91,6 @@ class TestEnclosingScopeForPath:
             register_project_tool(path=str(root), name=name)
             yield {"name": name, "root": root}
 
-
     def test_get_enclosing_scope_for_path_returns_scope_dict(self, project_with_python_file):
         """Register temp project with test.py; call get_enclosing_scope_for_path; assert result has kind,
         text, start_line, end_line and position inside function gives function scope."""
@@ -103,8 +100,6 @@ class TestEnclosingScopeForPath:
         tree_cache = get_tree_cache()
 
         # Position (1, 4) is inside "    return 1" (inside hello body)
-        result = get_enclosing_scope_for_path(
-            project, "test.py", 1, 4, "return", language_registry, tree_cache
-        )
+        result = get_enclosing_scope_for_path(project, "test.py", 1, 4, "return", language_registry, tree_cache)
 
         assert_scope_is_function(result, "def hello", "return 1", row=1)

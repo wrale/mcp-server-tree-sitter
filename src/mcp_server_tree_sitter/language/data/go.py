@@ -1,7 +1,18 @@
-"""Query templates for Go."""
+"""Go language data."""
 
-TEMPLATES = {
-    "functions": """
+from ..schema import LanguageDataBase
+
+
+class Go(LanguageDataBase):
+    id = "go"
+    extensions = ["go"]
+    scope_node_types = {
+        "function": ["function_declaration", "method_declaration"],
+        "class": ["type_declaration"],
+        "module": ["source_file"],
+    }
+    query_templates = {
+        "functions": """
         (function_declaration
             name: (identifier) @function.name
             parameters: (parameter_list) @function.params
@@ -12,7 +23,7 @@ TEMPLATES = {
             parameters: (parameter_list) @method.params
             body: (block) @method.body) @method.def
     """,
-    "structs": """
+        "structs": """
         (type_declaration
             (type_spec
                 name: (type_identifier) @struct.name
@@ -23,7 +34,7 @@ TEMPLATES = {
                 name: (type_identifier) @type.name
                 type: (_) @type.body)) @type.def
     """,
-    "imports": """
+        "imports": """
         (import_declaration) @import
 
         (import_declaration
@@ -39,10 +50,11 @@ TEMPLATES = {
             (import_spec
                 path: (_) @import.path)) @import.single
     """,
-    "interfaces": """
+        "interfaces": """
         (type_declaration
             (type_spec
                 name: (type_identifier) @interface.name
                 type: (interface_type) @interface.body)) @interface.def
     """,
-}
+    }
+    node_type_descriptions = {}

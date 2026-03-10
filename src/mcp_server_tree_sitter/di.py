@@ -27,6 +27,11 @@ class DependencyContainer:
         self.config_manager = ConfigurationManager()
         self._config = self.config_manager.get_config()
         self.project_registry = ProjectRegistry()
+        # Load language data once at startup so derived structures (scope types, extensions,
+        # query templates, etc.) are built and cached before any tool runs.
+        from .language.loader import load_all_language_data
+
+        load_all_language_data()
         self.language_registry = LanguageRegistry()
         self.tree_cache = TreeCache(
             max_size_mb=self._config.cache.max_size_mb, ttl_seconds=self._config.cache.ttl_seconds

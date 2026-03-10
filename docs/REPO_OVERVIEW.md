@@ -101,10 +101,9 @@ File extension → language is defined in `LanguageRegistry._language_map` in `s
 
 ### Full support (symbol extraction, templates)
 
-1. Do the parser-only steps above so the language is detected.
-2. **Add a template module:** create `src/mcp_server_tree_sitter/language/templates/<lang>.py` (e.g. `ruby.py`) with a `TEMPLATES` dict. Keys are template names (e.g. `"functions"`, `"classes"`, `"imports"`); values are tree-sitter query strings. Copy an existing language (e.g. `python.py`) and adapt node types to the grammar.
-3. **Register templates:** in `src/mcp_server_tree_sitter/language/templates/__init__.py`, import the new module and add `"language_id": module.TEMPLATES` to the `QUERY_TEMPLATES` dict.
-4. **Optional:** in `src/mcp_server_tree_sitter/tools/query_builder.py`, extend `describe_node_types()` with that language so `get_node_types` returns descriptions.
+1. Do the parser-only steps above so the language is detected (or add the extension to the language’s data file; the extension map is built from per-language data plus a fallback in the registry).
+2. **Add a per-language data file:** create `src/mcp_server_tree_sitter/language/data/<lang_id>.py` (e.g. `ruby.py`). Define a class that subclasses `LanguageDataBase` (from `language.schema`) and set class attributes: `id`, `extensions`, `scope_node_types` (keys `"function"`, `"class"`, `"module"`), `query_templates` (e.g. `"functions"`, `"classes"`, `"imports"`), and optionally `node_type_descriptions`. Copy an existing language (e.g. `python.py`) and adapt node types to the grammar. The loader discovers modules in `language/data/` and registers subclasses automatically; no separate registration step is needed.
+3. **Optional:** add `node_type_descriptions` on the class so `get_node_types` returns descriptions for that language.
 
 Analysis tools (`get_symbols`, `get_dependencies`, `analyze_complexity`) use these templates and language-specific defaults in `tools/analysis.py` (e.g. `extract_symbols` symbol_types per language).
 

@@ -17,54 +17,54 @@ from ..utils.tree_sitter_types import (
 
 logger = logging.getLogger(__name__)
 
+# Fallback extension -> language id for extensions not in per-language data (e.g. ruby, json).
+# Loader provides map from language/data/; this covers tree-sitter-language-pack languages
+# we don't yet have as data files.
+_EXTENSION_FALLBACK: Dict[str, str] = {
+    "rb": "ruby",
+    "php": "php",
+    "scala": "scala",
+    "lua": "lua",
+    "hs": "haskell",
+    "ml": "ocaml",
+    "sh": "bash",
+    "yaml": "yaml",
+    "yml": "yaml",
+    "json": "json",
+    "md": "markdown",
+    "html": "html",
+    "css": "css",
+    "scss": "scss",
+    "sass": "scss",
+    "sql": "sql",
+    "proto": "proto",
+    "elm": "elm",
+    "clj": "clojure",
+    "ex": "elixir",
+    "exs": "elixir",
+}
+
 
 class LanguageRegistry:
     """Manages tree-sitter language parsers."""
 
     def __init__(self) -> None:
-        """Initialize the registry."""
+        """Initialize the registry. Extension map comes from loader (language/data/); fallback for others."""
         self._lock = threading.RLock()
         self.languages: Dict[str, Language] = {}
-        self._language_map = {
-            "py": "python",
-            "js": "javascript",
-            "ts": "typescript",
-            "jsx": "javascript",
-            "tsx": "typescript",
-            "rb": "ruby",
-            "rs": "rust",
-            "go": "go",
-            "java": "java",
-            "c": "c",
-            "cpp": "cpp",
-            "cc": "cpp",
-            "h": "c",
-            "hpp": "cpp",
-            "cs": "csharp",
-            "php": "php",
-            "scala": "scala",
-            "swift": "swift",
-            "kt": "kotlin",
-            "lua": "lua",
-            "hs": "haskell",
-            "ml": "ocaml",
-            "sh": "bash",
-            "yaml": "yaml",
-            "yml": "yaml",
-            "json": "json",
-            "md": "markdown",
-            "html": "html",
-            "css": "css",
-            "scss": "scss",
-            "sass": "scss",
-            "sql": "sql",
-            "proto": "proto",
-            "elm": "elm",
-            "clj": "clojure",
-            "ex": "elixir",
-            "exs": "elixir",
-            "jl": "julia",
-        }
+        from .loader import get_extension_map
+
+        self._language_map = dict(get_extension_map())
+        for ext, lang_id in _EXTENSION_FALLBACK.items():
+            if ext not in self._language_map:
+                self._language_map[ext] = lang_id
+            else:
+                logger.warning(
+                    "Extension %r from fallback (%s) already set by language data (%s) - using data",
+                    ext,
+                    lang_id,
+                    self._language_map[ext],
+                )
 
         # Pre-load preferred languages if configured
         # Get dependencies within the method to avoid circular imports

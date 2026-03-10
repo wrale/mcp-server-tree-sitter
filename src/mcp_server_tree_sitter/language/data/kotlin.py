@@ -1,7 +1,18 @@
-"""Query templates for Kotlin language."""
+"""Kotlin language data."""
 
-TEMPLATES = {
-    "functions": """
+from ..schema import LanguageDataBase
+
+
+class Kotlin(LanguageDataBase):
+    id = "kotlin"
+    extensions = ["kt"]
+    scope_node_types = {
+        "function": ["function_declaration", "getter", "setter"],
+        "class": ["class_declaration", "interface_declaration"],
+        "module": ["kotlin_file"],
+    }
+    query_templates = {
+        "functions": """
         (function_declaration
             name: (simple_identifier) @function.name) @function.def
 
@@ -9,7 +20,7 @@ TEMPLATES = {
             name: (simple_identifier) @function.name
             function_body: (function_body) @function.body) @function.def
     """,
-    "classes": """
+        "classes": """
         (class_declaration
             name: (simple_identifier) @class.name) @class.def
 
@@ -17,7 +28,7 @@ TEMPLATES = {
             name: (simple_identifier) @class.name
             class_body: (class_body) @class.body) @class.def
     """,
-    "interfaces": """
+        "interfaces": """
         (interface_declaration
             name: (simple_identifier) @interface.name) @interface.def
 
@@ -25,7 +36,7 @@ TEMPLATES = {
             name: (simple_identifier) @interface.name
             class_body: (class_body) @interface.body) @interface.def
     """,
-    "imports": """
+        "imports": """
         (import_header) @import
 
         (import_header
@@ -38,16 +49,17 @@ TEMPLATES = {
             import_alias: (import_alias
                 name: (simple_identifier) @import.alias)) @import.aliased
     """,
-    "properties": """
+        "properties": """
         (property_declaration
             variable_declaration: (variable_declaration
                 simple_identifier: (simple_identifier) @property.name)) @property.def
     """,
-    "dataClasses": """
+        "dataClasses": """
         (class_declaration
             type: (type_modifiers
                 (type_modifier
                     "data" @data_class.modifier))
             name: (simple_identifier) @data_class.name) @data_class.def
     """,
-}
+    }
+    node_type_descriptions = {}
