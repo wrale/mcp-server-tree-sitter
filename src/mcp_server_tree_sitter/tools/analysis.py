@@ -60,6 +60,8 @@ def extract_symbols(
             symbol_types = ["functions", "structs", "imports"]
         elif language == "cpp":
             symbol_types = ["functions", "classes", "structs", "imports"]
+        elif language == "csharp":
+            symbol_types = ["functions", "classes", "interfaces", "structs", "imports"]
         elif language == "typescript":
             symbol_types = ["functions", "classes", "interfaces", "imports"]
         elif language == "swift":
