@@ -63,6 +63,7 @@ class LanguageRegistry:
             "clj": "clojure",
             "ex": "elixir",
             "exs": "elixir",
+            "jl": "julia",
         }
 
         # Pre-load preferred languages if configured

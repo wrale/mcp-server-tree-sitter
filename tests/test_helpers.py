@@ -27,13 +27,15 @@ from mcp_server_tree_sitter.language.query_templates import (
     get_query_template,
     list_query_templates,
 )
+from mcp_server_tree_sitter.models.ast import find_enclosing_scope
 from mcp_server_tree_sitter.tools.analysis import (
     analyze_code_complexity,
     analyze_project_structure,
     extract_symbols,
     find_dependencies,
 )
-from mcp_server_tree_sitter.tools.ast_operations import find_node_at_position as ast_find_node_at_position
+from mcp_server_tree_sitter.tools.ast_operations import find_node_at_position as ast_find_node_at_position, \
+    get_enclosing_scope_for_path
 from mcp_server_tree_sitter.tools.ast_operations import get_file_ast as ast_get_file_ast
 from mcp_server_tree_sitter.tools.file_operations import (
     get_file_content,
@@ -299,6 +301,15 @@ def get_query_template_tool(language: str, template_name: str) -> Dict[str, Any]
 def list_query_templates_tool(language: Optional[str] = None) -> Dict[str, Any]:
     """List available query templates."""
     return list_query_templates(language)
+
+
+def get_enclosing_scope_tool(project: str, path: str, row: int, col: int, label: str | None) -> Dict[str, Any]:
+    """Run a tree-sitter query on project files."""
+    project_registry = get_project_registry()
+    language_registry = get_language_registry()
+    tree_cache = get_tree_cache()
+
+    return get_enclosing_scope_for_path(project_registry.get_project(project), path, row, col, label, language_registry, tree_cache)
 
 
 def build_query(language: str, patterns: List[str], combine: str = "or") -> Dict[str, str]:

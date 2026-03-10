@@ -6,6 +6,7 @@ finding nodes at specific positions, and other AST-related operations.
 
 from typing import Any, Dict, List, Optional, Tuple
 
+from ..language.scope_node_types import get_enclosure_node_types, node_type_to_kind
 from ..utils.tree_sitter_helpers import (
     get_node_text,
     walk_tree,
@@ -138,10 +139,6 @@ def find_node_at_position(root_node: Any, row: int, column: int) -> Optional[Any
 
             continue  # Continue to first child
 
-        # If first child doesn't contain point, try siblings
-        cursor.goto_parent()
-        current_best = cursor.node  # Reset current best to parent
-
         # Try siblings
         found_in_sibling = False
         while cursor.goto_next_sibling():
@@ -210,3 +207,69 @@ def extract_node_path(
 
     # Reverse to get root->target order
     return list(reversed(path))
+
+
+def find_enclosing_scope(
+    root_node: Any,
+    source_bytes: bytes,
+    row: int,
+    column: int,
+    label: str,
+    language: str,
+) -> Dict[str, Any]:
+    """
+    Find the enclosing scope (function, class, or module) for a position and return its block info.
+
+    Used by get_enclosing_scope(project, path, row, column); does not depend on project or file path.
+
+    Args:
+        root_node: Root node of the parsed tree.
+        source_bytes: Source code bytes.
+        row: Row (0-based).
+        column: Column (0-based).
+        label: Text label at the position
+        language: Language id (e.g. "python", "javascript").
+
+    Returns:
+        Dict with keys: kind, text, start_line, end_line.
+
+    TODO:
+    - We are not checking the label against the node text. This could be an enhancement to ensure we are returning
+      a scope that actually contains the label, or find nearest scope that contains the label if the position is not
+      accurate.
+    """
+    safe_root = ensure_node(root_node)
+    node = find_node_at_position(safe_root, row, column)
+
+    if node is None:
+        # We didn't find any node. This should only happen if the position is outside the root node's span.
+        # In that case, we will return None.
+        return dict()
+
+    enclosure_types = set(get_enclosure_node_types(language))
+
+    # Lookup the node and its ancestors until we find one that is in the enclosure list (function, class, module), or we reach the root.
+    while node is not None:
+        if node.type in enclosure_types:
+            break
+        node = node.parent
+
+    # If we reached the root without finding an enclosure node, we will use the root as the scope node.
+    scope_node = safe_root if node is None else node
+
+    # Resolve kind from node type; extract name (e.g. Python/JS: "name" or "identifier" child).
+    scope_kind = node_type_to_kind(language, scope_node.type)
+
+    # Set text and start_line/end_line (0-based), return dict.
+    text = get_node_text(scope_node, source_bytes, decode=True)
+    if isinstance(text, bytes):
+        text = text.decode("utf-8", errors="replace")
+
+    start_line = scope_node.start_point[0]
+    end_line = scope_node.end_point[0]
+    return {
+        "kind": scope_kind.value,
+        "text": text,
+        "start_line": start_line,
+        "end_line": end_line,
+    }

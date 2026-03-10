@@ -173,7 +173,11 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
+# Editor backups
+*.un~
+
 # etc.
 results/
 diagnostic_results/
 *.json
+.idea/

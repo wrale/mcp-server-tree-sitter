@@ -47,30 +47,33 @@ prepare: clean format lint test-ci ensure-diagnostic-dir verify
 test-ci:
 	# Use CI=true to help tests detect when they're in a CI-like environment
 	CI=true $(MAKE) test-with-args
-	CI=true $(UV) run pytest tests/test_diagnostics/ -v
+	CI=true $(PYTEST) tests/test_diagnostics/ -v
+
+# Use venv Python and dev extras so project deps (yaml, mcp, etc.) and pytest are available.
+# Plain 'uv run pytest' can resolve to system pytest and wrong interpreter.
+PYTEST := $(UV) run --extra dev python -m pytest
 
 # Testing targets
 .PHONY: test
 test:
-	# Regular test target
-	$(UV) run pytest
+	$(PYTEST)
 
 # Run tests with explicit cli args to catch arg parsing conflicts
 .PHONY: test-with-args
 test-with-args:
-	$(UV) run pytest tests -- tests
+	$(PYTEST) tests -- tests
 
 .PHONY: test-diagnostics
 test-diagnostics: ensure-diagnostic-dir
-	$(UV) run pytest tests/test_diagnostics/ -v
+	$(PYTEST) tests/test_diagnostics/ -v
 
 .PHONY: test-diagnostics-ci
 test-diagnostics-ci: ensure-diagnostic-dir
-	$(UV) run pytest tests/test_diagnostics/ -v || echo "Diagnostic tests completed with issues - see diagnostic_results directory"
+	$(PYTEST) tests/test_diagnostics/ -v || echo "Diagnostic tests completed with issues - see diagnostic_results directory"
 
 .PHONY: test-coverage
 test-coverage:
-	$(UV) run pytest --cov=$(PACKAGE) --cov-report=term --cov-report=html
+	$(PYTEST) --cov=$(PACKAGE) --cov-report=term --cov-report=html
 
 # Matrix testing support
 .PHONY: test-matrix
