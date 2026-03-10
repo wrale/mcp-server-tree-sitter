@@ -61,18 +61,18 @@ flowchart TB
 
 ## Features (Summary)
 
-| Area | Status | Notes |
-|------|--------|--------|
-| Project / language / file ops | ✅ | register, list, remove project; list files, get file, metadata |
-| AST | ✅ | get_ast, get_node_at_position; cursor-based traversal |
-| Search & queries | ✅ | find_text, run_query; query templates, build, adapt, get_node_types |
-| Symbols & analysis | ✅ | get_symbols, find_usage, get_dependencies, analyze_project, analyze_complexity |
-| Similar code | ⚠️ | find_similar_code runs but often returns no results |
-| Config & cache | ✅ | configure, clear_cache, diagnose_config; parse tree caching |
-| MCP context / progress | ⚠️ | Context works; progress reporting not fully done |
-| Tree editing / incremental | ⚠️ | Partial; full tree edit + incremental parsing not complete |
-| UTF-16 / read callable | ❌ | Not implemented |
-| Image handling | ❌ | Not implemented |
+| Area                          | Status   | Notes                                                                          |
+|-------------------------------|----------|--------------------------------------------------------------------------------|
+| Project / language / file ops | ✅        | register, list, remove project; list files, get file, metadata                 |
+| AST                           | ✅        | get_ast, get_node_at_position; cursor-based traversal                          |
+| Search & queries              | ✅        | find_text, run_query; query templates, build, adapt, get_node_types            |
+| Symbols & analysis            | ✅        | get_symbols, find_usage, get_dependencies, analyze_project, analyze_complexity |
+| Similar code                  | ⚠️       | find_similar_code runs but often returns no results                            |
+| Config & cache                | ✅        | configure, clear_cache, diagnose_config; parse tree caching                    |
+| MCP context / progress        | ⚠️       | Context works; progress reporting not fully done                               |
+| Tree editing / incremental    | ⚠️       | Partial; full tree edit + incremental parsing not complete                     |
+| UTF-16 / read callable        | ❌        | Not implemented                                                                |
+| Image handling                | ❌        | Not implemented                                                                |
 
 **Languages:** See [Supported languages](#supported-languages) and [Adding more languages](#adding-more-languages) below.
 
