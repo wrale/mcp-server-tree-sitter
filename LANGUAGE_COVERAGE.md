@@ -37,7 +37,7 @@ We add support for more languages over time and update this table as we go.
 | commonlisp          | ❌         | ❌                   |
 | cpon                | ❌         | ❌                   |
 | **cpp**             | ✅         | ✅                   |
-| **csharp**          | ❌         | ❌                   |
+| **csharp**          | ✅         | ✅                   |
 | **css**             | ❌         | ❌                   |
 | csv                 | ❌         | ❌                   |
 | cuda                | ❌         | ❌                   |
@@ -187,7 +187,7 @@ We add support for more languages over time and update this table as we go.
 
 ## Summary
 
-- **Templates**: 12 languages (apl, c, cpp, go, java, javascript, julia, kotlin, python, rust, swift, typescript).
-- **get_enclosing_scope**: 11 languages (c, cpp, go, java, javascript, julia, kotlin, python, rust, swift, typescript).
+- **Templates**: 13 languages (apl, c, cpp, csharp, go, java, javascript, julia, kotlin, python, rust, swift, typescript).
+- **get_enclosing_scope**: 12 languages (c, cpp, csharp, go, java, javascript, julia, kotlin, python, rust, swift, typescript).
 
 Languages available in the pack but not listed above (e.g. `fsharp_signature`, `ocaml_interface`) can be added to the table when we add support for them.
