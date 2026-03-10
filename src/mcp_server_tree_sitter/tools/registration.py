@@ -357,11 +357,10 @@ def register_tools(mcp_server: Any, container: DependencyContainer) -> None:
             Empty if no scope found (e.g., point outside valid code)
         """
         project_obj = project_registry.get_project(project)
-        path = project_obj.get_file_path(file_path)
 
         return get_enclosing_scope_for_path(
-            project_registry.get_project(project),
-            str(path),
+            project_obj,
+            file_path,
             row,
             column,
             label if label is not None else "",
