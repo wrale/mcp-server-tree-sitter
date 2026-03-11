@@ -91,6 +91,8 @@ class LanguageRegistry:
         Returns:
             Language identifier or None if unknown
         """
+        # Handle Path objects (WindowsPath/PosixPath) by converting to string
+        file_path = str(file_path)
         ext = file_path.split(".")[-1].lower() if "." in file_path else ""
         return self._language_map.get(ext)
 
