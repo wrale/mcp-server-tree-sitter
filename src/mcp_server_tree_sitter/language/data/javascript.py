@@ -28,11 +28,8 @@ class JavaScript(LanguageDataBase):
             body: (class_body) @class.body) @class.def
     """,
         "imports": """
-        (import_statement) @import
-
         (import_statement
-            source: (string) @import.source
-            specifier: (_) @import.specifier) @import.full
+            source: (string) @import.source) @import
     """,
         "function_calls": """
         (call_expression
