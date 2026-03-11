@@ -59,4 +59,5 @@ class Csharp(LanguageDataBase):
             (qualified_name) @import.name) @import.qualified
     """,
     }
+    default_symbol_types = ["functions", "classes", "interfaces", "structs", "imports"]
     node_type_descriptions = {}

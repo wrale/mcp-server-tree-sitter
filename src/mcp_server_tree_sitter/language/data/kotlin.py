@@ -62,4 +62,5 @@ class Kotlin(LanguageDataBase):
             name: (simple_identifier) @data_class.name) @data_class.def
     """,
     }
+    default_symbol_types = ["functions", "classes", "interfaces", "imports"]
     node_type_descriptions = {}

@@ -45,6 +45,7 @@ class JavaScript(LanguageDataBase):
             value: (_) @assign.value) @assign
     """,
     }
+    default_symbol_types = ["functions", "classes", "imports"]
     node_type_descriptions = {
         "program": "The root node of a JavaScript file",
         "function_declaration": "A function declaration with name and params",

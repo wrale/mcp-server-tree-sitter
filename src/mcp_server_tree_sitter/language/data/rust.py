@@ -53,4 +53,5 @@ class Rust(LanguageDataBase):
             type: (_) @impl.type) @impl.def
     """,
     }
+    default_symbol_types = ["functions", "structs", "imports"]
     node_type_descriptions = {}

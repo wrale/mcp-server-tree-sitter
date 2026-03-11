@@ -57,4 +57,5 @@ class Go(LanguageDataBase):
                 type: (interface_type) @interface.body)) @interface.def
     """,
     }
+    default_symbol_types = ["functions", "structs", "imports"]
     node_type_descriptions = {}

@@ -59,4 +59,5 @@ class Cpp(LanguageDataBase):
                 name: (type_identifier) @template.class)) @template.class_def
     """,
     }
+    default_symbol_types = ["functions", "classes", "structs", "imports"]
     node_type_descriptions = {}

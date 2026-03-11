@@ -49,6 +49,7 @@ class Python(LanguageDataBase):
             right: (_) @assign.value) @assign
     """,
     }
+    default_symbol_types = ["functions", "classes", "imports"]
     node_type_descriptions = {
         "module": "The root node of a Python file",
         "function_definition": "A function definition with name and params",

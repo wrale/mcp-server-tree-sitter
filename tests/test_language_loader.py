@@ -1,12 +1,13 @@
 """Tests for loading and validating all language data from language/data/."""
 
 from mcp_server_tree_sitter.language.loader import (
+    get_default_symbol_types,
     get_extension_map,
     get_query_templates,
     get_scope_node_types,
     load_all_language_data,
 )
-from mcp_server_tree_sitter.language.schema import LanguageData
+from mcp_server_tree_sitter.language.schema import DEFAULT_SYMBOL_TYPES, LanguageData
 
 
 def test_load_all_language_data_returns_non_empty() -> None:
@@ -33,6 +34,9 @@ def test_each_language_data_valid() -> None:
         assert isinstance(lang_data.node_type_descriptions, dict), (
             f"{lang_id}: node_type_descriptions must be a dict"
         )
+        assert isinstance(lang_data.default_symbol_types, list), (
+            f"{lang_id}: default_symbol_types must be a list"
+        )
 
 
 def test_derived_caches_consistent_with_loaded() -> None:
@@ -49,3 +53,20 @@ def test_derived_caches_consistent_with_loaded() -> None:
     assert ext_lang_ids <= loaded_ids, "Extension map should only reference loaded language ids"
     templates = get_query_templates()
     assert set(templates.keys()) == loaded_ids, "query_templates should have same keys as loaded"
+
+
+def test_get_default_symbol_types_returns_per_language_defaults() -> None:
+    """get_default_symbol_types returns the configured list for known languages."""
+    assert get_default_symbol_types("python") == ["functions", "classes", "imports"]
+    assert get_default_symbol_types("rust") == ["functions", "structs", "imports"]
+    assert get_default_symbol_types("cpp") == ["functions", "classes", "structs", "imports"]
+    assert get_default_symbol_types("julia") == ["functions", "modules", "structs", "imports"]
+
+
+def test_get_default_symbol_types_returns_canonical_default_for_unknown() -> None:
+    """get_default_symbol_types returns DEFAULT_SYMBOL_TYPES for unknown language."""
+    result = get_default_symbol_types("unknown_lang_xyz_123")
+    assert result == DEFAULT_SYMBOL_TYPES
+    # Return value should be a copy so mutating does not affect the constant
+    result.append("other")
+    assert get_default_symbol_types("unknown_lang_xyz_123") == DEFAULT_SYMBOL_TYPES

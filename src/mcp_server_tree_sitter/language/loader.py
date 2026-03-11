@@ -4,17 +4,18 @@ Subclasses of LanguageDataBase register themselves when defined. LanguageDataLoa
 imports all modules in the data package (so classes are created), then builds
 LanguageData from the registry. Derived structures are built from the cached load.
 
-Public API (stable): load_all_language_data, get_scope_node_types, get_extension_map,
-get_query_templates, get_node_type_descriptions, get_query_adaptation_map.
+Public API (stable): load_all_language_data, get_all_language_data, get_language_data,
+get_default_symbol_types, get_scope_node_types, get_extension_map, get_query_templates,
+get_node_type_descriptions, get_query_adaptation_map.
 """
 
 import importlib
 import logging
 import pkgutil
 from types import ModuleType
-from typing import ClassVar, Dict
+from typing import ClassVar, Dict, Optional
 
-from .schema import LanguageData, LanguageDataBase
+from .schema import DEFAULT_SYMBOL_TYPES, LanguageData, LanguageDataBase
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -103,6 +104,22 @@ class LanguageDataLoader:
         return result
 
     @classmethod
+    def get_language_data(cls, language_id: str) -> Optional[LanguageData]:
+        """Return LanguageData for the given language id, or None if not found (cached at load time)."""
+        return cls._get_loaded().get(language_id)
+
+    @classmethod
+    def get_default_symbol_types(cls, language_id: str) -> list[str]:
+        """Return default symbol types for the language, or canonical default if not found (cached)."""
+        data = cls._get_loaded().get(language_id)
+        return list(data.default_symbol_types) if data else list(DEFAULT_SYMBOL_TYPES)
+
+    @classmethod
+    def get_all_language_data(cls) -> Dict[str, LanguageData]:
+        """Return all loaded language data as language id -> LanguageData (cached at load time)."""
+        return cls._get_loaded()
+
+    @classmethod
     def get_scope_node_types(cls) -> dict[str, dict[str, list[str]]]:
         """Return scope kind -> language id -> list of node type names (cached at load time)."""
         cls._get_loaded()
@@ -147,6 +164,21 @@ class LanguageDataLoader:
 def load_all_language_data() -> Dict[str, LanguageData]:
     """Load all language data (cached). See LanguageDataLoader.load_all_language_data."""
     return LanguageDataLoader.load_all_language_data()
+
+
+def get_all_language_data() -> Dict[str, LanguageData]:
+    """Return all loaded language data (cached). See LanguageDataLoader.get_all_language_data."""
+    return LanguageDataLoader.get_all_language_data()
+
+
+def get_language_data(language_id: str) -> Optional[LanguageData]:
+    """Return LanguageData for the given language id, or None if not found. See LanguageDataLoader.get_language_data."""
+    return LanguageDataLoader.get_language_data(language_id)
+
+
+def get_default_symbol_types(language_id: str) -> list[str]:
+    """Default symbol types for the language, or canonical default if not found."""
+    return LanguageDataLoader.get_default_symbol_types(language_id)
 
 
 def get_scope_node_types() -> dict[str, dict[str, list[str]]]:

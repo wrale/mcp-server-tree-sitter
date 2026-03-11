@@ -62,4 +62,5 @@ class Swift(LanguageDataBase):
             body: (extension_body) @extension.body) @extension.def
     """,
     }
+    default_symbol_types = ["functions", "classes", "structs", "imports"]
     node_type_descriptions = {}

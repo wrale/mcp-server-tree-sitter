@@ -15,6 +15,9 @@ ScopeKindKey = Literal["function", "class", "module"]
 
 _REQUIRED_SCOPE_KINDS: tuple[ScopeKindKey, ...] = ("function", "class", "module")
 
+# Single source of truth for default symbol types when a language has none or is unknown
+DEFAULT_SYMBOL_TYPES: list[str] = ["functions", "classes", "imports"]
+
 
 class LanguageDataBase(ABC):
     """Abstract base for per-language data. Subclass in language/data/<id>.py and set class attributes.
@@ -28,6 +31,8 @@ class LanguageDataBase(ABC):
     scope_node_types: ClassVar[dict[ScopeKindKey, list[str]]]
     query_templates: ClassVar[dict[str, str]]
     node_type_descriptions: ClassVar[dict[str, str]]
+    # Optional: default symbol types for extraction when not specified. Use [] to inherit default.
+    default_symbol_types: ClassVar[list[str]] = []
 
     def __init_subclass__(cls, **kwargs: object) -> None:
         super().__init_subclass__(**kwargs)
@@ -42,12 +47,14 @@ class LanguageDataBase(ABC):
     @classmethod
     def to_language_data(cls) -> "LanguageData":
         """Build and validate a LanguageData instance from this class's attributes."""
+        default_syms = getattr(cls, "default_symbol_types", [])
         return LanguageData(
             id=cls.id,
             extensions=list(cls.extensions),
             scope_node_types={k: list(v) for k, v in cls.scope_node_types.items()},
             query_templates=dict(cls.query_templates),
             node_type_descriptions=getattr(cls, "node_type_descriptions", {}) or {},
+            default_symbol_types=list(default_syms) if default_syms else DEFAULT_SYMBOL_TYPES,
         )
 
 
@@ -71,6 +78,10 @@ class LanguageData(BaseModel):
     node_type_descriptions: dict[str, str] = Field(
         default_factory=dict,
         description="Optional: node type name -> short description for tooling/docs",
+    )
+    default_symbol_types: list[str] = Field(
+        default_factory=lambda: list(DEFAULT_SYMBOL_TYPES),
+        description="Default symbol types for extraction when not specified",
     )
 
     @model_validator(mode="after")

@@ -45,4 +45,5 @@ class C(LanguageDataBase):
             name: (identifier) @macro.name) @macro.def
     """,
     }
+    default_symbol_types = ["functions", "structs", "imports"]
     node_type_descriptions = {}

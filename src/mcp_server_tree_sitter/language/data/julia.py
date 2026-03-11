@@ -62,4 +62,5 @@ class Julia(LanguageDataBase):
             name: (identifier) @abstract.name) @abstract.def
     """,
     }
+    default_symbol_types = ["functions", "modules", "structs", "imports"]
     node_type_descriptions = {}

@@ -59,4 +59,5 @@ class TypeScript(LanguageDataBase):
                 name: (identifier) @import.namespace)) @import.namespace
     """,
     }
+    default_symbol_types = ["functions", "classes", "interfaces", "imports"]
     node_type_descriptions = {}

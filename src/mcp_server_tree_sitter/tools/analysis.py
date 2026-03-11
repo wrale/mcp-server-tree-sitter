@@ -5,6 +5,7 @@ from collections import Counter, defaultdict
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from ..exceptions import SecurityError
+from ..language.loader import get_default_symbol_types
 from ..language.query_templates import get_query_template
 from ..language.registry import LanguageRegistry
 from ..models.project import Project
@@ -52,33 +53,9 @@ def extract_symbols(
     if not language:
         raise ValueError(f"Could not detect language for {file_path}")
 
-    # Default symbol types if not specified
+    # Default symbol types if not specified (from per-language config, or canonical default if language unknown)
     if symbol_types is None:
-        # Language-specific defaults based on their structural elements
-        if language == "rust":
-            symbol_types = ["functions", "structs", "imports"]
-        elif language == "go":
-            symbol_types = ["functions", "structs", "imports"]
-        elif language == "c":
-            symbol_types = ["functions", "structs", "imports"]
-        elif language == "cpp":
-            symbol_types = ["functions", "classes", "structs", "imports"]
-        elif language == "csharp":
-            symbol_types = ["functions", "classes", "interfaces", "structs", "imports"]
-        elif language == "typescript":
-            symbol_types = ["functions", "classes", "interfaces", "imports"]
-        elif language == "swift":
-            symbol_types = ["functions", "classes", "structs", "imports"]
-        elif language == "java":
-            symbol_types = ["functions", "classes", "interfaces", "imports"]
-        elif language == "kotlin":
-            symbol_types = ["functions", "classes", "interfaces", "imports"]
-        elif language == "julia":
-            symbol_types = ["functions", "modules", "structs", "imports"]
-        elif language == "apl":
-            symbol_types = ["functions", "namespaces", "variables", "imports"]
-        else:
-            symbol_types = ["functions", "classes", "imports"]
+        symbol_types = get_default_symbol_types(language)
 
     # Get query templates for each symbol type
     queries = {}

@@ -159,6 +159,19 @@ class FileHandler:
         }
 
 
+def test_extract_symbols_without_symbol_types_uses_per_language_default(
+    test_project: _SymbolProjectFixturePayload,
+) -> None:
+    """extract_symbols with symbol_types=None uses per-language default symbol types."""
+    from mcp_server_tree_sitter.language.loader import get_default_symbol_types
+
+    symbols = get_symbols(project=test_project["name"], file_path="test.py")
+    expected_types = set(get_default_symbol_types("python"))
+    assert set(symbols.keys()) == expected_types, (
+        f"Symbol keys should match python default symbol types, got {set(symbols.keys())}"
+    )
+
+
 def test_symbol_extraction_diagnostics(test_project: _SymbolProjectFixturePayload) -> None:
     """Test symbol extraction to diagnose specific issues in the implementation."""
     # Get symbols from first file, excluding class methods

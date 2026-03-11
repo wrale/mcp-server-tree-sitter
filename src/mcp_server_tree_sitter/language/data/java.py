@@ -59,4 +59,5 @@ class Java(LanguageDataBase):
             body: (enum_body) @enum.body) @enum.def
     """,
     }
+    default_symbol_types = ["functions", "classes", "interfaces", "imports"]
     node_type_descriptions = {}
