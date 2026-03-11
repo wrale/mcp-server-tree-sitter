@@ -4,7 +4,9 @@ Precedence: environment variables > explicit updates > YAML file > defaults.
 Env format: MCP_TS_SECTION_SETTING (e.g. MCP_TS_CACHE_MAX_SIZE_MB) or MCP_TS_SETTING.
 """
 
-from typing import List, Optional, TypeAlias, TypedDict, Union
+from typing import List, Optional, TypeAlias, Union
+
+from typing_extensions import TypedDict
 
 from pydantic import BaseModel, Field
 
