@@ -1,6 +1,13 @@
 """Configuration schema and public API for MCP Tree-sitter.
 
-Precedence: environment variables > explicit updates > YAML file > defaults.
+Configuration precedence (highest to lowest):
+  1. Explicit updates via update_value() — runtime changes take effect immediately
+     and are not overwritten by env or file.
+  2. Environment variables (MCP_TS_*) — applied exactly once at load time
+     (when config is created or when a file is loaded).
+  3. YAML file — values from the config file when present.
+  4. Defaults — ServerConfig / schema defaults.
+
 Import from this module for backward compatibility; schema lives in config_schema.
 """
 

@@ -1,4 +1,11 @@
-"""YAML configuration loading and ConfigurationManager for MCP Tree-sitter."""
+"""YAML configuration loading and ConfigurationManager for MCP Tree-sitter.
+
+Env vars are applied exactly once at load time (in load_config, load_config_from_file,
+ConfigurationManager.__init__, and load_from_file). update_value() does not re-apply
+env, so explicit runtime updates take precedence over env and persist.
+
+Precedence: update_value() > env (at load) > YAML file > defaults.
+"""
 
 import logging
 import os
@@ -144,7 +151,10 @@ class ConfigurationManager:
             return self._config
 
     def update_value(self, path: str, value: ConfigValue) -> None:
-        """Update a configuration value by dot-notation path (e.g. cache.max_size_mb)."""
+        """Update a configuration value by dot-notation path (e.g. cache.max_size_mb).
+
+        Env vars are not re-applied; this explicit update takes precedence and persists.
+        """
         parts = path.split(".")
         if len(parts) == 2:
             section, key = parts
@@ -166,7 +176,6 @@ class ConfigurationManager:
             else:
                 self._logger.warning(f"Unknown config path: {path}")
 
-        update_config_from_env(self._config)
         if self._on_config_loaded is not None:
             self._on_config_loaded(self._config)
 
