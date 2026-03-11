@@ -100,9 +100,10 @@ class Project:
         """
         # Normalize relative path to avoid directory traversal
         norm_path = normalize_path(self.root_path / relative_path)
+        root_resolved = self.root_path.resolve()
 
-        # Check path is inside project
-        if not str(norm_path).startswith(str(self.root_path)):
+        # Check path is inside project (Python 3.9+ is_relative_to; correct for prefixes like /proj vs /project)
+        if not norm_path.is_relative_to(root_resolved):
             raise ProjectError(f"Path '{relative_path}' is outside project root")
 
         return norm_path
