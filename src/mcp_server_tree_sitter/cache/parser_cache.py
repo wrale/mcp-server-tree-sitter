@@ -53,33 +53,33 @@ class TreeCache:
         """Get current max size setting."""
         # Always get the latest from container config
         try:
-            from ..di import get_container
+            from ..app import get_app
 
-            config = get_container().get_config()
+            config = get_app().get_config()
             return config.cache.max_size_mb if self.enabled else 0  # Return 0 if disabled
         except (ImportError, AttributeError):
-            # Fallback to instance value if container unavailable
+            # Fallback to instance value if app unavailable
             return self.max_size_mb
 
     def _get_ttl_seconds(self) -> int:
         """Get current TTL setting."""
         # Always get the latest from container config
         try:
-            from ..di import get_container
+            from ..app import get_app
 
-            config = get_container().get_config()
+            config = get_app().get_config()
             return config.cache.ttl_seconds
         except (ImportError, AttributeError):
-            # Fallback to instance value if container unavailable
+            # Fallback to instance value if app unavailable
             return self.ttl_seconds
 
     def _is_cache_enabled(self) -> bool:
         """Check if caching is enabled."""
-        # Honor both local setting and container config
+        # Honor both local setting and app config
         try:
-            from ..di import get_container
+            from ..app import get_app
 
-            config = get_container().get_config()
+            config = get_app().get_config()
             is_enabled = self.enabled and config.cache.enabled
             # For very small caches, log the state
             if not is_enabled:
@@ -354,11 +354,10 @@ class TreeCache:
 
 # The following function is maintained for backward compatibility
 def get_tree_cache() -> TreeCache:
-    """Get the tree cache from the dependency container."""
-    from ..di import get_container
+    """Get the tree cache from the app."""
+    from ..app import get_app
 
-    tree_cache = get_container().tree_cache
-    return tree_cache
+    return get_app().tree_cache
 
 
 @lru_cache(maxsize=32)

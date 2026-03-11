@@ -7,19 +7,19 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from mcp_server_tree_sitter.app import App
 from mcp_server_tree_sitter.config import ServerConfig
-from mcp_server_tree_sitter.di import DependencyContainer
 from mcp_server_tree_sitter.server import configure_with_context, main, mcp
 
 
 @pytest.fixture
-def mock_container() -> MagicMock:
-    """Create a mock dependency container (spec=DependencyContainer)."""
-    container = MagicMock(spec=DependencyContainer)
+def mock_app() -> MagicMock:
+    """Create a mock app (spec=App)."""
+    app = MagicMock(spec=App)
 
     # Set up mocks for required components
-    container.config_manager = MagicMock()
-    container.tree_cache = MagicMock()
+    app.config_manager = MagicMock()
+    app.tree_cache = MagicMock()
 
     # Set up initial config with proper nested structure
     initial_config = MagicMock(spec=ServerConfig)
@@ -44,11 +44,11 @@ def mock_container() -> MagicMock:
     initial_config.log_level = "INFO"
 
     # Ensure get_config returns the mock config
-    container.config_manager.get_config.return_value = initial_config
-    container.get_config.return_value = initial_config
+    app.config_manager.get_config.return_value = initial_config
+    app.get_config.return_value = initial_config
 
     # Set up to_dict to return a dictionary with expected structure
-    container.config_manager.to_dict.return_value = {
+    app.config_manager.to_dict.return_value = {
         "cache": {
             "enabled": True,
             "max_size_mb": 100,
@@ -64,7 +64,7 @@ def mock_container() -> MagicMock:
         "log_level": "INFO",
     }
 
-    return container
+    return app
 
 
 def test_mcp_server_initialized() -> None:
@@ -73,16 +73,16 @@ def test_mcp_server_initialized() -> None:
     assert mcp.name == "tree_sitter"
 
 
-def test_configure_with_context_basic(mock_container: MagicMock) -> None:
+def test_configure_with_context_basic(mock_app: MagicMock) -> None:
     """Test basic configuration with no specific settings."""
     # Call configure_with_context with only the container
-    config_dict, config = configure_with_context(mock_container)
+    config_dict, config = configure_with_context(mock_app)
 
     # Verify that get_config was called
-    mock_container.config_manager.get_config.assert_called()
+    mock_app.config_manager.get_config.assert_called()
 
     # Verify to_dict was called to return the config
-    mock_container.config_manager.to_dict.assert_called_once()
+    mock_app.config_manager.to_dict.assert_called_once()
 
     # Verify config has expected structure
     assert "cache" in config_dict
@@ -91,28 +91,28 @@ def test_configure_with_context_basic(mock_container: MagicMock) -> None:
     assert "log_level" in config_dict
 
 
-def test_configure_with_context_cache_enabled(mock_container: MagicMock) -> None:
+def test_configure_with_context_cache_enabled(mock_app: MagicMock) -> None:
     """Test configuration with cache_enabled setting."""
     # Call configure_with_context with cache_enabled=False
-    config_dict, config = configure_with_context(mock_container, cache_enabled=False)
+    config_dict, config = configure_with_context(mock_app, cache_enabled=False)
 
     # Verify update_value was called with correct parameters
-    mock_container.config_manager.update_value.assert_called_with("cache.enabled", False)
+    mock_app.config_manager.update_value.assert_called_with("cache.enabled", False)
 
     # Verify tree_cache.set_enabled was called
-    mock_container.tree_cache.set_enabled.assert_called_with(False)
+    mock_app.tree_cache.set_enabled.assert_called_with(False)
 
 
-def test_configure_with_context_max_file_size(mock_container: MagicMock) -> None:
+def test_configure_with_context_max_file_size(mock_app: MagicMock) -> None:
     """Test configuration with max_file_size_mb setting."""
     # Call configure_with_context with max_file_size_mb=20
-    config_dict, config = configure_with_context(mock_container, max_file_size_mb=20)
+    config_dict, config = configure_with_context(mock_app, max_file_size_mb=20)
 
     # Verify update_value was called with correct parameters
-    mock_container.config_manager.update_value.assert_called_with("security.max_file_size_mb", 20)
+    mock_app.config_manager.update_value.assert_called_with("security.max_file_size_mb", 20)
 
 
-def test_configure_with_context_log_level(mock_container: MagicMock) -> None:
+def test_configure_with_context_log_level(mock_app: MagicMock) -> None:
     """Test configuration with log_level setting."""
     # Call configure_with_context with log_level="DEBUG"
     with patch("logging.getLogger") as mock_get_logger:
@@ -134,10 +134,10 @@ def test_configure_with_context_log_level(mock_container: MagicMock) -> None:
                 "mcp_server_tree_sitter.test": None,
             },
         ):
-            config_dict, config = configure_with_context(mock_container, log_level="DEBUG")
+            config_dict, config = configure_with_context(mock_app, log_level="DEBUG")
 
     # Verify update_value was called with correct parameters
-    mock_container.config_manager.update_value.assert_called_with("log_level", "DEBUG")
+    mock_app.config_manager.update_value.assert_called_with("log_level", "DEBUG")
 
     # Verify root logger was configured
     # Allow any call to getLogger with any name starting with "mcp_server_tree_sitter"
@@ -145,7 +145,7 @@ def test_configure_with_context_log_level(mock_container: MagicMock) -> None:
     mock_root_logger.setLevel.assert_called_with(logging.DEBUG)
 
 
-def test_configure_with_context_config_path(mock_container: MagicMock) -> None:
+def test_configure_with_context_config_path(mock_app: MagicMock) -> None:
     """Test configuration with config_path setting."""
     # Create a temporary YAML file
     with tempfile.NamedTemporaryFile(suffix=".yaml", mode="w", delete=False) as temp_file:
@@ -162,26 +162,26 @@ cache:
         abs_path = os.path.abspath(config_path)
 
         # Call configure_with_context with the config path
-        config_dict, config = configure_with_context(mock_container, config_path=config_path)
+        config_dict, config = configure_with_context(mock_app, config_path=config_path)
 
         # Verify load_from_file was called with correct path
-        mock_container.config_manager.load_from_file.assert_called_with(abs_path)
+        mock_app.config_manager.load_from_file.assert_called_with(abs_path)
 
     finally:
         # Clean up the temporary file
         os.unlink(config_path)
 
 
-def test_configure_with_context_nonexistent_config_path(mock_container: MagicMock) -> None:
+def test_configure_with_context_nonexistent_config_path(mock_app: MagicMock) -> None:
     """Test configuration with a nonexistent config path."""
     # Use a path that definitely doesn't exist
     config_path = "/nonexistent/config.yaml"
 
     # Call configure_with_context with the nonexistent path
-    config_dict, config = configure_with_context(mock_container, config_path=config_path)
+    config_dict, config = configure_with_context(mock_app, config_path=config_path)
 
     # Verify the function handled the nonexistent file gracefully
-    mock_container.config_manager.load_from_file.assert_called_with(os.path.abspath(config_path))
+    mock_app.config_manager.load_from_file.assert_called_with(os.path.abspath(config_path))
 
 
 def test_main() -> None:

@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional
 
 from mcp.server.fastmcp import FastMCP
 
-from ..di import get_container
+from ..app import get_app
 from .file_operations import get_file_content, get_file_info, list_project_files
 
 
@@ -29,7 +29,7 @@ def register_file_tools(mcp_server: FastMCP) -> None:
         Returns:
             List of file paths
         """
-        project_registry = get_container().project_registry
+        project_registry = get_app().project_registry
         return list_project_files(project_registry.get_project(project), pattern, max_depth, extensions)
 
     @mcp_server.tool()
@@ -45,7 +45,7 @@ def register_file_tools(mcp_server: FastMCP) -> None:
         Returns:
             File content
         """
-        project_registry = get_container().project_registry
+        project_registry = get_app().project_registry
         content = get_file_content(
             project_registry.get_project(project),
             path,
@@ -67,4 +67,4 @@ def register_file_tools(mcp_server: FastMCP) -> None:
         Returns:
             File metadata
         """
-        return get_file_info(get_container().project_registry.get_project(project), path)
+        return get_file_info(get_app().project_registry.get_project(project), path)

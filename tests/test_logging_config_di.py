@@ -10,7 +10,7 @@ from typing import Any
 
 import pytest
 
-from mcp_server_tree_sitter.di import get_container
+from mcp_server_tree_sitter.app import get_app
 from tests.test_helpers import configure, get_ast, register_project_tool, temp_config
 
 
@@ -79,9 +79,9 @@ def test_log_level_setting_di(test_project: dict[str, Any]) -> None:
     # Root logger for the package
     logger_name = "mcp_server_tree_sitter"
 
-    # Get container for checking values later
-    container = get_container()
-    original_log_level = container.get_config().log_level
+    # Get app for checking values later
+    app = get_app()
+    original_log_level = app.get_config().log_level
 
     try:
         # Test with DEBUG level
@@ -140,7 +140,7 @@ def test_log_level_setting_di(test_project: dict[str, Any]) -> None:
 
     finally:
         # Restore original log level
-        container.config_manager.update_value("log_level", original_log_level)
+        app.config_manager.update_value("log_level", original_log_level)
 
 
 def test_log_level_in_yaml_config_di() -> None:
@@ -159,9 +159,9 @@ cache:
         temp_file_path = temp_file.name
 
     try:
-        # Get container for checking values later
-        container = get_container()
-        original_log_level = container.get_config().log_level
+        # Get app for checking values later
+        app = get_app()
+        original_log_level = app.get_config().log_level
 
         try:
             # Load the configuration
@@ -180,7 +180,7 @@ cache:
 
         finally:
             # Restore original log level
-            container.config_manager.update_value("log_level", original_log_level)
+            app.config_manager.update_value("log_level", original_log_level)
 
     finally:
         # Clean up

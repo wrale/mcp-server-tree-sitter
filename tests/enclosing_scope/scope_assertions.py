@@ -3,11 +3,16 @@
 from typing import Any, Dict, Optional
 
 SCOPE_KEYS = {"kind", "text", "start_line", "end_line"}
+# Optional key returned when scope text is truncated
+SCOPE_KEYS_OPTIONAL = SCOPE_KEYS | {"truncated"}
 
 
 def assert_scope_has_keys(scope: Dict[str, Any]) -> None:
-    """Assert the scope dict has exactly the expected keys."""
-    assert set(scope.keys()) == SCOPE_KEYS, f"Expected keys {SCOPE_KEYS}, got {set(scope.keys())}"
+    """Assert the scope dict has the required keys and no unexpected keys."""
+    keys = set(scope.keys())
+    assert SCOPE_KEYS <= keys <= SCOPE_KEYS_OPTIONAL, (
+        f"Expected keys in {SCOPE_KEYS}..{SCOPE_KEYS_OPTIONAL}, got {keys}"
+    )
 
 
 def assert_scope_is_module(scope: Dict[str, Any], *text_contains: str) -> None:

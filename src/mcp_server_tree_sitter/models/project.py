@@ -1,4 +1,8 @@
-"""Project model for MCP server."""
+"""Project model for MCP server.
+
+Singleton pattern: ProjectRegistry uses the __new__-based singleton pattern.
+This is the single mechanism used for process-wide singletons in this codebase.
+"""
 
 import logging
 import os
@@ -105,25 +109,26 @@ class Project:
 
 
 class ProjectRegistry:
-    """Manages projects for code analysis."""
+    """Manages projects for code analysis.
 
-    # Class variables for singleton pattern
+    __new__-based singleton: only one instance exists per process. Thread-safe;
+    call ProjectRegistry() or use get_app().project_registry to get the instance.
+    """
+
     _instance: Optional["ProjectRegistry"] = None
     _global_lock = threading.RLock()
 
     def __new__(cls) -> "ProjectRegistry":
-        """Implement singleton pattern with proper locking."""
+        """Return the single registry instance (thread-safe __new__ singleton)."""
         with cls._global_lock:
             if cls._instance is None:
                 instance = super(ProjectRegistry, cls).__new__(cls)
-                # We need to set attributes on the instance, not the class
                 instance._projects = {}
                 cls._instance = instance
             return cls._instance
 
     def __init__(self) -> None:
-        """Initialize the registry only once."""
-        # The actual initialization is done in __new__ to ensure it happens exactly once
+        """Ensure _projects exists (main initialization is in __new__)."""
         if not hasattr(self, "_projects"):
             self._projects: Dict[str, Project] = {}
 

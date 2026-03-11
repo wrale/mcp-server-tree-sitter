@@ -43,7 +43,7 @@ def node_to_dict_cursor(
 
     # Initialize the root node data
     root_id = get_node_id(safe_node)
-    root_data = {
+    root_data: Dict[str, Any] = {
         "id": root_id,
         "type": safe_node.type,
         "start_point": {
@@ -92,7 +92,7 @@ def node_to_dict_cursor(
             return node_map[node_id]
 
         # Create node data
-        node_data = {
+        node_data: Dict[str, Any] = {
             "id": node_id,
             "type": current_node.type,
             "start_point": {

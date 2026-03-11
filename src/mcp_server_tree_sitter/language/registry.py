@@ -69,9 +69,9 @@ class LanguageRegistry:
         # Pre-load preferred languages if configured
         # Get dependencies within the method to avoid circular imports
         try:
-            from ..di import get_container
+            from ..app import get_app
 
-            config = get_container().get_config()
+            config = get_app().get_config()
             for lang in config.language.preferred_languages:
                 try:
                     self.get_language(lang)
@@ -79,7 +79,7 @@ class LanguageRegistry:
                     logger.warning(f"Failed to pre-load language {lang}: {e}")
         except ImportError:
             # If dependency container isn't available yet, just skip this step
-            logger.warning("Skipping pre-loading of languages due to missing dependencies")
+            logger.warning("Skipping pre-loading of languages due to missing app")
 
     def language_for_file(self, file_path: str) -> Optional[str]:
         """

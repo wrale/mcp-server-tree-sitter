@@ -312,11 +312,11 @@ projects = list_projects()
 # Get configuration
 config = get_config()
 
-# Access components through dependency injection
-from mcp_server_tree_sitter.di import get_container
-container = get_container()
-project_registry = container.project_registry
-language_registry = container.language_registry
+# Access shared app state
+from mcp_server_tree_sitter.app import get_app
+app = get_app()
+project_registry = app.project_registry
+language_registry = app.language_registry
 ```
 
 ## Configuration

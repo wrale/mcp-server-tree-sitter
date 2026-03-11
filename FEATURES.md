@@ -320,12 +320,12 @@ from mcp_server_tree_sitter.api import get_config, get_language_registry
 config = get_config()
 languages = get_language_registry().list_available_languages()
 
-# Option 2: Direct Container Access
-from mcp_server_tree_sitter.di import get_container
+# Option 2: Direct app access
+from mcp_server_tree_sitter.app import get_app
 
-container = get_container()
-project_registry = container.project_registry
-tree_cache = container.tree_cache
+app = get_app()
+project_registry = app.project_registry
+tree_cache = app.tree_cache
 
 # Option 3: Global Context
 from mcp_server_tree_sitter.context import global_context
@@ -334,7 +334,7 @@ config = global_context.get_config()
 result = global_context.register_project("/path/to/project")
 ```
 
-The dependency injection approach helps make the code more testable and maintainable, even though it still uses singletons internally.
+Shared app state is exposed via get_app(); the same singleton is used throughout.
 
 ---
 

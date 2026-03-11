@@ -2,7 +2,7 @@
 
 from mcp.server.fastmcp import FastMCP
 
-from ..di import get_container
+from ..app import get_app
 from .ast_operations import get_enclosing_scope_for_path
 from .search import QueryMatchResult, TextMatchResult, query_code, search_text
 
@@ -36,10 +36,10 @@ def register_search_tools(mcp_server: FastMCP) -> None:
         Returns:
             List of matches with file, line number, and text
         """
-        container = get_container()
-        config = container.config_manager.get_config()
+        app = get_app()
+        config = app.config_manager.get_config()
         return search_text(
-            container.project_registry.get_project(project),
+            app.project_registry.get_project(project),
             pattern,
             file_pattern,
             max_results if max_results is not None else config.max_results_default,
@@ -73,16 +73,16 @@ def register_search_tools(mcp_server: FastMCP) -> None:
             Information about the enclosing scope, including type, name, and range
             Empty if no scope found (e.g., point outside valid code)
         """
-        container = get_container()
-        project_obj = container.project_registry.get_project(project)
+        app = get_app()
+        project_obj = app.project_registry.get_project(project)
         return get_enclosing_scope_for_path(
             project_obj,
             file_path,
             row,
             column,
             label if label is not None else "",
-            container.language_registry,
-            container.tree_cache,
+            app.language_registry,
+            app.tree_cache,
             max_lines,
         )
 
@@ -106,13 +106,13 @@ def register_search_tools(mcp_server: FastMCP) -> None:
         Returns:
             List of query matches
         """
-        container = get_container()
-        config = container.config_manager.get_config()
+        app = get_app()
+        config = app.config_manager.get_config()
         return query_code(
-            container.project_registry.get_project(project),
+            app.project_registry.get_project(project),
             query,
-            container.language_registry,
-            container.tree_cache,
+            app.language_registry,
+            app.tree_cache,
             file_path,
             language,
             max_results if max_results is not None else config.max_results_default,

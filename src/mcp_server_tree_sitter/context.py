@@ -7,11 +7,12 @@ components while supporting dependency injection.
 
 from typing import Any, Dict, List, Optional
 
+from .app import get_app
+
 # Import logging from bootstrap package
 from .bootstrap import get_logger, update_log_levels
 from .cache.parser_cache import TreeCache
 from .config import ConfigDict, ConfigurationManager, ServerConfig
-from .di import get_container
 from .exceptions import ProjectError
 from .language.registry import LanguageRegistry
 from .models.project import ProjectRegistry
@@ -34,11 +35,11 @@ class ServerContext:
 
         If components are not provided, they will be fetched from the global container.
         """
-        container = get_container()
-        self.config_manager = config_manager or container.config_manager
-        self.project_registry = project_registry or container.project_registry
-        self.language_registry = language_registry or container.language_registry
-        self.tree_cache = tree_cache or container.tree_cache
+        app = get_app()
+        self.config_manager = config_manager or app.config_manager
+        self.project_registry = project_registry or app.project_registry
+        self.language_registry = language_registry or app.language_registry
+        self.tree_cache = tree_cache or app.tree_cache
 
     def get_config(self) -> ServerConfig:
         """Get the current configuration."""

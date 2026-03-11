@@ -16,11 +16,10 @@ def reset_project_registry() -> Generator[None, None, None]:
     project registry, which is a singleton that persists across tests.
     """
     # Import here to avoid circular imports
-    from mcp_server_tree_sitter.di import get_container
+    from mcp_server_tree_sitter.app import get_app
 
-    # Get registry through DI container
-    container = get_container()
-    registry = container.project_registry
+    app = get_app()
+    registry = app.project_registry
 
     # Store original projects to restore after test
     original_projects = dict(registry._projects)

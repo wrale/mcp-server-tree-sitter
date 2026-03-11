@@ -78,27 +78,24 @@ def test_server_context_initialization(mock_dependencies: _MockDependenciesPaylo
     assert context.tree_cache is mock_dependencies["tree_cache"]
 
 
-@patch("mcp_server_tree_sitter.di.get_container")
-def test_server_context_initialization_with_container(
-    mock_get_container: MagicMock, mock_dependencies: _MockDependenciesPayload
+@patch("mcp_server_tree_sitter.context.get_app")
+def test_server_context_initialization_with_app(
+    mock_get_app: MagicMock, mock_dependencies: _MockDependenciesPayload
 ) -> None:
-    """Test that ServerContext falls back to container when dependencies are not provided."""
-    container = MagicMock()
-    container.config_manager = mock_dependencies["config_manager"]
-    container.project_registry = mock_dependencies["project_registry"]
-    container.language_registry = mock_dependencies["language_registry"]
-    container.tree_cache = mock_dependencies["tree_cache"]
+    """Test that ServerContext falls back to app when dependencies are not provided."""
+    app = MagicMock()
+    app.config_manager = mock_dependencies["config_manager"]
+    app.project_registry = mock_dependencies["project_registry"]
+    app.language_registry = mock_dependencies["language_registry"]
+    app.tree_cache = mock_dependencies["tree_cache"]
 
-    # Mock get_container() to return our container
-    mock_get_container.return_value = container
+    mock_get_app.return_value = app
 
-    # Test directly injecting dependencies from container
-    # This is what happens when get_container() is called
     context = ServerContext(
-        config_manager=container.config_manager,
-        project_registry=container.project_registry,
-        language_registry=container.language_registry,
-        tree_cache=container.tree_cache,
+        config_manager=app.config_manager,
+        project_registry=app.project_registry,
+        language_registry=app.language_registry,
+        tree_cache=app.tree_cache,
     )
 
     # We're testing that the context correctly uses these injected dependencies

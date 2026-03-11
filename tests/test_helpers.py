@@ -20,7 +20,7 @@ from mcp_server_tree_sitter.api import (
 from mcp_server_tree_sitter.api import (
     remove_project as api_remove_project,
 )
-from mcp_server_tree_sitter.di import get_container
+from mcp_server_tree_sitter.app import get_app
 from mcp_server_tree_sitter.language.query_templates import (
     get_query_template,
     list_query_templates,
@@ -59,21 +59,21 @@ def temp_config(**kwargs: object) -> Generator[None, None, None]:
     Args:
         **kwargs: Configuration values to change temporarily
     """
-    # Get container and save original values
-    container = get_container()
-    config_manager = container.config_manager
+    # Get app and save original values
+    app = get_app()
+    config_manager = app.config_manager
     original_values = {}
 
     # Apply configuration changes
     for key, value in kwargs.items():
         # For tree_cache settings that need to be applied directly
         if key == "cache.enabled":
-            original_values["tree_cache.enabled"] = container.tree_cache.enabled
-            container.tree_cache.set_enabled(value)
+            original_values["tree_cache.enabled"] = app.tree_cache.enabled
+            app.tree_cache.set_enabled(value)
 
         if key == "cache.max_size_mb":
-            original_values["tree_cache.max_size_mb"] = container.tree_cache._get_max_size_mb()
-            container.tree_cache.set_max_size_mb(value)
+            original_values["tree_cache.max_size_mb"] = app.tree_cache._get_max_size_mb()
+            app.tree_cache.set_max_size_mb(value)
 
         # Handle log level specially
         if key == "log_level":
@@ -96,9 +96,9 @@ def temp_config(**kwargs: object) -> Generator[None, None, None]:
         # Restore original values
         for key, value in original_values.items():
             if key == "tree_cache.enabled":
-                container.tree_cache.set_enabled(value)
+                app.tree_cache.set_enabled(value)
             elif key == "tree_cache.max_size_mb":
-                container.tree_cache.set_max_size_mb(value)
+                app.tree_cache.set_max_size_mb(value)
             elif key == "root_logger_level":
                 # Restore original logger level
                 root_logger = logging.getLogger("mcp_server_tree_sitter")
@@ -106,7 +106,7 @@ def temp_config(**kwargs: object) -> Generator[None, None, None]:
                 logging.debug(f"Restored root logger level to {value} in temp_config")
 
         # Re-apply original config values to config manager
-        current_config = container.get_config()
+        current_config = app.get_config()
         for key, _value in kwargs.items():
             parts = key.split(".")
             if len(parts) == 2:
@@ -114,15 +114,15 @@ def temp_config(**kwargs: object) -> Generator[None, None, None]:
                 if hasattr(current_config, section):
                     section_obj = getattr(current_config, section)
                     if hasattr(section_obj, setting):
-                        # Get the original value from container's config
-                        original_config = container.config_manager.get_config()
+                        # Get the original value from app config
+                        original_config = app.config_manager.get_config()
                         original_section = getattr(original_config, section, None)
                         if original_section and hasattr(original_section, setting):
                             original_value = getattr(original_section, setting)
                             config_manager.update_value(key, original_value)
             elif hasattr(current_config, key):
                 # Handle top-level attributes like log_level
-                original_config = container.config_manager.get_config()
+                original_config = app.config_manager.get_config()
                 if hasattr(original_config, key):
                     original_value = getattr(original_config, key)
                     config_manager.update_value(key, original_value)
@@ -461,9 +461,9 @@ def configure(
     max_file_size_mb: Optional[int] = None,
     log_level: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Configure the server using the DI container."""
-    container = get_container()
-    config_manager = container.config_manager
+    """Configure the server using shared app state."""
+    app = get_app()
+    config_manager = app.config_manager
 
     # Load config if path provided
     if config_path:
@@ -474,7 +474,7 @@ def configure(
     if cache_enabled is not None:
         logging.info(f"Setting cache.enabled to {cache_enabled}")
         config_manager.update_value("cache.enabled", cache_enabled)
-        container.tree_cache.set_enabled(cache_enabled)
+        app.tree_cache.set_enabled(cache_enabled)
 
     if max_file_size_mb is not None:
         logging.info(f"Setting security.max_file_size_mb to {max_file_size_mb}")
@@ -506,9 +506,8 @@ def configure_with_context(
     """
     Configure with explicit context - compatibility function.
 
-    In new DI model, context is replaced by container. This is a compatibility
-    function that accepts a context parameter but uses the container internally.
+    Compatibility helper: accepts a context parameter but uses shared app state internally.
     """
     # Just delegate to the regular configure function and return current config
     result = configure(config_path, cache_enabled, max_file_size_mb, log_level)
-    return result, get_container().get_config()
+    return result, get_app().get_config()

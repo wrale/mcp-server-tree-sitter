@@ -18,7 +18,7 @@ def diagnose_yaml_config(config_path: str) -> Dict[str, Any]:
     Returns:
         Dictionary with diagnostic information
     """
-    result = {
+    result: Dict[str, Any] = {
         "file_path": config_path,
         "exists": False,
         "readable": False,

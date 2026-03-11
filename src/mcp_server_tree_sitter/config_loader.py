@@ -132,12 +132,12 @@ class ConfigurationManager:
             update_config_from_new(self._config, ServerConfig(**config_data))
             update_config_from_env(self._config)
             try:
-                from .di import get_container
+                from .app import get_app
 
-                c = get_container()
-                c.tree_cache.set_enabled(self._config.cache.enabled)
-                c.tree_cache.set_max_size_mb(self._config.cache.max_size_mb)
-                c.tree_cache.set_ttl_seconds(self._config.cache.ttl_seconds)
+                app = get_app()
+                app.tree_cache.set_enabled(self._config.cache.enabled)
+                app.tree_cache.set_max_size_mb(self._config.cache.max_size_mb)
+                app.tree_cache.set_ttl_seconds(self._config.cache.ttl_seconds)
                 update_log_levels(self._config.log_level)
             except (ImportError, AttributeError) as e:
                 self._logger.warning(f"Could not apply config to dependencies: {e}")

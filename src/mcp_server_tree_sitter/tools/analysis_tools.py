@@ -4,7 +4,7 @@ from typing import cast
 
 from mcp.server.fastmcp import Context, FastMCP
 
-from ..di import get_container
+from ..app import get_app
 from ..utils.context import MCPContextProtocol
 from .analysis import (
     ComplexityResult,
@@ -36,11 +36,11 @@ def register_analysis_tools(mcp_server: FastMCP) -> None:
         Returns:
             Dictionary of symbols by type
         """
-        container = get_container()
+        app = get_app()
         return extract_symbols(
-            container.project_registry.get_project(project),
+            app.project_registry.get_project(project),
             file_path,
-            container.language_registry,
+            app.language_registry,
             symbol_types,
         )
 
@@ -60,10 +60,10 @@ def register_analysis_tools(mcp_server: FastMCP) -> None:
         Returns:
             Project analysis
         """
-        container = get_container()
+        app = get_app()
         return analyze_project_structure(
-            container.project_registry.get_project(project),
-            container.language_registry,
+            app.project_registry.get_project(project),
+            app.language_registry,
             scan_depth,
             cast(MCPContextProtocol | None, ctx),
         )
@@ -79,11 +79,11 @@ def register_analysis_tools(mcp_server: FastMCP) -> None:
         Returns:
             Dictionary of imports/includes
         """
-        container = get_container()
+        app = get_app()
         return find_dependencies(
-            container.project_registry.get_project(project),
+            app.project_registry.get_project(project),
             file_path,
-            container.language_registry,
+            app.language_registry,
         )
 
     @mcp_server.tool()
@@ -97,11 +97,11 @@ def register_analysis_tools(mcp_server: FastMCP) -> None:
         Returns:
             Complexity metrics
         """
-        container = get_container()
+        app = get_app()
         return analyze_code_complexity(
-            container.project_registry.get_project(project),
+            app.project_registry.get_project(project),
             file_path,
-            container.language_registry,
+            app.language_registry,
         )
 
     @mcp_server.tool()
@@ -124,7 +124,7 @@ def register_analysis_tools(mcp_server: FastMCP) -> None:
         Returns:
             List of similar code locations
         """
-        container = get_container()
+        app = get_app()
         clean_snippet = snippet.strip()
 
         extension_map = {
@@ -145,7 +145,7 @@ def register_analysis_tools(mcp_server: FastMCP) -> None:
         file_pattern = f"**/*.{extension}" if extension else None
 
         return search_text(
-            container.project_registry.get_project(project),
+            app.project_registry.get_project(project),
             clean_snippet,
             file_pattern=file_pattern,
             max_results=max_results,
@@ -172,8 +172,8 @@ def register_analysis_tools(mcp_server: FastMCP) -> None:
         Returns:
             List of usage locations
         """
-        container = get_container()
-        language_registry = container.language_registry
+        app = get_app()
+        language_registry = app.language_registry
         if not language and file_path:
             language = language_registry.language_for_file(file_path)
 
@@ -188,10 +188,10 @@ def register_analysis_tools(mcp_server: FastMCP) -> None:
         """
 
         return query_code(
-            container.project_registry.get_project(project),
+            app.project_registry.get_project(project),
             query,
             language_registry,
-            container.tree_cache,
+            app.tree_cache,
             file_path,
             language,
         )

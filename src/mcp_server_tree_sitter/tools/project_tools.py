@@ -6,8 +6,8 @@ from typing import Any, Dict, List, Optional
 
 from mcp.server.fastmcp import FastMCP
 
+from ..app import get_app
 from ..config import ConfigDict
-from ..di import get_container
 from ..exceptions import ProjectError
 
 logger = logging.getLogger(__name__)
@@ -34,9 +34,9 @@ def register_project_tools(mcp_server: FastMCP) -> None:
         Returns:
             Current configuration
         """
-        container = get_container()
-        config_manager = container.config_manager
-        tree_cache = container.tree_cache
+        app = get_app()
+        config_manager = app.config_manager
+        tree_cache = app.tree_cache
 
         initial_config = config_manager.get_config()
         logger.info(
@@ -85,9 +85,9 @@ def register_project_tools(mcp_server: FastMCP) -> None:
         Returns:
             Project information
         """
-        container = get_container()
-        project_registry = container.project_registry
-        language_registry = container.language_registry
+        app = get_app()
+        project_registry = app.project_registry
+        language_registry = app.language_registry
         try:
             project = project_registry.register_project(name or path, path, description)
             project.scan_files(language_registry)
@@ -102,7 +102,7 @@ def register_project_tools(mcp_server: FastMCP) -> None:
         Returns:
             List of project information
         """
-        return get_container().project_registry.list_projects()
+        return get_app().project_registry.list_projects()
 
     @mcp_server.tool()
     def remove_project_tool(name: str) -> Dict[str, str]:
@@ -115,7 +115,7 @@ def register_project_tools(mcp_server: FastMCP) -> None:
             Success message
         """
         try:
-            get_container().project_registry.remove_project(name)
+            get_app().project_registry.remove_project(name)
             return {"status": "success", "message": f"Project '{name}' removed"}
         except Exception as e:
             raise ProjectError(f"Failed to remove project: {e}") from e
@@ -127,7 +127,7 @@ def register_project_tools(mcp_server: FastMCP) -> None:
         Returns:
             Information about available languages
         """
-        available = get_container().language_registry.list_available_languages()
+        available = get_app().language_registry.list_available_languages()
         return {
             "available": available,
             "installable": [],
@@ -143,7 +143,7 @@ def register_project_tools(mcp_server: FastMCP) -> None:
         Returns:
             Success message
         """
-        language_registry = get_container().language_registry
+        language_registry = get_app().language_registry
         if language_registry.is_language_available(language):
             return {
                 "status": "success",
@@ -165,9 +165,9 @@ def register_project_tools(mcp_server: FastMCP) -> None:
         Returns:
             Status message
         """
-        container = get_container()
-        project_registry = container.project_registry
-        tree_cache = container.tree_cache
+        app = get_app()
+        project_registry = app.project_registry
+        tree_cache = app.tree_cache
         if project and file_path:
             project_obj = project_registry.get_project(project)
             abs_path = project_obj.get_file_path(file_path)

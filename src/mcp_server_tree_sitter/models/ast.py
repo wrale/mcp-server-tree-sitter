@@ -271,13 +271,13 @@ def find_enclosing_scope(
 
     start_line = scope_node.start_point[0]
     end_line = scope_node.end_point[0]
-    
+
     # Apply truncation if max_lines is set and scope exceeds it
     truncated = False
     if max_lines > 0 and (end_line - start_line + 1) > max_lines:
         truncated = True
         text, start_line, end_line = _truncate_scope_text(text, start_line, end_line, row, max_lines)
-    
+
     return {
         "kind": scope_kind.value,
         "text": text,
@@ -296,50 +296,50 @@ def _truncate_scope_text(
 ) -> Tuple[str, int, int]:
     """
     Truncate scope text to max_lines, centered around target_row.
-    
+
     Args:
         text: Full scope text
         original_start_line: Original start line (0-based)
         original_end_line: Original end line (0-based)
         target_row: Target row to center around (0-based)
         max_lines: Maximum number of lines to keep
-        
+
     Returns:
         Tuple of (truncated_text, new_start_line, new_end_line)
     """
     lines = text.splitlines(keepends=True)
     total_lines = len(lines)
-    
+
     # Calculate the target line within the scope
     target_line_in_scope = target_row - original_start_line
     target_line_in_scope = max(0, min(target_line_in_scope, total_lines - 1))
-    
+
     # Calculate window: keep max_lines/2 before and after target
     half_window = max_lines // 2
     window_start = max(0, target_line_in_scope - half_window)
     window_end = min(total_lines, window_start + max_lines)
-    
+
     # Adjust window_start if we hit the end
     if window_end - window_start < max_lines:
         window_start = max(0, window_end - max_lines)
-    
+
     # Build truncated text with markers
     result_lines = []
-    
+
     # Add marker for omitted lines at the start
     if window_start > 0:
         result_lines.append(f"// ... {window_start} lines omitted ...\n")
-    
+
     # Add the window of lines
     result_lines.extend(lines[window_start:window_end])
-    
+
     # Add marker for omitted lines at the end
     omitted_at_end = total_lines - window_end
     if omitted_at_end > 0:
         result_lines.append(f"// ... {omitted_at_end} lines omitted ...\n")
-    
+
     truncated_text = "".join(result_lines)
     new_start_line = original_start_line + window_start
     new_end_line = original_start_line + window_end - 1
-    
+
     return truncated_text, new_start_line, new_end_line

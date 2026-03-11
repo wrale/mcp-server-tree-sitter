@@ -1,13 +1,13 @@
-"""MCP server implementation for Tree-sitter with dependency injection."""
+"""MCP server implementation for Tree-sitter."""
 
 import os
 from typing import Optional, Tuple
 
 from mcp.server.fastmcp import FastMCP
 
+from .app import App, get_app
 from .bootstrap import get_logger, update_log_levels
 from .config import ConfigDict, ServerConfig
-from .di import DependencyContainer, get_container
 
 # Create server instance
 mcp = FastMCP("tree_sitter")
@@ -17,16 +17,16 @@ logger = get_logger(__name__)
 
 
 def configure_with_context(
-    container: DependencyContainer,
+    app: App,
     config_path: Optional[str] = None,
     cache_enabled: Optional[bool] = None,
     max_file_size_mb: Optional[int] = None,
     log_level: Optional[str] = None,
 ) -> Tuple[ConfigDict, ServerConfig]:
-    """Configure the server with explicit context.
+    """Configure the server with explicit app state.
 
     Args:
-        container: DependencyContainer instance
+        app: App instance (shared state)
         config_path: Path to YAML config file
         cache_enabled: Whether to enable parse tree caching
         max_file_size_mb: Maximum file size in MB
@@ -36,8 +36,8 @@ def configure_with_context(
         Tuple of (configuration dict, ServerConfig object)
     """
     # Get initial config for comparison
-    config_manager = container.config_manager
-    tree_cache = container.tree_cache
+    config_manager = app.config_manager
+    tree_cache = app.tree_cache
     initial_config = config_manager.get_config()
     logger.info(
         f"Initial configuration: "
@@ -134,18 +134,17 @@ def main() -> None:
         update_log_levels("DEBUG")
         logger.debug("Debug logging enabled")
 
-    # Get the container
-    container = get_container()
+    app = get_app()
 
     # Configure with provided options
     if args.config:
         logger.info(f"Loading configuration from {args.config}")
-        container.config_manager.load_from_file(args.config)
+        app.config_manager.load_from_file(args.config)
 
     if args.disable_cache:
         logger.info("Disabling parse tree cache as requested")
-        container.config_manager.update_value("cache.enabled", False)
-        container.tree_cache.set_enabled(False)
+        app.config_manager.update_value("cache.enabled", False)
+        app.tree_cache.set_enabled(False)
 
     # Register capabilities and tools
     from .capabilities import register_capabilities
@@ -155,11 +154,11 @@ def main() -> None:
     register_tools(mcp)
 
     # Load configuration from environment
-    config = container.get_config()
+    config = app.get_config()
 
     # Update tree cache settings from config
-    container.tree_cache.set_max_size_mb(config.cache.max_size_mb)
-    container.tree_cache.set_enabled(config.cache.enabled)
+    app.tree_cache.set_max_size_mb(config.cache.max_size_mb)
+    app.tree_cache.set_enabled(config.cache.enabled)
 
     # Run the server
     logger.info("Starting MCP Tree-sitter Server")

@@ -132,26 +132,24 @@ While the system does use singleton objects internally, they are accessed throug
 
 ### Key Components
 
-#### Dependency Container
+#### Shared app state
 
-The central component is the `DependencyContainer` which holds all shared services:
+The `App` object holds all shared state (config, registries, cache). Get it with `get_app()`:
 
 ```python
-from mcp_server_tree_sitter.di import get_container
+from mcp_server_tree_sitter.app import get_app
 
-# Get the global container instance
-container = get_container()
+app = get_app()
 
-# Access services
-config_manager = container.config_manager
-project_registry = container.project_registry
-language_registry = container.language_registry
-tree_cache = container.tree_cache
+config_manager = app.config_manager
+project_registry = app.project_registry
+language_registry = app.language_registry
+tree_cache = app.tree_cache
 ```
 
 #### ServerContext
 
-The `ServerContext` provides a convenient high-level interface to the container:
+The `ServerContext` provides a convenient high-level interface to app state:
 
 ```python
 from mcp_server_tree_sitter.context import ServerContext, global_context

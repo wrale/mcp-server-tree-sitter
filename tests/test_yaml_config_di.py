@@ -1,4 +1,4 @@
-"""Tests for configuration loading from YAML files using DI."""
+"""Tests for configuration loading from YAML files (shared app state)."""
 
 import os
 import tempfile
@@ -7,8 +7,8 @@ from collections.abc import Generator
 import pytest
 import yaml
 
+from mcp_server_tree_sitter.app import get_app
 from mcp_server_tree_sitter.config import ServerConfig
-from mcp_server_tree_sitter.di import get_container
 from tests.test_helpers import configure
 
 
@@ -54,13 +54,13 @@ def test_server_config_from_file(temp_yaml_file: str) -> None:
 
 
 def test_load_config_function_di(temp_yaml_file: str) -> None:
-    """Test the config loading with DI container."""
+    """Test config loading with shared app state."""
     # Print debug information
     print(f"Temporary YAML file created at: {temp_yaml_file}")
 
-    # Get the container directly
-    container = get_container()
-    original_config = container.get_config()
+    # Get the app directly
+    app = get_app()
+    original_config = app.get_config()
 
     # Save original values to restore later
     original_cache_size = original_config.cache.max_size_mb
@@ -68,9 +68,9 @@ def test_load_config_function_di(temp_yaml_file: str) -> None:
     original_depth = original_config.language.default_max_depth
 
     try:
-        # Load config file using container's config manager
-        container.config_manager.load_from_file(temp_yaml_file)
-        config = container.get_config()
+        # Load config file using app's config manager
+        app.config_manager.load_from_file(temp_yaml_file)
+        config = app.get_config()
 
         # Verify that the config values were loaded correctly
         assert config.cache.max_size_mb == 256
@@ -79,9 +79,9 @@ def test_load_config_function_di(temp_yaml_file: str) -> None:
 
     finally:
         # Restore original values
-        container.config_manager.update_value("cache.max_size_mb", original_cache_size)
-        container.config_manager.update_value("security.max_file_size_mb", original_security_size)
-        container.config_manager.update_value("language.default_max_depth", original_depth)
+        app.config_manager.update_value("cache.max_size_mb", original_cache_size)
+        app.config_manager.update_value("security.max_file_size_mb", original_security_size)
+        app.config_manager.update_value("language.default_max_depth", original_depth)
 
 
 def test_configure_helper(temp_yaml_file: str) -> None:
@@ -90,9 +90,9 @@ def test_configure_helper(temp_yaml_file: str) -> None:
     print(f"Temporary YAML file created at: {temp_yaml_file}")
     print(f"File exists: {os.path.exists(temp_yaml_file)}")
 
-    # Get container to save original values
-    container = get_container()
-    original_config = container.get_config()
+    # Get app to save original values
+    app = get_app()
+    original_config = app.get_config()
 
     # Save original values to restore later
     original_cache_size = original_config.cache.max_size_mb
@@ -119,17 +119,17 @@ def test_configure_helper(temp_yaml_file: str) -> None:
         # Language settings
         assert result["language"]["default_max_depth"] == 7
 
-        # Also verify the container's config was updated
-        config = container.get_config()
+        # Also verify the app's config was updated
+        config = app.get_config()
         assert config.cache.max_size_mb == 256
         assert config.security.max_file_size_mb == 10
         assert config.language.default_max_depth == 7
 
     finally:
         # Restore original values
-        container.config_manager.update_value("cache.max_size_mb", original_cache_size)
-        container.config_manager.update_value("security.max_file_size_mb", original_security_size)
-        container.config_manager.update_value("language.default_max_depth", original_depth)
+        app.config_manager.update_value("cache.max_size_mb", original_cache_size)
+        app.config_manager.update_value("security.max_file_size_mb", original_security_size)
+        app.config_manager.update_value("language.default_max_depth", original_depth)
 
 
 def test_real_yaml_example_di() -> None:
@@ -187,9 +187,9 @@ language:
         temp_file_path = temp_file.name
 
     try:
-        # Get container to save original values
-        container = get_container()
-        original_config = container.get_config()
+        # Get app to save original values
+        app = get_app()
+        original_config = app.get_config()
 
         # Save original values to restore later
         original_cache_size = original_config.cache.max_size_mb
@@ -209,17 +209,17 @@ language:
             assert ".claude" in result["security"]["excluded_dirs"]
             assert result["language"]["default_max_depth"] == 7
 
-            # Also verify the container's config was updated
-            config = container.get_config()
+            # Also verify the app's config was updated
+            config = app.get_config()
             assert config.cache.max_size_mb == 256
             assert config.security.max_file_size_mb == 10
             assert config.language.default_max_depth == 7
 
         finally:
             # Restore original values
-            container.config_manager.update_value("cache.max_size_mb", original_cache_size)
-            container.config_manager.update_value("security.max_file_size_mb", original_security_size)
-            container.config_manager.update_value("language.default_max_depth", original_depth)
+            app.config_manager.update_value("cache.max_size_mb", original_cache_size)
+            app.config_manager.update_value("security.max_file_size_mb", original_security_size)
+            app.config_manager.update_value("language.default_max_depth", original_depth)
 
     finally:
         # Clean up the temporary file

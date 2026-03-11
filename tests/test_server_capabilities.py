@@ -45,9 +45,9 @@ def mock_config() -> MagicMock:
     return config
 
 
-@patch("mcp_server_tree_sitter.di.get_container")
+@patch("mcp_server_tree_sitter.app.get_app")
 def test_register_capabilities(
-    mock_get_container: MagicMock,
+    mock_get_app: MagicMock,
     mock_server: MockMCPServer,
     mock_config: MagicMock,
 ) -> None:
@@ -56,7 +56,7 @@ def test_register_capabilities(
     mock_container = MagicMock()
     mock_container.config_manager = MagicMock()
     mock_container.config_manager.get_config.return_value = mock_config
-    mock_get_container.return_value = mock_container
+    mock_get_app.return_value = mock_container
 
     # Call the register_capabilities function
     register_capabilities(mock_server)
@@ -66,9 +66,9 @@ def test_register_capabilities(
 
 
 @patch("mcp_server_tree_sitter.capabilities.server_capabilities.logger")
-@patch("mcp_server_tree_sitter.di.get_container")
+@patch("mcp_server_tree_sitter.app.get_app")
 def test_handle_logging(
-    mock_get_container: MagicMock,
+    mock_get_app: MagicMock,
     mock_logger: MagicMock,
     mock_server: MockMCPServer,
     mock_config: MagicMock,
@@ -78,7 +78,7 @@ def test_handle_logging(
     mock_container = MagicMock()
     mock_container.config_manager = MagicMock()
     mock_container.config_manager.get_config.return_value = mock_config
-    mock_get_container.return_value = mock_container
+    mock_get_app.return_value = mock_container
 
     # Register capabilities
     register_capabilities(mock_server)
@@ -107,9 +107,9 @@ def test_handle_logging(
     mock_logger.log.assert_called_with(logging.ERROR, "MCP: Error message")
 
 
-@patch("mcp_server_tree_sitter.di.get_container")
+@patch("mcp_server_tree_sitter.app.get_app")
 def test_handle_completion_project_suggestions(
-    mock_get_container: MagicMock,
+    mock_get_app: MagicMock,
     mock_server: MockMCPServer,
     mock_config: MagicMock,
 ) -> None:
@@ -126,7 +126,7 @@ def test_handle_completion_project_suggestions(
         {"name": "project2"},
     ]
 
-    mock_get_container.return_value = mock_container
+    mock_get_app.return_value = mock_container
 
     # Register capabilities
     register_capabilities(mock_server)
@@ -150,9 +150,9 @@ def test_handle_completion_project_suggestions(
     assert suggestions[1]["text"] == "project2"
 
 
-@patch("mcp_server_tree_sitter.di.get_container")
+@patch("mcp_server_tree_sitter.app.get_app")
 def test_handle_completion_language_suggestions(
-    mock_get_container: MagicMock,
+    mock_get_app: MagicMock,
     mock_server: MockMCPServer,
     mock_config: MagicMock,
 ) -> None:
@@ -166,7 +166,7 @@ def test_handle_completion_language_suggestions(
     mock_container.language_registry = MagicMock()
     mock_container.language_registry.list_available_languages.return_value = ["python", "javascript"]
 
-    mock_get_container.return_value = mock_container
+    mock_get_app.return_value = mock_container
 
     # Register capabilities
     register_capabilities(mock_server)
@@ -189,9 +189,9 @@ def test_handle_completion_language_suggestions(
     assert suggestions[0]["text"] == "python"
 
 
-@patch("mcp_server_tree_sitter.di.get_container")
+@patch("mcp_server_tree_sitter.app.get_app")
 def test_handle_completion_config_suggestions(
-    mock_get_container: MagicMock,
+    mock_get_app: MagicMock,
     mock_server: MockMCPServer,
     mock_config: MagicMock,
 ) -> None:
@@ -200,7 +200,7 @@ def test_handle_completion_config_suggestions(
     mock_container = MagicMock()
     mock_container.config_manager = MagicMock()
     mock_container.config_manager.get_config.return_value = mock_config
-    mock_get_container.return_value = mock_container
+    mock_get_app.return_value = mock_container
 
     # Register capabilities
     register_capabilities(mock_server)

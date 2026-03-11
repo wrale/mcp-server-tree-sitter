@@ -25,7 +25,7 @@ Tests for the MCP Tree-sitter Server. Run with `make test` or `uv run --extra de
 
 | File                | Purpose                                                                                                   |
 |---------------------|-----------------------------------------------------------------------------------------------------------|
-| **test_di.py**      | `DependencyContainer` singleton, custom deps, and that core deps are initialized.                         |
+| **test_app.py**     | `App` singleton, core state initialized, single instance across threads.                                    |
 | **test_context.py** | `ServerContext` / global context: init, get_config, register/list/remove project, clear cache, configure. |
 
 ---

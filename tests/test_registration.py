@@ -6,9 +6,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from mcp_server_tree_sitter.app import App
 from mcp_server_tree_sitter.cache.parser_cache import TreeCache
 from mcp_server_tree_sitter.config import ConfigurationManager, ServerConfig
-from mcp_server_tree_sitter.di import DependencyContainer
 from mcp_server_tree_sitter.language.registry import LanguageRegistry
 from mcp_server_tree_sitter.models.project import ProjectRegistry
 from mcp_server_tree_sitter.tools.registration import _register_prompts, register_tools
@@ -51,8 +51,8 @@ def mock_mcp_server() -> MockMCPServer:
 
 @pytest.fixture
 def mock_container() -> MagicMock:
-    """Fixture to create a mock dependency container (spec=DependencyContainer)."""
-    container = MagicMock(spec=DependencyContainer)
+    """Fixture to create a mock app (spec=App)."""
+    container = MagicMock(spec=App)
     container.config_manager = MagicMock(spec=ConfigurationManager)
     container.project_registry = MagicMock(spec=ProjectRegistry)
     container.language_registry = MagicMock(spec=LanguageRegistry)
@@ -160,8 +160,8 @@ def test_get_symbols_tool_calls_extract_symbols(
     register_tools(mock_mcp_server)
     mock_extract_symbols.return_value = {"functions": [], "classes": []}
 
-    # Tool resolves container at call time via get_container()
-    with patch("mcp_server_tree_sitter.tools.analysis_tools.get_container", return_value=mock_container):
+    # Tool resolves container at call time via get_app()
+    with patch("mcp_server_tree_sitter.tools.analysis_tools.get_app", return_value=mock_container):
         mock_mcp_server.tools["get_symbols"](project="test_project", file_path="test.py")
 
     # Verify extract_symbols was called with correct parameters
@@ -183,7 +183,7 @@ def test_run_query_tool_calls_query_code(
     register_tools(mock_mcp_server)
     mock_query_code.return_value = []
 
-    with patch("mcp_server_tree_sitter.tools.search_tools.get_container", return_value=mock_container):
+    with patch("mcp_server_tree_sitter.tools.search_tools.get_app", return_value=mock_container):
         mock_mcp_server.tools["run_query"](
             project="test_project", query="test query", file_path="test.py", language="python"
         )
@@ -204,7 +204,7 @@ def test_configure_tool_updates_config(mock_mcp_server: MockMCPServer, mock_cont
     # Setup
     register_tools(mock_mcp_server)
 
-    with patch("mcp_server_tree_sitter.tools.project_tools.get_container", return_value=mock_container):
+    with patch("mcp_server_tree_sitter.tools.project_tools.get_app", return_value=mock_container):
         mock_mcp_server.tools["configure"](cache_enabled=False, max_file_size_mb=10, log_level="DEBUG")
 
     # Verify the config manager was updated
@@ -225,7 +225,7 @@ def test_list_files_tool_calls_list_project_files(
     register_tools(mock_mcp_server)
     mock_list_files.return_value = ["file1.py", "file2.py"]
 
-    with patch("mcp_server_tree_sitter.tools.file_tools.get_container", return_value=mock_container):
+    with patch("mcp_server_tree_sitter.tools.file_tools.get_app", return_value=mock_container):
         mock_mcp_server.tools["list_files"](project="test_project", pattern="**/*.py")
 
     # Verify list_project_files was called with correct parameters
@@ -246,7 +246,7 @@ def test_get_ast_tool_calls_get_file_ast(
     register_tools(mock_mcp_server)
     mock_get_ast.return_value = {"tree": {}, "file": "test.py", "language": "python"}
 
-    with patch("mcp_server_tree_sitter.tools.ast_tools.get_container", return_value=mock_container):
+    with patch("mcp_server_tree_sitter.tools.ast_tools.get_app", return_value=mock_container):
         mock_mcp_server.tools["get_ast"](project="test_project", path="test.py", max_depth=3)
 
     # Verify get_file_ast was called with correct parameters

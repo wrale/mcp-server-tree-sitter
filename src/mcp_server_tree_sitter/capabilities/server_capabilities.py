@@ -15,12 +15,10 @@ def register_capabilities(mcp_server: FastMCP) -> None:
     Args:
         mcp_server: MCP server instance
     """
-    # Use dependency injection instead of global context
-    from ..di import get_container
+    from ..app import get_app
 
-    # Get container and dependencies
-    container = get_container()
-    config_manager = container.config_manager
+    app = get_app()
+    config_manager = app.config_manager
     config = config_manager.get_config()
 
     # FastMCP may not have capability method, so we'll skip this for now
@@ -104,8 +102,7 @@ def register_capabilities(mcp_server: FastMCP) -> None:
 
         # Project name suggestions
         if current_word and "project" in text[:position].lower():
-            # Use container's project registry
-            project_registry = container.project_registry
+            project_registry = app.project_registry
             for project_dict in project_registry.list_projects():
                 project_name = project_dict["name"]
                 if project_name.startswith(current_word):
@@ -118,8 +115,7 @@ def register_capabilities(mcp_server: FastMCP) -> None:
 
         # Language suggestions
         if current_word and "language" in text[:position].lower():
-            # Use container's language registry
-            language_registry = container.language_registry
+            language_registry = app.language_registry
             for language in language_registry.list_available_languages():
                 if language.startswith(current_word):
                     suggestions.append({"text": language, "description": f"Language: {language}"})

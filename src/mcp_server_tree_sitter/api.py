@@ -1,15 +1,11 @@
-"""API functions for accessing container dependencies.
-
-This module provides function-based access to dependencies managed by the
-container, helping to break circular import chains and simplify access.
-"""
+"""API helpers for shared app state (project registry, config, cache, etc.)."""
 
 import logging
 from typing import Any, Dict, List, Optional
 
+from .app import get_app
 from .cache.parser_cache import TreeCache
 from .config import ConfigurationManager, ServerConfig
-from .di import get_container
 from .language.registry import LanguageRegistry
 from .models.project import ProjectRegistry
 
@@ -18,27 +14,27 @@ logger = logging.getLogger(__name__)
 
 def get_project_registry() -> ProjectRegistry:
     """Get the project registry."""
-    return get_container().project_registry
+    return get_app().project_registry
 
 
 def get_language_registry() -> LanguageRegistry:
     """Get the language registry."""
-    return get_container().language_registry
+    return get_app().language_registry
 
 
 def get_tree_cache() -> TreeCache:
     """Get the tree cache."""
-    return get_container().tree_cache
+    return get_app().tree_cache
 
 
 def get_config() -> ServerConfig:
     """Get the current configuration."""
-    return get_container().get_config()
+    return get_app().get_config()
 
 
 def get_config_manager() -> ConfigurationManager:
     """Get the configuration manager."""
-    return get_container().config_manager
+    return get_app().config_manager
 
 
 def list_projects() -> List[Dict[str, Any]]:

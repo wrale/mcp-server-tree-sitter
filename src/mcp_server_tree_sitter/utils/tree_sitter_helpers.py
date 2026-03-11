@@ -435,16 +435,15 @@ def parse_with_cached_tree(
         file_path: Path to the file
         language: Language identifier
         language_obj: Language object
-        tree_cache: Tree cache instance (optional, falls back to container if not provided)
+        tree_cache: Tree cache instance (optional, falls back to app if not provided)
 
     Returns:
         Tuple of (Tree, source_bytes)
     """
-    # Get tree cache from container if not provided
     if tree_cache is None:
-        from ..di import get_container
+        from ..app import get_app
 
-        tree_cache = get_container().tree_cache
+        tree_cache = get_app().tree_cache
 
     # Check if we have a cached tree
     cached = tree_cache.get(file_path, language)
@@ -485,16 +484,15 @@ def update_cached_tree(
         language_obj: Language object
         start_byte, old_end_byte, new_end_byte: Byte positions of edit
         start_point, old_end_point, new_end_point: Row/column positions of edit
-        tree_cache: Tree cache instance (optional, falls back to container if not provided)
+        tree_cache: Tree cache instance (optional, falls back to app if not provided)
 
     Returns:
         Updated (tree, source_bytes) if successful, None otherwise
     """
-    # Get tree cache from container if not provided
     if tree_cache is None:
-        from ..di import get_container
+        from ..app import get_app
 
-        tree_cache = get_container().tree_cache
+        tree_cache = get_app().tree_cache
 
     # Check if we have a cached tree
     cached = tree_cache.get(file_path, language)
