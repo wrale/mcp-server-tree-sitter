@@ -5,7 +5,7 @@ to ensure type safety and consistent handling of tree-sitter objects.
 """
 
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, Union, cast
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, TypeVar, Union, cast
 
 import tree_sitter
 
@@ -24,10 +24,14 @@ from ..utils.tree_sitter_types import (
     ensure_tree,
 )
 
+if TYPE_CHECKING:
+    from ..cache.parser_cache import TreeCache
+    from ..language.registry import LanguageRegistry
+
 T = TypeVar("T")
 
 
-def run_query_captures(language: Any, query_string: str, node: Any) -> Dict[str, List[Any]]:
+def run_query_captures(language: Language, query_string: str, node: Node) -> Dict[str, List[Node]]:
     """
     Run a tree-sitter query on a node and return captures as a dict.
 
@@ -48,10 +52,10 @@ def run_query_captures(language: Any, query_string: str, node: Any) -> Dict[str,
     # Cast for tree_sitter API (our Language|DummyLanguage, Node|DummyNode satisfy runtime)
     query = tree_sitter.Query(cast(Any, safe_lang), query_string)
     cursor = tree_sitter.QueryCursor(query)
-    return cursor.captures(cast(Any, safe_node))
+    return cast(Dict[str, List[Node]], cursor.captures(cast(Any, safe_node)))
 
 
-def create_parser(language_obj: Any) -> Parser:
+def create_parser(language_obj: Language) -> Parser:
     """
     Create a parser configured for a specific language.
 
@@ -76,7 +80,7 @@ def create_parser(language_obj: Any) -> Parser:
     return ensure_parser(parser)
 
 
-def parse_source(source: bytes, parser: Union[Parser, Any]) -> Tree:
+def parse_source(source: bytes, parser: Parser) -> Tree:
     """
     Parse source code using a configured parser.
 
@@ -198,7 +202,9 @@ def get_changed_ranges(old_tree: Tree, new_tree: Tree) -> List[Tuple[int, int]]:
 
 
 def parse_file(
-    file_path: Path, parser_or_language: Union[Parser, str], registry: Optional[Any] = None
+    file_path: Path,
+    parser_or_language: Union[Parser, str],
+    registry: Optional["LanguageRegistry"] = None,
 ) -> Tuple[Tree, bytes]:
     """
     Parse a file using a configured parser.
@@ -214,9 +220,8 @@ def parse_file(
     source_bytes = read_binary_file(file_path)
 
     # If we received a parser directly, use it
-    if hasattr(parser_or_language, "parse"):
-        parser = parser_or_language
-        tree = parse_source(source_bytes, parser)
+    if isinstance(parser_or_language, Parser):
+        tree = parse_source(source_bytes, parser_or_language)
         return (tree, source_bytes)
 
     # If we received a language string and registry, get the parser
@@ -408,7 +413,10 @@ def get_node_descendants(node: Optional[Node], max_depth: Optional[int] = None) 
 
 
 def parse_with_cached_tree(
-    file_path: Path, language: str, language_obj: Language, tree_cache: Any = None
+    file_path: Path,
+    language: str,
+    language_obj: Language,
+    tree_cache: Optional["TreeCache"] = None,
 ) -> Tuple[Tree, bytes]:
     """
     Parse a file with tree caching.
@@ -456,7 +464,7 @@ def update_cached_tree(
     start_point: Tuple[int, int],
     old_end_point: Tuple[int, int],
     new_end_point: Tuple[int, int],
-    tree_cache: Any = None,
+    tree_cache: Optional["TreeCache"] = None,
 ) -> Optional[Tuple[Tree, bytes]]:
     """
     Update a cached tree with edit operation.
@@ -549,7 +557,9 @@ def create_edit(
     }
 
 
-def parse_file_with_detection(file_path: Path, language: Optional[str], registry: Any) -> Tuple[Tree, bytes]:
+def parse_file_with_detection(
+    file_path: Path, language: Optional[str], registry: "LanguageRegistry"
+) -> Tuple[Tree, bytes]:
     """
     Parse a file with language detection.
 
@@ -606,7 +616,9 @@ def parse_file_with_detection(file_path: Path, language: Optional[str], registry
     return (tree, source_bytes)
 
 
-def parse_file_incremental(file_path: Path, old_tree: Tree, language: str, registry: Any) -> Tuple[Tree, bytes]:
+def parse_file_incremental(
+    file_path: Path, old_tree: Tree, language: str, registry: "LanguageRegistry"
+) -> Tuple[Tree, bytes]:
     """
     Parse a file incrementally using a previous tree.
 

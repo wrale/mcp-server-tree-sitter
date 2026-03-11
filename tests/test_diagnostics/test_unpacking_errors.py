@@ -7,6 +7,7 @@ from typing import Any, Dict, Generator
 import pytest
 
 from mcp_server_tree_sitter.api import get_project_registry
+from mcp_server_tree_sitter.testing import DiagnosticData
 from tests.test_helpers import analyze_complexity, get_dependencies, get_symbols, register_project_tool, run_query
 
 
@@ -59,7 +60,7 @@ if __name__ == "__main__":
 
 
 @pytest.mark.diagnostic
-def test_get_symbols_error(test_project, diagnostic) -> None:
+def test_get_symbols_error(test_project: Dict[str, Any], diagnostic: DiagnosticData) -> None:
     """Test get_symbols and diagnose unpacking errors."""
     diagnostic.add_detail("project", test_project["name"])
     diagnostic.add_detail("file", test_project["file"])
@@ -94,7 +95,7 @@ def test_get_symbols_error(test_project, diagnostic) -> None:
 
 
 @pytest.mark.diagnostic
-def test_get_dependencies_error(test_project, diagnostic) -> None:
+def test_get_dependencies_error(test_project: Dict[str, Any], diagnostic: DiagnosticData) -> None:
     """Test get_dependencies and diagnose unpacking errors."""
     diagnostic.add_detail("project", test_project["name"])
     diagnostic.add_detail("file", test_project["file"])
@@ -127,7 +128,7 @@ def test_get_dependencies_error(test_project, diagnostic) -> None:
 
 
 @pytest.mark.diagnostic
-def test_analyze_complexity_error(test_project, diagnostic) -> None:
+def test_analyze_complexity_error(test_project: Dict[str, Any], diagnostic: DiagnosticData) -> None:
     """Test analyze_complexity and diagnose unpacking errors."""
     diagnostic.add_detail("project", test_project["name"])
     diagnostic.add_detail("file", test_project["file"])
@@ -161,7 +162,7 @@ def test_analyze_complexity_error(test_project, diagnostic) -> None:
 
 
 @pytest.mark.diagnostic
-def test_run_query_error(test_project, diagnostic) -> None:
+def test_run_query_error(test_project: Dict[str, Any], diagnostic: DiagnosticData) -> None:
     """Test run_query and diagnose unpacking errors."""
     diagnostic.add_detail("project", test_project["name"])
     diagnostic.add_detail("file", test_project["file"])

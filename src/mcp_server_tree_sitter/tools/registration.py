@@ -8,14 +8,18 @@ import logging
 import os
 from typing import Any, Dict, List, Optional
 
+from mcp.server.fastmcp import FastMCP
+
+from ..config import ConfigDict
 from ..di import DependencyContainer
 from ..exceptions import ProjectError
+from ..utils.context.mcp_context import MCPContextProtocol
 from .ast_operations import get_enclosing_scope_for_path
 
 logger = logging.getLogger(__name__)
 
 
-def register_tools(mcp_server: Any, container: DependencyContainer) -> None:
+def register_tools(mcp_server: FastMCP, container: DependencyContainer) -> None:
     """Register all MCP tools with dependency injection.
 
     Args:
@@ -35,7 +39,7 @@ def register_tools(mcp_server: Any, container: DependencyContainer) -> None:
         cache_enabled: Optional[bool] = None,
         max_file_size_mb: Optional[int] = None,
         log_level: Optional[str] = None,
-    ) -> Dict[str, Any]:
+    ) -> ConfigDict:
         """Configure the server.
 
         Args:
@@ -515,7 +519,7 @@ def register_tools(mcp_server: Any, container: DependencyContainer) -> None:
         return extract_symbols(project_registry.get_project(project), file_path, language_registry, symbol_types)
 
     @mcp_server.tool()
-    def analyze_project(project: str, scan_depth: int = 3, ctx: Optional[Any] = None) -> Dict[str, Any]:
+    def analyze_project(project: str, scan_depth: int = 3, ctx: Optional[MCPContextProtocol] = None) -> Dict[str, Any]:
         """Analyze overall project structure.
 
         Args:
@@ -711,7 +715,7 @@ def register_tools(mcp_server: Any, container: DependencyContainer) -> None:
     _register_prompts(mcp_server, container)
 
 
-def _register_prompts(mcp_server: Any, container: DependencyContainer) -> None:
+def _register_prompts(mcp_server: FastMCP, container: DependencyContainer) -> None:
     """Register all prompt templates with dependency injection.
 
     Args:

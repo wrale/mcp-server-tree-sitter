@@ -6,7 +6,7 @@ import os
 from unittest.mock import MagicMock, patch
 
 
-def test_early_init_in_package():
+def test_early_init_in_package() -> None:
     """Test that logging is configured before other modules are imported."""
     # Rather than mocking which won't work well with imports,
     # we'll check the actual package __init__.py file content
@@ -34,7 +34,7 @@ def test_early_init_in_package():
     )
 
 
-def test_configure_is_called_at_import():
+def test_configure_is_called_at_import() -> None:
     """Test that the configure_root_logger is called when bootstrap is imported."""
     # Mock the root logger configuration function
     with patch("logging.basicConfig") as mock_basic_config:
@@ -47,7 +47,7 @@ def test_configure_is_called_at_import():
         mock_basic_config.assert_called_once()
 
 
-def test_environment_vars_processed_early():
+def test_environment_vars_processed_early() -> None:
     """Test that environment variables are processed before logger configuration."""
     # Test the function directly rather than trying to mock it
     # Save current environment variable value
@@ -82,7 +82,7 @@ def test_environment_vars_processed_early():
             os.environ["MCP_TS_LOG_LEVEL"] = original_env
 
 
-def test_handlers_synchronized_at_init():
+def test_handlers_synchronized_at_init() -> None:
     """Test that handler levels are synchronized at initialization."""
     # Mock handlers on the root logger
     mock_handler = MagicMock()

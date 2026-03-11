@@ -83,7 +83,7 @@ def test_project() -> Generator[Dict[str, Any], None, None]:
 
 
 # Test list_project_files function
-def test_list_project_files_basic(test_project):
+def test_list_project_files_basic(test_project: Dict[str, Any]) -> None:
     """Test basic functionality of list_project_files."""
     # Get project object
     from mcp_server_tree_sitter.api import get_project_registry
@@ -101,7 +101,7 @@ def test_list_project_files_basic(test_project):
     assert test_project["files"]["nested"] in files
 
 
-def test_list_project_files_with_pattern(test_project):
+def test_list_project_files_with_pattern(test_project: Dict[str, Any]) -> None:
     """Test list_project_files with a glob pattern."""
     # Get project object
     from mcp_server_tree_sitter.api import get_project_registry
@@ -119,7 +119,7 @@ def test_list_project_files_with_pattern(test_project):
     assert test_project["files"]["empty"] not in python_files
 
 
-def test_list_project_files_with_max_depth(test_project):
+def test_list_project_files_with_max_depth(test_project: Dict[str, Any]) -> None:
     """Test list_project_files with max_depth parameter."""
     # Get project object
     from mcp_server_tree_sitter.api import get_project_registry
@@ -137,7 +137,7 @@ def test_list_project_files_with_max_depth(test_project):
     assert test_project["files"]["nested"] not in root_files
 
 
-def test_list_project_files_with_extensions(test_project):
+def test_list_project_files_with_extensions(test_project: Dict[str, Any]) -> None:
     """Test list_project_files with extension filtering."""
     # Get project object
     from mcp_server_tree_sitter.api import get_project_registry
@@ -162,7 +162,7 @@ def test_list_project_files_with_extensions(test_project):
 
 
 # Test get_file_content function
-def test_get_file_content_basic(test_project):
+def test_get_file_content_basic(test_project: Dict[str, Any]) -> None:
     """Test basic functionality of get_file_content."""
     # Get project object
     from mcp_server_tree_sitter.api import get_project_registry
@@ -178,7 +178,7 @@ def test_get_file_content_basic(test_project):
     assert "print('Hello, world!')" in content
 
 
-def test_get_file_content_empty(test_project):
+def test_get_file_content_empty(test_project: Dict[str, Any]) -> None:
     """Test get_file_content with an empty file."""
     # Get project object
     from mcp_server_tree_sitter.api import get_project_registry
@@ -193,7 +193,7 @@ def test_get_file_content_empty(test_project):
     assert content == ""
 
 
-def test_get_file_content_with_line_limits(test_project):
+def test_get_file_content_with_line_limits(test_project: Dict[str, Any]) -> None:
     """Test get_file_content with line limiting parameters."""
     # Get project object
     from mcp_server_tree_sitter.api import get_project_registry
@@ -217,7 +217,7 @@ def test_get_file_content_with_line_limits(test_project):
     assert "hello()" in content
 
 
-def test_get_file_content_nonexistent_file(test_project):
+def test_get_file_content_nonexistent_file(test_project: Dict[str, Any]) -> None:
     """Test get_file_content with a nonexistent file."""
     # Get project object
     from mcp_server_tree_sitter.api import get_project_registry
@@ -230,7 +230,7 @@ def test_get_file_content_nonexistent_file(test_project):
         get_file_content(project, "nonexistent.py")
 
 
-def test_get_file_content_outside_project(test_project):
+def test_get_file_content_outside_project(test_project: Dict[str, Any]) -> None:
     """Test get_file_content with a path outside the project."""
     # Get project object
     from mcp_server_tree_sitter.api import get_project_registry
@@ -243,7 +243,7 @@ def test_get_file_content_outside_project(test_project):
         get_file_content(project, "../outside.txt")
 
 
-def test_get_file_content_as_bytes(test_project):
+def test_get_file_content_as_bytes(test_project: Dict[str, Any]) -> None:
     """Test get_file_content with as_bytes=True."""
     # Get project object
     from mcp_server_tree_sitter.api import get_project_registry
@@ -260,7 +260,7 @@ def test_get_file_content_as_bytes(test_project):
 
 
 # Test get_file_info function
-def test_get_file_info_basic(test_project):
+def test_get_file_info_basic(test_project: Dict[str, Any]) -> None:
     """Test basic functionality of get_file_info."""
     # Get project object
     from mcp_server_tree_sitter.api import get_project_registry
@@ -279,7 +279,7 @@ def test_get_file_info_basic(test_project):
     assert info["line_count"] > 0
 
 
-def test_get_file_info_directory(test_project):
+def test_get_file_info_directory(test_project: Dict[str, Any]) -> None:
     """Test get_file_info with a directory."""
     # Get project object
     from mcp_server_tree_sitter.api import get_project_registry
@@ -296,7 +296,7 @@ def test_get_file_info_directory(test_project):
     assert info["line_count"] is None  # Line count should be None for directories
 
 
-def test_get_file_info_nonexistent_file(test_project):
+def test_get_file_info_nonexistent_file(test_project: Dict[str, Any]) -> None:
     """Test get_file_info with a nonexistent file."""
     # Get project object
     from mcp_server_tree_sitter.api import get_project_registry
@@ -309,7 +309,7 @@ def test_get_file_info_nonexistent_file(test_project):
         get_file_info(project, "nonexistent.py")
 
 
-def test_get_file_info_outside_project(test_project):
+def test_get_file_info_outside_project(test_project: Dict[str, Any]) -> None:
     """Test get_file_info with a path outside the project."""
     # Get project object
     from mcp_server_tree_sitter.api import get_project_registry
@@ -323,7 +323,7 @@ def test_get_file_info_outside_project(test_project):
 
 
 # Test count_lines function
-def test_count_lines(test_project):
+def test_count_lines(test_project: Dict[str, Any]) -> None:
     """Test the count_lines function."""
     # Get absolute path to Python file
     python_file_path = Path(test_project["path"]) / test_project["files"]["python"]
@@ -335,7 +335,7 @@ def test_count_lines(test_project):
     assert line_count == 4  # Based on the file content we created
 
 
-def test_count_lines_empty_file(test_project):
+def test_count_lines_empty_file(test_project: Dict[str, Any]) -> None:
     """Test count_lines with an empty file."""
     # Get absolute path to empty file
     empty_file_path = Path(test_project["path"]) / test_project["files"]["empty"]
@@ -347,7 +347,7 @@ def test_count_lines_empty_file(test_project):
     assert line_count == 0
 
 
-def test_count_lines_large_file(test_project):
+def test_count_lines_large_file(test_project: Dict[str, Any]) -> None:
     """Test count_lines with a large file."""
     # Get absolute path to large file
     large_file_path = Path(test_project["path"]) / test_project["files"]["large"]

@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 # Import logging from bootstrap package
 from .bootstrap import get_logger, update_log_levels
 from .cache.parser_cache import TreeCache
-from .config import ConfigurationManager, ServerConfig
+from .config import ConfigDict, ConfigurationManager, ServerConfig
 from .di import get_container
 from .exceptions import ProjectError
 from .language.registry import LanguageRegistry
@@ -28,7 +28,7 @@ class ServerContext:
         project_registry: Optional[ProjectRegistry] = None,
         language_registry: Optional[LanguageRegistry] = None,
         tree_cache: Optional[TreeCache] = None,
-    ):
+    ) -> None:
         """
         Initialize with optional components.
 
@@ -92,7 +92,7 @@ class ServerContext:
         cache_enabled: Optional[bool] = None,
         max_file_size_mb: Optional[int] = None,
         log_level: Optional[str] = None,
-    ) -> Dict[str, Any]:
+    ) -> ConfigDict:
         """Configure the server."""
         # Load config if path provided
         if config_path:

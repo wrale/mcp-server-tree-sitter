@@ -9,6 +9,7 @@ from typing import Any, Dict, Optional, Tuple, cast
 
 # Import global_context at runtime to avoid circular imports
 from ..utils.tree_sitter_types import (
+    Language,
     Parser,
     Tree,
     ensure_language,
@@ -22,9 +23,9 @@ logger = logging.getLogger(__name__)
 class TreeCache:
     """Cache for parsed syntax trees."""
 
-    def __init__(self, max_size_mb: Optional[int] = None, ttl_seconds: Optional[int] = None):
+    def __init__(self, max_size_mb: Optional[int] = None, ttl_seconds: Optional[int] = None) -> None:
         """Initialize the tree cache with explicit size and TTL settings."""
-        self.cache: Dict[str, Tuple[Any, bytes, float]] = {}  # (tree, source, timestamp)
+        self.cache: Dict[str, Tuple[Tree, bytes, float]] = {}  # (tree, source, timestamp)
         self.lock = threading.RLock()
         self.current_size_bytes = 0
         self.modified_trees: Dict[str, bool] = {}
@@ -361,7 +362,7 @@ def get_tree_cache() -> TreeCache:
 
 
 @lru_cache(maxsize=32)
-def get_cached_parser(language: Any) -> Parser:
+def get_cached_parser(language: Language) -> Parser:
     """Get a cached parser for a language."""
     parser = Parser()
     safe_language = ensure_language(language)

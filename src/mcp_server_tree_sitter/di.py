@@ -4,7 +4,7 @@ This module provides a central container for managing all application dependenci
 replacing the global variables and singletons previously used throughout the codebase.
 """
 
-from typing import Any, Dict
+from typing import Dict, Optional
 
 # Import logging from bootstrap package
 from .bootstrap import get_logger
@@ -37,8 +37,8 @@ class DependencyContainer:
             max_size_mb=self._config.cache.max_size_mb, ttl_seconds=self._config.cache.ttl_seconds
         )
 
-        # Storage for any additional dependencies
-        self._additional: Dict[str, Any] = {}
+        # Storage for additional dependencies (callers must narrow after get_dependency)
+        self._additional: Dict[str, object] = {}
 
     def get_config(self) -> ServerConfig:
         """Get the current configuration."""
@@ -46,12 +46,12 @@ class DependencyContainer:
         config = self.config_manager.get_config()
         return config
 
-    def register_dependency(self, name: str, instance: Any) -> None:
-        """Register an additional dependency."""
+    def register_dependency(self, name: str, instance: object) -> None:
+        """Register an additional dependency. Callers should narrow after get_dependency."""
         self._additional[name] = instance
 
-    def get_dependency(self, name: str) -> Any:
-        """Get a registered dependency."""
+    def get_dependency(self, name: str) -> Optional[object]:
+        """Get a registered dependency. Callers must narrow the return type."""
         return self._additional.get(name)
 
 

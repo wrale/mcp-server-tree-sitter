@@ -10,7 +10,7 @@ from mcp_server_tree_sitter.bootstrap import update_log_levels
 from mcp_server_tree_sitter.bootstrap.logging_bootstrap import get_log_level_from_env
 
 
-def test_debug_flag_with_preexisting_env():
+def test_debug_flag_with_preexisting_env() -> None:
     """Test that debug flag works correctly with pre-existing environment variables.
 
     This test simulates the real-world scenario where the logging is configured
@@ -69,7 +69,7 @@ def test_debug_flag_with_preexisting_env():
         pkg_logger.setLevel(original_level)
 
 
-def test_update_log_levels_reconfigures_root_logger():
+def test_update_log_levels_reconfigures_root_logger() -> None:
     """Test that update_log_levels also updates the root logger.
 
     This tests the enhanced implementation that reconfigures the root
@@ -125,7 +125,7 @@ def test_update_log_levels_reconfigures_root_logger():
         pkg_logger.setLevel(original_pkg_level)
 
 
-def test_environment_variable_updates_log_level():
+def test_environment_variable_updates_log_level() -> None:
     """Test that setting MCP_TS_LOG_LEVEL changes the logging level correctly."""
     # Save original environment and logger state
     original_env = os.environ.get("MCP_TS_LOG_LEVEL")
@@ -177,7 +177,7 @@ def test_environment_variable_updates_log_level():
         pkg_logger.setLevel(original_level)
 
 
-def test_configure_root_logger_syncs_handlers():
+def test_configure_root_logger_syncs_handlers() -> None:
     """Test that configure_root_logger synchronizes handler levels for existing loggers."""
     from mcp_server_tree_sitter.bootstrap.logging_bootstrap import configure_root_logger
 
@@ -246,7 +246,7 @@ def test_configure_root_logger_syncs_handlers():
         pkg_logger.setLevel(original_pkg_level)
 
 
-def test_log_message_levels():
+def test_log_message_levels() -> None:
     """Test that log messages about environment variables use the DEBUG level."""
     # Save original environment state
     original_env = {}

@@ -1,12 +1,15 @@
 """Example of using pytest with diagnostic plugin for testing."""
 
 import tempfile
+from collections.abc import Generator
 from pathlib import Path
+from typing import Any
 
 import pytest
 
 from mcp_server_tree_sitter.api import get_project_registry
 from mcp_server_tree_sitter.language.registry import LanguageRegistry
+from mcp_server_tree_sitter.testing import DiagnosticData
 from tests.test_helpers import get_ast, register_project_tool
 
 # Load the diagnostic fixture
@@ -14,7 +17,7 @@ pytest.importorskip("mcp_server_tree_sitter.testing")
 
 
 @pytest.fixture
-def test_project():
+def test_project() -> Generator[dict[str, Any], None, None]:
     """Create a temporary test project with a sample file."""
     # Set up a temporary directory
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -41,7 +44,7 @@ def test_project():
 
 
 @pytest.mark.diagnostic
-def test_ast_failure(test_project, diagnostic) -> None:
+def test_ast_failure(test_project: dict[str, Any], diagnostic: DiagnosticData) -> None:
     """Test the get_ast functionality."""
     # Add test details to diagnostic data
     diagnostic.add_detail("project", test_project["name"])
@@ -84,7 +87,7 @@ def test_ast_failure(test_project, diagnostic) -> None:
 
 
 @pytest.mark.diagnostic
-def test_language_detection(diagnostic) -> None:
+def test_language_detection(diagnostic: DiagnosticData) -> None:
     """Test language detection functionality."""
     registry = LanguageRegistry()
 

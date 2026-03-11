@@ -1,7 +1,7 @@
 """Tests for tree_sitter_helpers.py module."""
 
 from pathlib import Path
-from typing import Any, Dict, cast
+from typing import Any, Dict
 
 import pytest
 
@@ -74,7 +74,7 @@ console.log(person.greet());
 
 
 @pytest.fixture
-def parsed_files(test_files) -> Dict[str, Dict[str, Any]]:
+def parsed_files(test_files: Dict[str, Path]) -> Dict[str, Dict[str, Any]]:
     """Create parsed source trees for different languages."""
     from mcp_server_tree_sitter.language.registry import LanguageRegistry
 
@@ -109,7 +109,7 @@ def parsed_files(test_files) -> Dict[str, Dict[str, Any]]:
 
 
 # Tests for file parsing functions
-def test_parse_file_with_detection(test_files, tmp_path):
+def test_parse_file_with_detection(test_files: Dict[str, Path], tmp_path: Path) -> None:
     """Test parsing a file."""
     from mcp_server_tree_sitter.language.registry import LanguageRegistry
 
@@ -132,7 +132,7 @@ def test_parse_file_with_detection(test_files, tmp_path):
     assert b"function hello" in source
 
 
-def test_parse_file_with_unknown_language(tmp_path):
+def test_parse_file_with_unknown_language(tmp_path: Path) -> None:
     """Test handling of unknown language when parsing a file."""
     from mcp_server_tree_sitter.language.registry import LanguageRegistry
 
@@ -152,7 +152,7 @@ def test_parse_file_with_unknown_language(tmp_path):
         parse_file_with_detection(unknown_file, "nonexistent_language", registry)
 
 
-def test_parse_source(parsed_files):
+def test_parse_source(parsed_files: Dict[str, Dict[str, Any]]) -> None:
     """Test parsing source code."""
     # Get Python parser and source
     py_parser = parsed_files["python"]["parser"]
@@ -175,7 +175,7 @@ def test_parse_source(parsed_files):
     assert tree.root_node.type == "program"
 
 
-def test_parse_source_incremental(parsed_files):
+def test_parse_source_incremental(parsed_files: Dict[str, Dict[str, Any]]) -> None:
     """Test incremental parsing of source code."""
     # Get Python parser, tree, and source
     py_parser = parsed_files["python"]["parser"]
@@ -197,7 +197,7 @@ def test_parse_source_incremental(parsed_files):
     assert b"Greetings" in node_text
 
 
-def test_edit_tree(parsed_files):
+def test_edit_tree(parsed_files: Dict[str, Dict[str, Any]]) -> None:
     """Test editing a syntax tree."""
     # Get Python tree and source
     py_tree = parsed_files["python"]["tree"]
@@ -232,7 +232,7 @@ def test_edit_tree(parsed_files):
     assert b"Greetings" in root_text
 
 
-def test_get_changed_ranges(parsed_files):
+def test_get_changed_ranges(parsed_files: Dict[str, Dict[str, Any]]) -> None:
     """Test getting changed ranges between trees."""
     # Get Python parser, tree, and source
     py_parser = parsed_files["python"]["parser"]
@@ -254,7 +254,7 @@ def test_get_changed_ranges(parsed_files):
     assert len(ranges[0]) == 2  # (start_byte, end_byte)
 
 
-def test_get_node_text(parsed_files):
+def test_get_node_text(parsed_files: Dict[str, Dict[str, Any]]) -> None:
     """Test extracting text from a node."""
     # Get Python tree and source
     py_tree = parsed_files["python"]["tree"]
@@ -279,7 +279,7 @@ def test_get_node_text(parsed_files):
     assert b"def hello" in function_text
 
 
-def test_get_node_with_text(parsed_files):
+def test_get_node_with_text(parsed_files: Dict[str, Dict[str, Any]]) -> None:
     """Test finding a node with specific text."""
     # Get Python tree and source
     py_tree = parsed_files["python"]["tree"]
@@ -293,7 +293,7 @@ def test_get_node_with_text(parsed_files):
     assert b"Hello" in node_text
 
 
-def test_walk_tree(parsed_files):
+def test_walk_tree(parsed_files: Dict[str, Dict[str, Any]]) -> None:
     """Test walking a tree with cursor."""
     # Get Python tree
     py_tree = parsed_files["python"]["tree"]
@@ -325,7 +325,7 @@ def test_walk_tree(parsed_files):
     assert "function_definition" in node_types or "def" in node_types
 
 
-def test_is_node_inside(parsed_files):
+def test_is_node_inside(parsed_files: Dict[str, Dict[str, Any]]) -> None:
     """Test checking if a node is inside another."""
     # Get Python tree
     py_tree = parsed_files["python"]["tree"]
@@ -349,7 +349,7 @@ def test_is_node_inside(parsed_files):
     assert not is_node_inside((999, 0), root_node)
 
 
-def test_find_all_descendants(parsed_files):
+def test_find_all_descendants(parsed_files: Dict[str, Dict[str, Any]]) -> None:
     """Test finding all descendants of a node."""
     # Get Python tree
     py_tree = parsed_files["python"]["tree"]
@@ -366,31 +366,22 @@ def test_find_all_descendants(parsed_files):
 
 
 # Test edge cases and error handling
-def test_get_node_text_with_invalid_byte_range(parsed_files):
-    """Test get_node_text with invalid byte range."""
-    # Only source is needed for this test
-    py_source = parsed_files["python"]["source"]
+def test_get_node_text_with_invalid_byte_range(parsed_files: Dict[str, Dict[str, Any]]) -> None:
+    """Test get_node_text when node's byte range is beyond the provided source."""
+    py_tree = parsed_files["python"]["tree"]
 
-    # Create a node with an invalid byte range by modifying properties
-    # This is a bit of a hack, but it's effective for testing error handling
-    class MockNode:
-        def __init__(self):
-            self.start_byte = len(py_source) + 100  # Beyond source length
-            self.end_byte = len(py_source) + 200
-            self.type = "invalid"
-            self.start_point = (999, 0)
-            self.end_point = (999, 10)
-            self.is_named = True
+    # Use a real node and pass source shorter than the node's range so the
+    # slice is out of range (e.g. empty source).
+    node = py_tree.root_node
+    empty_source = b""
 
-    # Create mock node and try to get text (cast: mock has start_byte/end_byte for the helper)
-    mock_node = MockNode()
-    result = get_node_text(cast(Any, mock_node), py_source, decode=False)
+    result = get_node_text(node, empty_source, decode=False)
 
-    # Should return empty bytes for invalid range
+    # Should return empty bytes when range is beyond source length
     assert result == b""
 
 
-def test_parse_file_incremental(test_files, tmp_path):
+def test_parse_file_incremental(test_files: Dict[str, Path], tmp_path: Path) -> None:
     """Test incremental parsing of a file."""
     from mcp_server_tree_sitter.language.registry import LanguageRegistry
 
@@ -419,7 +410,7 @@ def test_parse_file_incremental(test_files, tmp_path):
     assert b"Greetings" in node_text
 
 
-def test_parse_file_nonexistent():
+def test_parse_file_nonexistent() -> None:
     """Test handling of nonexistent file."""
     from mcp_server_tree_sitter.language.registry import LanguageRegistry
 
@@ -430,7 +421,7 @@ def test_parse_file_nonexistent():
         parse_file_with_detection(Path("/nonexistent/file.py"), "python", registry)
 
 
-def test_parse_file_without_language(test_files):
+def test_parse_file_without_language(test_files: Dict[str, Path]) -> None:
     """Test parsing a file without specifying language."""
     from mcp_server_tree_sitter.language.registry import LanguageRegistry
 

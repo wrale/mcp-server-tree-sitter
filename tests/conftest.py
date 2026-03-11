@@ -1,5 +1,7 @@
 """Pytest configuration for mcp-server-tree-sitter tests."""
 
+from collections.abc import Generator
+
 import pytest
 
 # Import and register the diagnostic plugin
@@ -7,7 +9,7 @@ pytest_plugins = ["mcp_server_tree_sitter.testing.pytest_diagnostic"]
 
 
 @pytest.fixture(autouse=True, scope="function")
-def reset_project_registry():
+def reset_project_registry() -> Generator[None, None, None]:
     """Reset the project registry between tests.
 
     This prevents tests from interfering with each other when using the

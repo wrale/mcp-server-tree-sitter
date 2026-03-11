@@ -6,8 +6,10 @@ This file is being kept as an integration test but has been updated to fully use
 import io
 import logging
 import tempfile
+from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -16,7 +18,7 @@ from tests.test_helpers import configure, get_ast, register_project_tool, temp_c
 
 
 @contextmanager
-def capture_logs(logger_name="mcp_server_tree_sitter"):
+def capture_logs(logger_name: str = "mcp_server_tree_sitter") -> Generator[io.StringIO, None, None]:
     """
     Context manager to capture logs from a specific logger.
 
@@ -57,7 +59,7 @@ def capture_logs(logger_name="mcp_server_tree_sitter"):
 
 
 @pytest.fixture
-def test_project():
+def test_project() -> Generator[dict[str, Any], None, None]:
     """Create a temporary test project with a sample file."""
     with tempfile.TemporaryDirectory() as temp_dir:
         project_path = Path(temp_dir)
@@ -81,7 +83,7 @@ def test_project():
         yield {"name": project_name, "path": str(project_path), "file": "test.py"}
 
 
-def test_log_level_setting(test_project):
+def test_log_level_setting(test_project: dict[str, Any]) -> None:
     """Test that log_level setting controls logging verbosity."""
     # Root logger for the package
     logger_name = "mcp_server_tree_sitter"
@@ -140,7 +142,7 @@ def test_log_level_setting(test_project):
         container.config_manager.update_value("log_level", original_log_level)
 
 
-def test_log_level_in_yaml_config():
+def test_log_level_in_yaml_config() -> None:
     """Test that log_level can be configured via YAML."""
     # Create a temporary YAML file
     with tempfile.NamedTemporaryFile(suffix=".yaml", mode="w+", delete=False) as temp_file:

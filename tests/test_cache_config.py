@@ -2,7 +2,9 @@
 
 import tempfile
 import time
+from collections.abc import Generator
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -11,7 +13,7 @@ from tests.test_helpers import get_ast, register_project_tool, temp_config
 
 
 @pytest.fixture
-def test_project():
+def test_project() -> Generator[dict[str, Any], None, None]:
     """Create a temporary test project with sample files."""
     with tempfile.TemporaryDirectory() as temp_dir:
         project_path = Path(temp_dir)
@@ -42,7 +44,7 @@ def test_project():
         yield {"name": project_name, "path": str(project_path)}
 
 
-def test_cache_max_size_setting(test_project):
+def test_cache_max_size_setting(test_project: dict[str, Any]) -> None:
     """Test that cache.max_size_mb limits the cache size."""
     # Clear cache to start fresh
     tree_cache = get_tree_cache()
@@ -82,7 +84,7 @@ def test_cache_max_size_setting(test_project):
         assert cache_size < 5, "Cache should have evicted some entries"
 
 
-def test_cache_ttl_setting(test_project):
+def test_cache_ttl_setting(test_project: dict[str, Any]) -> None:
     """Test that cache.ttl_seconds controls cache entry lifetime."""
     # Clear cache to start fresh
     tree_cache = get_tree_cache()
@@ -115,7 +117,7 @@ def test_cache_ttl_setting(test_project):
         assert cached_after is None, "Entry should be removed after TTL"
 
 
-def test_cache_eviction_policy(test_project):
+def test_cache_eviction_policy(test_project: dict[str, Any]) -> None:
     """Test that the cache evicts oldest entries first when full."""
     # Clear cache to start fresh
     tree_cache = get_tree_cache()
@@ -142,7 +144,7 @@ def test_cache_eviction_policy(test_project):
         # Override the cache's get method to track access
         original_get = tree_cache.get
 
-        def tracked_get(file_path, language):
+        def tracked_get(file_path: Path, language: str) -> object:
             # Track access
             key = f"{file_path.name}"
             if key not in access_order:

@@ -6,7 +6,7 @@ import logging
 import pytest
 
 
-def test_bootstrap_imported_first():
+def test_bootstrap_imported_first() -> None:
     """Test that bootstrap is imported in __init__.py before anything else."""
     # Get the content of __init__.py
     import inspect
@@ -32,7 +32,7 @@ def test_bootstrap_imported_first():
             assert bootstrap_import_index < other_import_index, f"bootstrap should be imported before {other_import}"
 
 
-def test_logging_config_forwards_to_bootstrap():
+def test_logging_config_forwards_to_bootstrap() -> None:
     """Test that logging_config.py forwards to bootstrap.logging_bootstrap."""
     # Import both modules
     from mcp_server_tree_sitter import logging_config
@@ -46,7 +46,7 @@ def test_logging_config_forwards_to_bootstrap():
     assert logging_config.LOG_LEVEL_MAP is logging_bootstrap.LOG_LEVEL_MAP
 
 
-def test_key_modules_use_bootstrap():
+def test_key_modules_use_bootstrap() -> None:
     """Test that key modules import logging utilities from bootstrap."""
     # Import key modules
     modules_to_check = [
@@ -83,7 +83,7 @@ def test_key_modules_use_bootstrap():
             pytest.skip(f"Couldn't check {module_name}: {e}")
 
 
-def test_log_level_update_consistency():
+def test_log_level_update_consistency() -> None:
     """Test that all log level updates use bootstrap's implementation."""
     # Create test loggers and handlers
     root_logger = logging.getLogger("mcp_server_tree_sitter")
@@ -124,7 +124,7 @@ def test_log_level_update_consistency():
         child_logger.removeHandler(child_handler)
 
 
-def test_no_duplicate_log_level_implementations():
+def test_no_duplicate_log_level_implementations() -> None:
     """Test that only the bootstrap implementation of update_log_levels exists."""
     # Import bootstrap's update_log_levels for reference
     from mcp_server_tree_sitter.bootstrap.logging_bootstrap import update_log_levels as bootstrap_update

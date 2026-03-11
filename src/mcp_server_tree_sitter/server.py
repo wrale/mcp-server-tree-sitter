@@ -1,12 +1,12 @@
 """MCP server implementation for Tree-sitter with dependency injection."""
 
 import os
-from typing import Any, Dict, Optional, Tuple
+from typing import Optional, Tuple
 
 from mcp.server.fastmcp import FastMCP
 
 from .bootstrap import get_logger, update_log_levels
-from .config import ServerConfig
+from .config import ConfigDict, ServerConfig
 from .di import DependencyContainer, get_container
 
 # Create server instance
@@ -22,7 +22,7 @@ def configure_with_context(
     cache_enabled: Optional[bool] = None,
     max_file_size_mb: Optional[int] = None,
     log_level: Optional[str] = None,
-) -> Tuple[Dict[str, Any], ServerConfig]:
+) -> Tuple[ConfigDict, ServerConfig]:
     """Configure the server with explicit context.
 
     Args:

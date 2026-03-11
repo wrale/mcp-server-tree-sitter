@@ -8,6 +8,7 @@ import pytest
 
 from mcp_server_tree_sitter.api import get_language_registry, get_project_registry, get_tree_cache
 from mcp_server_tree_sitter.models.ast import node_to_dict
+from mcp_server_tree_sitter.testing import DiagnosticData
 from tests.test_helpers import get_ast, register_project_tool
 
 
@@ -61,7 +62,7 @@ def parse_file(file_path: Path, language: str) -> Tuple[Any, bytes]:
 
 
 @pytest.mark.diagnostic
-def test_get_ast_functionality(test_project, diagnostic) -> None:
+def test_get_ast_functionality(test_project: Dict[str, Any], diagnostic: DiagnosticData) -> None:
     """Test the get_ast MCP tool functionality."""
     # Add test details to diagnostic data
     diagnostic.add_detail("project", test_project["name"])
@@ -107,7 +108,7 @@ def test_get_ast_functionality(test_project, diagnostic) -> None:
 
 
 @pytest.mark.diagnostic
-def test_direct_parsing(test_project, diagnostic) -> None:
+def test_direct_parsing(test_project: Dict[str, Any], diagnostic: DiagnosticData) -> None:
     """Test lower-level parse_file function to isolate issues."""
     file_path = test_project["path"] / test_project["file"]
     diagnostic.add_detail("file_path", str(file_path))

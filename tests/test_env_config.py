@@ -2,6 +2,7 @@
 
 import os
 import tempfile
+from collections.abc import Generator
 
 import pytest
 import yaml
@@ -10,7 +11,7 @@ from mcp_server_tree_sitter.config import ConfigurationManager
 
 
 @pytest.fixture
-def temp_yaml_file():
+def temp_yaml_file() -> Generator[str, None, None]:
     """Create a temporary YAML file with test configuration."""
     with tempfile.NamedTemporaryFile(suffix=".yaml", mode="w+", delete=False) as temp_file:
         test_config = {
@@ -28,7 +29,7 @@ def temp_yaml_file():
     os.unlink(temp_file_path)
 
 
-def test_env_overrides_defaults(monkeypatch):
+def test_env_overrides_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     """Environment variables should override hard-coded defaults."""
     # Using single underscore format that matches current implementation
     monkeypatch.setenv("MCP_TS_CACHE_MAX_SIZE_MB", "512")
@@ -42,7 +43,7 @@ def test_env_overrides_defaults(monkeypatch):
     assert cfg.language.default_max_depth == 5
 
 
-def test_env_overrides_yaml(temp_yaml_file, monkeypatch):
+def test_env_overrides_yaml(temp_yaml_file: str, monkeypatch: pytest.MonkeyPatch) -> None:
     """Environment variables should take precedence over YAML values."""
     # YAML sets 256; env var must win with 1024
     # Using single underscore format that matches current implementation
@@ -68,7 +69,7 @@ def test_env_overrides_yaml(temp_yaml_file, monkeypatch):
     assert cfg.language.auto_install is True
 
 
-def test_log_level_env_var(monkeypatch):
+def test_log_level_env_var(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test the specific MCP_TS_LOG_LEVEL variable that was the original issue."""
     monkeypatch.setenv("MCP_TS_LOG_LEVEL", "DEBUG")
 
@@ -78,7 +79,7 @@ def test_log_level_env_var(monkeypatch):
     assert cfg.log_level == "DEBUG", "Log level should be set from environment variable"
 
 
-def test_invalid_env_var_handling(monkeypatch):
+def test_invalid_env_var_handling(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test that invalid environment variable values don't crash the system."""
     # Set an invalid value for an integer field
     monkeypatch.setenv("MCP_TS_CACHE_MAX_SIZE_MB", "not_a_number")

@@ -2,6 +2,7 @@
 
 import os
 import tempfile
+from collections.abc import Generator
 
 import pytest
 import yaml
@@ -12,7 +13,7 @@ from tests.test_helpers import configure
 
 
 @pytest.fixture
-def temp_yaml_file():
+def temp_yaml_file() -> Generator[str, None, None]:
     """Create a temporary YAML file with test configuration."""
     with tempfile.NamedTemporaryFile(suffix=".yaml", mode="w+", delete=False) as temp_file:
         test_config = {
@@ -30,7 +31,7 @@ def temp_yaml_file():
     os.unlink(temp_file_path)
 
 
-def test_server_config_from_file(temp_yaml_file):
+def test_server_config_from_file(temp_yaml_file: str) -> None:
     """Test the ServerConfig.from_file method directly."""
     # Print debug information
     print(f"Temporary YAML file created at: {temp_yaml_file}")
@@ -53,7 +54,7 @@ def test_server_config_from_file(temp_yaml_file):
     assert config.language.default_max_depth == 7
 
 
-def test_load_config_function_di(temp_yaml_file):
+def test_load_config_function_di(temp_yaml_file: str) -> None:
     """Test the config loading with DI container."""
     # Print debug information
     print(f"Temporary YAML file created at: {temp_yaml_file}")
@@ -84,7 +85,7 @@ def test_load_config_function_di(temp_yaml_file):
         container.config_manager.update_value("language.default_max_depth", original_depth)
 
 
-def test_configure_helper(temp_yaml_file):
+def test_configure_helper(temp_yaml_file: str) -> None:
     """Test that the configure helper function properly loads values from a YAML file."""
     # Print debug information
     print(f"Temporary YAML file created at: {temp_yaml_file}")
@@ -133,7 +134,7 @@ def test_configure_helper(temp_yaml_file):
         container.config_manager.update_value("language.default_max_depth", original_depth)
 
 
-def test_real_yaml_example_di():
+def test_real_yaml_example_di() -> None:
     """Test with a real-world example like the one in the issue."""
     with tempfile.NamedTemporaryFile(suffix=".yaml", mode="w+", delete=False) as temp_file:
         # Copy the example from the issue

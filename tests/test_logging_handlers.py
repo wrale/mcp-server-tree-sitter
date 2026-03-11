@@ -2,6 +2,7 @@
 
 import io
 import logging
+from collections.abc import Generator
 from contextlib import contextmanager
 
 # Import from bootstrap module rather than logging_config
@@ -9,7 +10,7 @@ from mcp_server_tree_sitter.bootstrap import get_logger, update_log_levels
 
 
 @contextmanager
-def temp_logger(name="mcp_server_tree_sitter.test_handlers"):
+def temp_logger(name: str = "mcp_server_tree_sitter.test_handlers") -> Generator[logging.Logger, None, None]:
     """Create a temporary logger for testing."""
     logger = logging.getLogger(name)
 
@@ -41,7 +42,7 @@ def temp_logger(name="mcp_server_tree_sitter.test_handlers"):
         logger.propagate = original_propagate
 
 
-def test_handler_level_synchronization():
+def test_handler_level_synchronization() -> None:
     """Test that handler levels are synchronized with logger's effective level."""
     # Set up test environment
     root_logger = logging.getLogger("mcp_server_tree_sitter")
@@ -116,7 +117,7 @@ def test_handler_level_synchronization():
         test_logger.setLevel(original_test_level)
 
 
-def test_get_logger_handler_sync():
+def test_get_logger_handler_sync() -> None:
     """Test that get_logger creates loggers with proper level inheritance and synchronized handler levels."""
     # Set up test environment
     root_logger = logging.getLogger("mcp_server_tree_sitter")
@@ -197,7 +198,7 @@ def test_get_logger_handler_sync():
         root_logger.setLevel(original_root_level)
 
 
-def test_multiple_handlers_with_log_streams():
+def test_multiple_handlers_with_log_streams() -> None:
     """Test that multiple handlers all pass the appropriate log messages."""
     # Create handlers with capture buffers
     debug_capture = io.StringIO()

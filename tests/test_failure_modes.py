@@ -11,7 +11,7 @@ These tests help ensure robust behavior in various scenarios.
 
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, Generator
+from typing import Any, Callable, Dict, Generator
 
 import pytest
 
@@ -28,7 +28,7 @@ from tests.test_helpers import (
 
 
 @pytest.fixture
-def mock_project(request) -> Generator[Dict[str, Any], None, None]:
+def mock_project(request: pytest.FixtureRequest) -> Generator[Dict[str, Any], None, None]:
     """Create a mock project fixture for testing with unique names."""
     with tempfile.TemporaryDirectory() as temp_dir:
         project_path = Path(temp_dir)
@@ -59,7 +59,7 @@ def mock_project(request) -> Generator[Dict[str, Any], None, None]:
 class TestQueryExecution:
     """Test query execution functionality."""
 
-    def test_run_query_with_valid_query(self, mock_project) -> None:
+    def test_run_query_with_valid_query(self, mock_project: Dict[str, Any]) -> None:
         """Test that run_query executes and returns expected results."""
         # Simple query that should match functions
         query = "(function_definition name: (identifier) @function.name) @function.def"
@@ -85,7 +85,7 @@ class TestQueryExecution:
 
         assert found_hello, "Query should find the 'hello' function"
 
-    def test_adapt_query_language_specific_syntax(self, mock_project) -> None:
+    def test_adapt_query_language_specific_syntax(self, mock_project: Dict[str, Any]) -> None:
         """Test adapt_query with language-specific syntax handling."""
         # Import the adapt_query function
         from mcp_server_tree_sitter.tools.query_builder import adapt_query
@@ -110,7 +110,7 @@ class TestQueryExecution:
 class TestSymbolExtraction:
     """Test symbol extraction functionality."""
 
-    def test_get_symbols_function_detection(self, mock_project) -> None:
+    def test_get_symbols_function_detection(self, mock_project: Dict[str, Any]) -> None:
         """Test that get_symbols properly extracts functions."""
         # Execute get_symbols on a file with known content
         result = get_symbols(project=mock_project["name"], file_path="test.py")
@@ -146,7 +146,7 @@ class TestSymbolExtraction:
 class TestDependencyAnalysis:
     """Test dependency analysis functionality."""
 
-    def test_get_dependencies_import_detection(self, mock_project) -> None:
+    def test_get_dependencies_import_detection(self, mock_project: Dict[str, Any]) -> None:
         """Test that get_dependencies properly detects imports."""
         # Execute get_dependencies on a file with known imports
         result = get_dependencies(project=mock_project["name"], file_path="test.py")
@@ -167,7 +167,7 @@ class TestDependencyAnalysis:
 class TestCodeSearch:
     """Test code search operations."""
 
-    def test_find_similar_code_with_exact_match(self, mock_project) -> None:
+    def test_find_similar_code_with_exact_match(self, mock_project: Dict[str, Any]) -> None:
         """Test that find_similar_code finds exact matches."""
         # Execute find_similar_code with a snippet that exists in the file
         result = find_similar_code(
@@ -181,7 +181,7 @@ class TestCodeSearch:
         assert isinstance(result, list), "find_similar_code should return a list"
         assert len(result) > 0, "Should find at least one match for an exact snippet"
 
-    def test_find_usage_for_function(self, mock_project) -> None:
+    def test_find_usage_for_function(self, mock_project: Dict[str, Any]) -> None:
         """Test that find_usage finds function references."""
         # Execute find_usage with a symbol that exists in the file
         result = find_usage(project=mock_project["name"], symbol="hello", language="python")
@@ -226,7 +226,9 @@ class TestCodeSearch:
         ),
     ],
 )
-def test_error_handling_with_invalid_project(command_name, function, args) -> None:
+def test_error_handling_with_invalid_project(
+    command_name: str, function: Callable[..., object], args: dict[str, object]
+) -> None:
     """Test that commands properly handle invalid project names."""
     # Use an invalid project name
     if "project" in args:
@@ -242,7 +244,7 @@ def test_error_handling_with_invalid_project(command_name, function, args) -> No
 class TestASTHandling:
     """Test AST handling capabilities."""
 
-    def test_ast_node_traversal(self, mock_project) -> None:
+    def test_ast_node_traversal(self, mock_project: Dict[str, Any]) -> None:
         """Test AST node traversal functionality."""
         # Get an AST for a file
         ast_result = get_ast(project=mock_project["name"], path="test.py", max_depth=5, include_text=True)
@@ -262,7 +264,7 @@ class TestASTHandling:
         # Find the function definition
         function_nodes = []
 
-        def find_functions(node) -> None:
+        def find_functions(node: object) -> None:
             if isinstance(node, dict) and node.get("type") == "function_definition":
                 function_nodes.append(node)
             if isinstance(node, dict) and "children" in node:

@@ -2,17 +2,37 @@
 
 import logging
 from contextlib import contextmanager
-from typing import Any, Generator, Optional, TypeVar
+from typing import Generator, Optional, Protocol, TypeVar
 
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 
 
+class MCPContextProtocol(Protocol):
+    """Protocol for MCP context objects that support progress and info reporting."""
+
+    def report_progress(self, current: int, total: int) -> None:
+        """Report progress to the MCP client."""
+        ...
+
+    def info(self, message: str) -> None:
+        """Log or send an info message."""
+        ...
+
+    def warning(self, message: str) -> None:
+        """Log or send a warning message."""
+        ...
+
+    def error(self, message: str) -> None:
+        """Log or send an error message."""
+        ...
+
+
 class ProgressScope:
     """Scope for tracking progress of an operation."""
 
-    def __init__(self, context: "MCPContext", total: int, description: str):
+    def __init__(self, context: "MCPContext", total: int, description: str) -> None:
         """
         Initialize a progress scope.
 
@@ -52,7 +72,7 @@ class ProgressScope:
 class MCPContext:
     """Context for MCP operations with progress reporting."""
 
-    def __init__(self, ctx: Optional[Any] = None):
+    def __init__(self, ctx: Optional["MCPContextProtocol"] = None) -> None:
         """
         Initialize context with optional MCP context.
 
@@ -150,7 +170,7 @@ class MCPContext:
                 scope.set_progress(scope.total)  # Ensure we complete the progress
             self.info(f"Completed: {description}")
 
-    def with_mcp_context(self, ctx: Any) -> "MCPContext":
+    def with_mcp_context(self, ctx: "MCPContextProtocol") -> "MCPContext":
         """
         Create a new context with the given MCP context.
 
@@ -163,7 +183,7 @@ class MCPContext:
         return MCPContext(ctx)
 
     @staticmethod
-    def from_mcp_context(ctx: Optional[Any]) -> "MCPContext":
+    def from_mcp_context(ctx: Optional["MCPContextProtocol"]) -> "MCPContext":
         """
         Create a context from an MCP context.
 
@@ -175,7 +195,7 @@ class MCPContext:
         """
         return MCPContext(ctx)
 
-    def try_get_mcp_context(self) -> Optional[Any]:
+    def try_get_mcp_context(self) -> Optional["MCPContextProtocol"]:
         """
         Get the wrapped MCP context if available.
 

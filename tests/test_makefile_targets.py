@@ -6,7 +6,7 @@ import subprocess
 from pathlib import Path
 
 
-def test_makefile_target_syntax():
+def test_makefile_target_syntax() -> None:
     """Test that critical Makefile targets are correctly formed."""
     # Get the Makefile content
     makefile_path = Path(__file__).parent.parent / "Makefile"
@@ -32,7 +32,7 @@ def test_makefile_target_syntax():
     assert "help: show-help" in makefile_content, "help is not properly set as default target"
 
 
-def test_makefile_target_execution():
+def test_makefile_target_execution() -> None:
     """Test that Makefile targets execute correctly when invoked with --help."""
     # We'll only try the --help flag since we don't want to actually start the server
     # Skip if not in a development environment

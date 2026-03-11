@@ -9,6 +9,7 @@ import pytest
 from mcp_server_tree_sitter.api import get_language_registry, get_project_registry
 from mcp_server_tree_sitter.models.ast import node_to_dict
 from mcp_server_tree_sitter.models.ast_cursor import node_to_dict_cursor
+from mcp_server_tree_sitter.testing import DiagnosticData
 from tests.test_helpers import register_project_tool
 
 
@@ -55,7 +56,7 @@ def test_project() -> Generator[Dict[str, Any], None, None]:
 
 
 @pytest.mark.diagnostic
-def test_cursor_ast_implementation(test_project, diagnostic) -> None:
+def test_cursor_ast_implementation(test_project: Dict[str, Any], diagnostic: DiagnosticData) -> None:
     """Test the cursor-based AST implementation."""
     # Add test details to diagnostic data
     diagnostic.add_detail("project", test_project["name"])
@@ -128,7 +129,7 @@ def test_cursor_ast_implementation(test_project, diagnostic) -> None:
 
 
 @pytest.mark.diagnostic
-def test_large_ast_handling(test_project, diagnostic) -> None:
+def test_large_ast_handling(test_project: Dict[str, Any], diagnostic: DiagnosticData) -> None:
     """Test handling of a slightly larger AST to ensure cursor-based approach works."""
     # Add test details to diagnostic data
     diagnostic.add_detail("project", test_project["name"])
@@ -204,7 +205,7 @@ if __name__ == "__main__":
         class_nodes = []
         function_nodes = []
 
-        def count_nodes(node_dict) -> None:
+        def count_nodes(node_dict: dict[str, object]) -> None:
             if node_dict["type"] == "class_definition":
                 class_nodes.append(node_dict["id"])
             elif node_dict["type"] == "function_definition":

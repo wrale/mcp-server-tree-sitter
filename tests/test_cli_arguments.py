@@ -9,7 +9,7 @@ import pytest
 from mcp_server_tree_sitter.server import main
 
 
-def test_help_flag_does_not_start_server():
+def test_help_flag_does_not_start_server() -> None:
     """Test that --help flag prints help and doesn't start the server."""
     # Use subprocess to test the actual command
     result = subprocess.run(
@@ -31,7 +31,7 @@ def test_help_flag_does_not_start_server():
     assert "Starting MCP Tree-sitter Server" not in result.stdout
 
 
-def test_version_flag_exits_without_starting_server():
+def test_version_flag_exits_without_starting_server() -> None:
     """Test that --version shows version and exits without starting the server."""
     result = subprocess.run(
         [sys.executable, "-m", "mcp_server_tree_sitter", "--version"],
@@ -50,7 +50,7 @@ def test_version_flag_exits_without_starting_server():
     assert "Starting MCP Tree-sitter Server" not in result.stdout
 
 
-def test_direct_script_help_flag():
+def test_direct_script_help_flag() -> None:
     """Test that mcp-server-tree-sitter --help works correctly when called as a script."""
     # This uses a mock to avoid actually calling the script binary
     with (
@@ -72,7 +72,7 @@ def test_direct_script_help_flag():
         assert excinfo.value.code == 0
 
 
-def test_entry_point_implementation():
+def test_entry_point_implementation() -> None:
     """Verify that the entry point properly uses argparse for argument handling."""
     import inspect
 

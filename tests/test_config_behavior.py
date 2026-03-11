@@ -1,7 +1,9 @@
 """Tests for how configuration settings affect actual system behavior."""
 
 import tempfile
+from collections.abc import Generator
 from pathlib import Path
+from typing import TypedDict
 
 import pytest
 
@@ -10,8 +12,16 @@ from mcp_server_tree_sitter.exceptions import FileAccessError
 from tests.test_helpers import get_ast, register_project_tool, temp_config
 
 
+class _ProjectFixturePayload(TypedDict):
+    """Shape of the test_project fixture payload."""
+
+    name: str
+    path: str
+    file: str
+
+
 @pytest.fixture
-def test_project():
+def test_project() -> Generator[_ProjectFixturePayload, None, None]:
     """Create a temporary test project with sample files."""
     with tempfile.TemporaryDirectory() as temp_dir:
         project_path = Path(temp_dir)
@@ -35,7 +45,7 @@ def test_project():
         yield {"name": project_name, "path": str(project_path), "file": "test.py"}
 
 
-def test_cache_enabled_setting(test_project):
+def test_cache_enabled_setting(test_project: _ProjectFixturePayload) -> None:
     """Test that cache.enabled controls caching behavior."""
     # No need to get project registry, project object, or file path here
 
@@ -59,7 +69,7 @@ def test_cache_enabled_setting(test_project):
         # Override get method to track cache hits/misses
         original_get = tree_cache.get
 
-        def tracked_get(*args, **kwargs):
+        def tracked_get(*args: object, **kwargs: object) -> object:
             nonlocal cache_hit_count, cache_miss_count
             result = original_get(*args, **kwargs)
             if result is None:
@@ -100,14 +110,14 @@ def test_cache_enabled_setting(test_project):
         original_get = tree_cache.get
         original_put = tree_cache.put
 
-        def tracked_get(*args, **kwargs):
+        def tracked_get(*args: object, **kwargs: object) -> object:
             nonlocal cache_miss_count
             result = original_get(*args, **kwargs)
             if result is None:
                 cache_miss_count += 1
             return result
 
-        def tracked_put(*args, **kwargs):
+        def tracked_put(*args: object, **kwargs: object) -> object:
             nonlocal put_count
             put_count += 1
             return original_put(*args, **kwargs)
@@ -130,7 +140,7 @@ def test_cache_enabled_setting(test_project):
             tree_cache.put = original_put
 
 
-def test_security_file_size_limit(test_project):
+def test_security_file_size_limit(test_project: _ProjectFixturePayload) -> None:
     """Test that security.max_file_size_mb prevents processing large files."""
     # Create a larger file
     large_file_path = Path(test_project["path"]) / "large.py"
@@ -160,7 +170,7 @@ def test_security_file_size_limit(test_project):
         assert "tree" in result
 
 
-def test_excluded_dirs_setting(test_project):
+def test_excluded_dirs_setting(test_project: _ProjectFixturePayload) -> None:
     """Test that security.excluded_dirs prevents access to excluded directories."""
     # Create a directory structure with an excluded dir
     secret_dir = Path(test_project["path"]) / ".secret"
@@ -188,7 +198,7 @@ def test_excluded_dirs_setting(test_project):
         assert "tree" in result
 
 
-def test_default_max_depth_setting(test_project):
+def test_default_max_depth_setting(test_project: _ProjectFixturePayload) -> None:
     """Test that language.default_max_depth controls AST traversal depth."""
     # Create a file with nested structure
     nested_file = Path(test_project["path"]) / "nested.py"
@@ -210,7 +220,7 @@ class OuterClass:
         result = get_ast(project=test_project["name"], path="nested.py")
 
         # Helper function to find the maximum depth in the AST
-        def find_max_depth(node, current_depth=0):
+        def find_max_depth(node: dict[str, object], current_depth: int = 0) -> int:
             if not isinstance(node, dict):
                 return current_depth
 

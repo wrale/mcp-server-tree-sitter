@@ -7,61 +7,38 @@ container, helping to break circular import chains and simplify access.
 import logging
 from typing import Any, Dict, List, Optional
 
+from .cache.parser_cache import TreeCache
+from .config import ConfigurationManager, ServerConfig
 from .di import get_container
-from .exceptions import ProjectError
+from .language.registry import LanguageRegistry
+from .models.project import ProjectRegistry
 
 logger = logging.getLogger(__name__)
 
 
-def get_project_registry() -> Any:
+def get_project_registry() -> ProjectRegistry:
     """Get the project registry."""
     return get_container().project_registry
 
 
-def get_language_registry() -> Any:
+def get_language_registry() -> LanguageRegistry:
     """Get the language registry."""
     return get_container().language_registry
 
 
-def get_tree_cache() -> Any:
+def get_tree_cache() -> TreeCache:
     """Get the tree cache."""
     return get_container().tree_cache
 
 
-def get_config() -> Any:
+def get_config() -> ServerConfig:
     """Get the current configuration."""
     return get_container().get_config()
 
 
-def get_config_manager() -> Any:
+def get_config_manager() -> ConfigurationManager:
     """Get the configuration manager."""
     return get_container().config_manager
-
-
-def register_project(path: str, name: Optional[str] = None, description: Optional[str] = None) -> Dict[str, Any]:
-    """Register a project."""
-    project_registry = get_project_registry()
-    language_registry = get_language_registry()
-
-    try:
-        # Register project
-        project = project_registry.register_project(name or path, path, description)
-
-        # Scan for languages
-        project.scan_files(language_registry)
-
-        project_dict = project.to_dict()
-        # Add type annotations
-        result: Dict[str, Any] = {
-            "name": project_dict["name"],
-            "root_path": project_dict["root_path"],
-            "description": project_dict["description"],
-            "languages": project_dict["languages"],
-            "last_scan_time": project_dict["last_scan_time"],
-        }
-        return result
-    except Exception as e:
-        raise ProjectError(f"Failed to register project: {e}") from e
 
 
 def list_projects() -> List[Dict[str, Any]]:

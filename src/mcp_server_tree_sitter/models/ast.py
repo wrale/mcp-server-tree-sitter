@@ -11,14 +11,14 @@ from ..utils.tree_sitter_helpers import (
     get_node_text,
     walk_tree,
 )
-from ..utils.tree_sitter_types import ensure_node
+from ..utils.tree_sitter_types import Node, ensure_node
 
 # Import the cursor-based implementation
 from .ast_cursor import node_to_dict_cursor
 
 
 def node_to_dict(
-    node: Any,
+    node: Node,
     source_bytes: Optional[bytes] = None,
     include_children: bool = True,
     include_text: bool = True,
@@ -45,7 +45,7 @@ def node_to_dict(
     return node_to_dict_cursor(node, source_bytes, include_children, include_text, max_depth)
 
 
-def summarize_node(node: Any, source_bytes: Optional[bytes] = None) -> Dict[str, Any]:
+def summarize_node(node: Node, source_bytes: Optional[bytes] = None) -> Dict[str, Any]:
     """
     Create a compact summary of a node without details or children.
 
@@ -86,7 +86,7 @@ def summarize_node(node: Any, source_bytes: Optional[bytes] = None) -> Dict[str,
     return result
 
 
-def find_node_at_position(root_node: Any, row: int, column: int) -> Optional[Any]:
+def find_node_at_position(root_node: Node, row: int, column: int) -> Optional[Node]:
     """
     Find the most specific node at a given position using cursor-based traversal.
 
@@ -110,7 +110,7 @@ def find_node_at_position(root_node: Any, row: int, column: int) -> Optional[Any
     current_best = cursor.node
 
     # Special handling for function definitions and identifiers
-    def check_for_specific_nodes(node: Any) -> Optional[Any]:
+    def check_for_specific_nodes(node: Node) -> Optional[Node]:
         # For function definitions, check if position is over the function name
         if node.type == "function_definition":
             for child in node.children:
@@ -164,8 +164,8 @@ def find_node_at_position(root_node: Any, row: int, column: int) -> Optional[Any
 
 
 def extract_node_path(
-    root_node: Any,
-    target_node: Any,
+    root_node: Node,
+    target_node: Node,
 ) -> List[Tuple[str, Optional[str]]]:
     """
     Extract the path from root to a specific node using safe node handling.
@@ -210,7 +210,7 @@ def extract_node_path(
 
 
 def find_enclosing_scope(
-    root_node: Any,
+    root_node: Node,
     source_bytes: bytes,
     row: int,
     column: int,

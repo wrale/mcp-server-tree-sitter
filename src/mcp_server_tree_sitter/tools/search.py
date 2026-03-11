@@ -5,13 +5,16 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from ..cache.parser_cache import TreeCache
 from ..exceptions import QueryError, SecurityError
+from ..language.registry import LanguageRegistry
+from ..models.project import Project
 from ..utils.security import validate_file_access
 from ..utils.tree_sitter_helpers import run_query_captures
 
 
 def search_text(
-    project: Any,
+    project: Project,
     pattern: str,
     file_pattern: Optional[str] = None,
     max_results: int = 100,
@@ -138,10 +141,10 @@ def search_text(
 
 
 def query_code(
-    project: Any,
+    project: Project,
     query_string: str,
-    language_registry: Any,
-    tree_cache: Any,
+    language_registry: LanguageRegistry,
+    tree_cache: TreeCache,
     file_path: Optional[str] = None,
     language: Optional[str] = None,
     max_results: int = 100,

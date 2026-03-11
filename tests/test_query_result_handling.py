@@ -14,7 +14,7 @@ from tests.test_helpers import register_project_tool, run_query
 
 
 @pytest.fixture
-def test_project(request) -> Generator[Dict[str, Any], None, None]:
+def test_project(request: pytest.FixtureRequest) -> Generator[Dict[str, Any], None, None]:
     """Create a test project with Python files containing known constructs."""
     with tempfile.TemporaryDirectory() as temp_dir:
         project_path = Path(temp_dir)
@@ -69,7 +69,7 @@ if __name__ == "__main__":
         yield {"name": project_name, "path": str(project_path), "file": "test.py"}
 
 
-def test_query_capture_processing(test_project) -> None:
+def test_query_capture_processing(test_project: Dict[str, Any]) -> None:
     """Test query capture processing to verify correct results."""
     # Simple query to find function definitions
     query = "(function_definition name: (identifier) @function.name) @function.def"
@@ -118,7 +118,9 @@ def test_query_capture_processing(test_project) -> None:
         ),  # print, greet, process_data
     ],
 )
-def test_query_result_capture_types(test_project, query_string, expected_capture_count) -> None:
+def test_query_result_capture_types(
+    test_project: Dict[str, Any], query_string: str, expected_capture_count: int
+) -> None:
     """Test different types of query captures to verify result handling."""
     # Run the query
     result = run_query(
@@ -242,7 +244,7 @@ def test_query_result_structure_transformation() -> None:
     # This helps verify result transformation is correct
 
     # Create a function to transform mock tree-sitter query results to expected MCP format
-    def transform_query_results(ts_results) -> List[Dict[str, Any]]:
+    def transform_query_results(ts_results: object) -> List[Dict[str, object]]:
         """Transform tree-sitter query results to MCP format."""
         # Implement a simplified version of what the actual transformation might be
         mcp_results = []

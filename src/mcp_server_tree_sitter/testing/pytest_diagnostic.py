@@ -7,18 +7,40 @@ while maintaining standard test pass/fail behavior.
 import json
 import time
 import traceback
+import types
 from json import JSONEncoder
 from pathlib import Path
-from typing import Any, Dict, Generator, List, Optional
+from typing import Any, Dict, Generator, List, Optional, Protocol
 
 import pytest
+
+
+class _TerminalReporterLike(Protocol):
+    """Protocol for pytest's terminal reporter (not in public API)."""
+
+    def write_sep(self, sep: str, title: str) -> None: ...
+    def write_line(self, line: str) -> None: ...
+
+
+class _ExceptionInfoLike(Protocol):
+    """Protocol for pytest's ExceptionInfo (internal)."""
+
+    type: type[BaseException]
+    value: BaseException
+    tb: Optional[types.TracebackType]
+
+
+class _CallInfoLike(Protocol):
+    """Protocol for pytest's CallInfo (internal)."""
+
+    excinfo: Optional[_ExceptionInfoLike]
 
 
 # Custom JSON Encoder that can handle binary data
 class DiagnosticJSONEncoder(JSONEncoder):
     """Custom JSON encoder that can handle bytes and other non-serializable types."""
 
-    def default(self, o: Any) -> Any:
+    def default(self, o: object) -> object:
         """Convert bytes and other types to JSON-serializable objects."""
         if isinstance(o, bytes):
             # Convert bytes to base64 string for JSON serialization
@@ -55,7 +77,7 @@ _CURRENT_TEST: Dict[str, Any] = {}
 class DiagnosticData:
     """Container for diagnostic information."""
 
-    def __init__(self, test_id: str):
+    def __init__(self, test_id: str) -> None:
         """Initialize with test ID."""
         self.test_id = test_id
         self.start_time = time.time()
@@ -76,12 +98,12 @@ class DiagnosticData:
         self.errors.append(error_info)
         self.status = "error"
 
-    def add_detail(self, key: str, value: Any) -> None:
-        """Add a detail to the diagnostic data."""
+    def add_detail(self, key: str, value: object) -> None:
+        """Add a detail to the diagnostic data (JSON-serializable or custom-encoded)."""
         self.details[key] = value
 
-    def add_artifact(self, name: str, content: Any) -> None:
-        """Add an artifact to the diagnostic data."""
+    def add_artifact(self, name: str, content: object) -> None:
+        """Add an artifact to the diagnostic data (JSON-serializable or custom-encoded)."""
         self.artifacts[name] = content
 
     def finalize(self, status: str = "completed") -> None:
@@ -105,7 +127,7 @@ class DiagnosticData:
 
 
 @pytest.fixture
-def diagnostic(request: Any) -> Generator[DiagnosticData, None, None]:
+def diagnostic(request: pytest.FixtureRequest) -> Generator[DiagnosticData, None, None]:
     """Fixture to provide diagnostic functionality to tests."""
     # Get the current test ID
     test_id = f"{request.path}::{request.node.name}"
@@ -120,31 +142,33 @@ def diagnostic(request: Any) -> Generator[DiagnosticData, None, None]:
     diag.finalize()
 
 
-def pytest_configure(config: Any) -> None:
+def pytest_configure(config: pytest.Config) -> None:
     """Set up the plugin when pytest starts."""
     # Register additional markers
     config.addinivalue_line("markers", "diagnostic: mark test as producing diagnostic information")
 
 
-def pytest_runtest_protocol(item: Any, nextitem: Any) -> Optional[bool]:
+def pytest_runtest_protocol(item: pytest.Item, nextitem: Optional[pytest.Item]) -> Optional[bool]:
     """Custom test protocol that captures detailed diagnostics."""
     # Use the standard protocol
     return None
 
 
-def pytest_runtest_setup(item: Any) -> None:
+def pytest_runtest_setup(item: pytest.Item) -> None:
     """Set up the test environment."""
     # This is no longer needed as we use the request fixture
     pass
 
 
-def pytest_runtest_teardown(item: Any) -> None:
+def pytest_runtest_teardown(item: pytest.Item) -> None:
     """Clean up after a test."""
     # This is no longer needed as we use the request fixture
     pass
 
 
-def pytest_terminal_summary(terminalreporter: Any, exitstatus: Any, config: Any) -> None:
+def pytest_terminal_summary(
+    terminalreporter: _TerminalReporterLike, exitstatus: int, config: pytest.Config
+) -> None:
     """Add diagnostic summary to the terminal output."""
     if _DIAGNOSTICS:
         terminalreporter.write_sep("=", "Diagnostic Summary")
@@ -161,7 +185,7 @@ def pytest_terminal_summary(terminalreporter: Any, exitstatus: Any, config: Any)
                         terminalreporter.write_line(f"  Error {i + 1}: {error['type']}: {error['message']}")
 
 
-def pytest_sessionfinish(session: Any, exitstatus: Any) -> None:
+def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
     """Generate JSON reports at the end of the test session."""
     output_dir = Path("diagnostic_results")
     output_dir.mkdir(exist_ok=True)
@@ -193,8 +217,10 @@ def pytest_sessionfinish(session: Any, exitstatus: Any) -> None:
 
 
 @pytest.hookimpl(tryfirst=True)
-def pytest_exception_interact(node: Any, call: Any, report: Any) -> None:
-    """Capture exception details for diagnostics."""
+def pytest_exception_interact(
+    node: pytest.Item, call: _CallInfoLike, report: object
+) -> None:
+    """Capture exception details for diagnostics. report is pytest TestReport (internal)."""
     if call.excinfo:
         try:
             test_id = f"{node.path}::{node.name}"

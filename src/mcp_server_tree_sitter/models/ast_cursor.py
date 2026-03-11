@@ -10,7 +10,7 @@ from ..utils.tree_sitter_types import Node, ensure_node
 
 
 def node_to_dict_cursor(
-    node: Any,
+    node: Node,
     source_bytes: Optional[bytes] = None,
     include_children: bool = True,
     include_text: bool = True,

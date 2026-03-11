@@ -1,7 +1,5 @@
 """Tests for loading and validating all language data from language/data/."""
 
-import pytest
-
 from mcp_server_tree_sitter.language.loader import (
     get_extension_map,
     get_query_templates,

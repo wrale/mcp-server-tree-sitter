@@ -5,13 +5,14 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 from ..exceptions import FileAccessError, ProjectError
+from ..models.project import Project
 from ..utils.security import validate_file_access
 
 logger = logging.getLogger(__name__)
 
 
 def list_project_files(
-    project: Any,
+    project: Project,
     pattern: Optional[str] = None,
     max_depth: Optional[int] = None,
     filter_extensions: Optional[List[str]] = None,
@@ -75,7 +76,7 @@ def list_project_files(
 
 
 def get_file_content(
-    project: Any,
+    project: Project,
     path: str,
     as_bytes: bool = False,
     max_lines: Optional[int] = None,
@@ -173,7 +174,7 @@ def get_file_content(
         raise FileAccessError(f"Error reading file: {e}") from e
 
 
-def get_file_info(project: Any, path: str) -> Dict[str, Any]:
+def get_file_info(project: Project, path: str) -> Dict[str, Any]:
     """
     Get metadata about a file.
 

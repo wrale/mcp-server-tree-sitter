@@ -1,6 +1,7 @@
 """AST operation tools for MCP server."""
 
 import logging
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 from ..cache.parser_cache import TreeCache
@@ -13,16 +14,16 @@ from ..utils.security import validate_file_access
 from ..utils.tree_sitter_helpers import (
     parse_source,
 )
-from ..utils.tree_sitter_types import Tree
+from ..utils.tree_sitter_types import Node, Tree
 
 logger = logging.getLogger(__name__)
 
 
 def get_file_ast(
-    project: Any,
+    project: Project,
     path: str,
-    language_registry: Any,
-    tree_cache: Any,
+    language_registry: LanguageRegistry,
+    tree_cache: TreeCache,
     max_depth: Optional[int] = None,
     include_text: bool = True,
 ) -> Dict[str, Any]:
@@ -70,7 +71,12 @@ def get_file_ast(
     }
 
 
-def parse_file(file_path: Any, language: str, language_registry: Any, tree_cache: Any) -> tuple[Tree, bytes]:
+def parse_file(
+    file_path: Path,
+    language: str,
+    language_registry: LanguageRegistry,
+    tree_cache: TreeCache,
+) -> tuple[Tree, bytes]:
     """
     Parse a file using tree-sitter.
 
@@ -160,7 +166,7 @@ def get_enclosing_scope_for_path(
     return find_enclosing_scope(tree.root_node, source_bytes, row, column, label, language)
 
 
-def find_node_at_position(root_node: Any, row: int, column: int) -> Optional[Any]:
+def find_node_at_position(root_node: Node, row: int, column: int) -> Optional[Node]:
     """
     Find the most specific node at a given position.
 

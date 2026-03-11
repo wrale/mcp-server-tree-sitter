@@ -7,13 +7,14 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 from ..exceptions import ProjectError
+from ..language.registry import LanguageRegistry
 from ..utils.path import get_project_root, normalize_path
 
 
 class Project:
     """Represents a project for code analysis."""
 
-    def __init__(self, name: str, path: Path, description: Optional[str] = None):
+    def __init__(self, name: str, path: Path, description: Optional[str] = None) -> None:
         self.name = name
         self.root_path = path
         self.description = description
@@ -31,7 +32,7 @@ class Project:
             "last_scan_time": self.last_scan_time,
         }
 
-    def scan_files(self, language_registry: Any, force: bool = False) -> Dict[str, int]:
+    def scan_files(self, language_registry: LanguageRegistry, force: bool = False) -> Dict[str, int]:
         """
         Scan project files and identify languages.
 

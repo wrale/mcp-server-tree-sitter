@@ -164,7 +164,7 @@ class LanguageRegistry:
         except Exception:
             return False
 
-    def get_language(self, language_name: str) -> Any:
+    def get_language(self, language_name: str) -> Language:
         """
         Get or load a language by name from tree-sitter-language-pack.
 

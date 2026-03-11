@@ -3,14 +3,14 @@
 from mcp_server_tree_sitter.di import get_container
 
 
-def test_container_singleton():
+def test_container_singleton() -> None:
     """Test that get_container returns the same instance each time."""
     container1 = get_container()
     container2 = get_container()
     assert container1 is container2
 
 
-def test_register_custom_dependency():
+def test_register_custom_dependency() -> None:
     """Test registering and retrieving a custom dependency."""
     container = get_container()
 
@@ -23,7 +23,7 @@ def test_register_custom_dependency():
     assert retrieved is test_value
 
 
-def test_core_dependencies_initialized():
+def test_core_dependencies_initialized() -> None:
     """Test that core dependencies are automatically initialized."""
     container = get_container()
 

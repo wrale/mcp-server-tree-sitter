@@ -14,7 +14,7 @@ The precedence order for configuration is:
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import List, Optional, TypeAlias, TypedDict, Union
 
 import yaml
 from pydantic import BaseModel, Field
@@ -23,6 +23,34 @@ from pydantic import BaseModel, Field
 from .bootstrap import get_logger, update_log_levels
 
 logger = get_logger(__name__)
+
+# Type for a single config value (env override / update_value); list is List[str] for excluded_dirs etc.
+ConfigValue: TypeAlias = Union[int, float, bool, str, None, List[str]]
+
+
+class _CacheDict(TypedDict):
+    enabled: bool
+    max_size_mb: int
+    ttl_seconds: int
+
+
+class _SecurityDict(TypedDict):
+    max_file_size_mb: int
+    excluded_dirs: List[str]
+
+
+class _LanguageDict(TypedDict):
+    auto_install: bool
+    default_max_depth: int
+
+
+class ConfigDict(TypedDict):
+    """Serialized config shape returned by ConfigurationManager.to_dict()."""
+
+    cache: _CacheDict
+    security: _SecurityDict
+    language: _LanguageDict
+    log_level: str
 
 
 class CacheConfig(BaseModel):
@@ -164,7 +192,7 @@ def update_config_from_env(config: ServerConfig) -> None:
                 logger.warning(f"Unknown setting {setting} in section {section} from environment variable {env_name}")
 
 
-def _convert_value(value_str: str, current_value: Any) -> Any:
+def _convert_value(value_str: str, current_value: ConfigValue) -> ConfigValue:
     """Convert string value from environment variable to the appropriate type.
 
     Args:
@@ -188,7 +216,7 @@ def _convert_value(value_str: str, current_value: Any) -> Any:
             # Convert comma-separated string to list
             return [item.strip() for item in value_str.split(",")]
         else:
-            # Default to string
+            # Default to string (includes current_value is None or str)
             return value_str
     except (ValueError, TypeError) as e:
         # If conversion fails, log a warning and return the original value
@@ -199,7 +227,7 @@ def _convert_value(value_str: str, current_value: Any) -> Any:
 class ConfigurationManager:
     """Manages server configuration without relying on global variables."""
 
-    def __init__(self, initial_config: Optional[ServerConfig] = None):
+    def __init__(self, initial_config: Optional[ServerConfig] = None) -> None:
         """Initialize with optional initial configuration."""
         self._config = initial_config or ServerConfig()
         self._logger = logging.getLogger(__name__)
@@ -338,7 +366,7 @@ class ConfigurationManager:
             self._logger.error(traceback.format_exc())
             return self._config
 
-    def update_value(self, path: str, value: Any) -> None:
+    def update_value(self, path: str, value: ConfigValue) -> None:
         """Update a specific configuration value by dot-notation path."""
         parts = path.split(".")
 
@@ -367,8 +395,7 @@ class ConfigurationManager:
                 self._logger.debug(f"Updated config value {path} from {old_value} to {value}")
 
                 # If updating log_level, apply it using centralized bootstrap function
-                if path == "log_level":
-                    # Use centralized bootstrap module
+                if path == "log_level" and isinstance(value, (str, int)):
                     update_log_levels(value)
                     self._logger.debug(f"Applied log level {value} to mcp_server_tree_sitter loggers")
             else:
@@ -379,8 +406,8 @@ class ConfigurationManager:
         # Environment variables > Explicit updates > YAML > Defaults
         update_config_from_env(self._config)
 
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert configuration to a dictionary."""
+    def to_dict(self) -> ConfigDict:
+        """Convert configuration to a dictionary (serialized config)."""
         return {
             "cache": {
                 "enabled": self._config.cache.enabled,
