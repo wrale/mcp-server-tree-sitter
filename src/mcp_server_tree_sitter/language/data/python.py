@@ -1,6 +1,74 @@
 """Python language data."""
 
+from typing import Any, Dict, Set
+
+from ...utils.tree_sitter_helpers import get_node_text, run_query_captures
+from ..import_enrichers import (
+    node_location,
+    register_dependency_module_enricher,
+    register_symbol_import_enricher,
+)
 from ..schema import LanguageDataBase
+
+
+def _enrich_symbol_imports(
+    symbols: Dict[str, list],
+    safe_lang: Any,  # noqa: ANN401 (tree-sitter Language)
+    tree: Any,  # noqa: ANN401 (tree-sitter Tree)
+    source_bytes: bytes,
+) -> None:
+    """Add aliased import entries to symbols['imports'] (e.g. from X import Y as Z)."""
+    aliased_query = """
+    (import_from_statement
+        module_name: (dotted_name) @import.from
+        name: (aliased_import)) @import
+    """
+    for capture_name, nodes in run_query_captures(safe_lang, aliased_query, tree.root_node).items():
+        for node in nodes:
+            if capture_name == "import.from":
+                symbols["imports"].append(
+                    {
+                        "name": get_node_text(node, source_bytes),
+                        "type": "imports",
+                        "location": node_location(node),
+                    }
+                )
+    alias_query = "(aliased_import) @alias"
+    for capture_name, nodes in run_query_captures(safe_lang, alias_query, tree.root_node).items():
+        for node in nodes:
+            if capture_name != "alias":
+                continue
+            alias_text = get_node_text(node, source_bytes)
+            module_name = ""
+            if node.parent and node.parent.parent:
+                for child in node.parent.parent.children:
+                    if getattr(child, "type", None) == "dotted_name":
+                        module_name = get_node_text(child, source_bytes)
+                        break
+            symbols["imports"].append({"name": alias_text, "type": "imports", "location": node_location(node)})
+            if module_name:
+                loc = node_location(node)
+                mod_loc = {"start": {"row": loc["start"]["row"], "column": 0}, "end": dict(loc["end"])}
+                symbols["imports"].append({"name": module_name, "type": "imports", "location": mod_loc})
+
+
+def _enrich_dependency_modules(
+    module_imports: Set[str],
+    safe_lang: Any,  # noqa: ANN401 (tree-sitter Language)
+    tree: Any,  # noqa: ANN401 (tree-sitter Tree)
+    source_bytes: bytes,
+) -> None:
+    """Add module names from aliased imports to module_imports (e.g. from X import Y as Z)."""
+    aliased_query = "(aliased_import) @alias"
+    for _cap, nodes in run_query_captures(safe_lang, aliased_query, tree.root_node).items():
+        for aliased_node in nodes:
+            if aliased_node.parent and aliased_node.parent.parent:
+                for child in aliased_node.parent.parent.children:
+                    if getattr(child, "type", None) == "dotted_name":
+                        mn = get_node_text(child, source_bytes)
+                        if mn:
+                            module_imports.add(mn.decode("utf-8") if isinstance(mn, bytes) else mn)
+                        break
 
 
 class Python(LanguageDataBase):
@@ -67,3 +135,8 @@ class Python(LanguageDataBase):
         "for_statement": "A for loop with target, iterable, and body",
         "while_statement": "A while loop with condition and body",
     }
+
+
+# Register import enrichers so symbol extraction and dependency discovery pick up aliased imports
+register_symbol_import_enricher(Python.id, _enrich_symbol_imports)
+register_dependency_module_enricher(Python.id, _enrich_dependency_modules)
