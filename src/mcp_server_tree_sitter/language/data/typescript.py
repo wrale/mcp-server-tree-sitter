@@ -60,4 +60,10 @@ class TypeScript(LanguageDataBase):
     """,
     }
     default_symbol_types = ["functions", "classes", "interfaces", "imports"]
+    complexity_nodes = [
+        "if_statement",
+        "for_statement",
+        "while_statement",
+        "try_statement",
+    ]
     node_type_descriptions = {}

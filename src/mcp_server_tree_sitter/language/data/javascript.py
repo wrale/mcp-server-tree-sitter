@@ -43,6 +43,12 @@ class JavaScript(LanguageDataBase):
     """,
     }
     default_symbol_types = ["functions", "classes", "imports"]
+    complexity_nodes = [
+        "if_statement",
+        "for_statement",
+        "while_statement",
+        "try_statement",
+    ]
     node_type_descriptions = {
         "program": "The root node of a JavaScript file",
         "function_declaration": "A function declaration with name and params",

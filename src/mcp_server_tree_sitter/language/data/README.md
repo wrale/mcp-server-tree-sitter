@@ -16,6 +16,9 @@ One **Python module per supported language** lives here. Each module defines a c
 | `scope_node_types`       | dict           | Yes       | Keys exactly `"function"`, `"class"`, `"module"`. Each value is a list of tree-sitter node type names. |
 | `query_templates`        | dict[str, str] | Yes       | Template name → tree-sitter query string (multi-line allowed).                                         |
 | `node_type_descriptions` | dict[str, str] | No        | Node type name → short description; default `{}`.                                                      |
+| `complexity_nodes`       | list[str]      | No        | Tree-sitter node types for cyclomatic complexity (e.g. if_statement); default `[]`.                    |
+
+See [LANGUAGE_COVERAGE.md](LANGUAGE_COVERAGE.md) in this directory for the coverage table (Extensions, Templates, get_enclosing_scope, Complexity nodes) for all pack languages.
 
 ## Convention
 

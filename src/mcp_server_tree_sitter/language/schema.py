@@ -33,6 +33,8 @@ class LanguageDataBase(ABC):
     node_type_descriptions: ClassVar[dict[str, str]]
     # Optional: default symbol types for extraction when not specified. Use [] to inherit default.
     default_symbol_types: ClassVar[list[str]] = []
+    # Optional: tree-sitter node types that count as decision points for cyclomatic complexity (e.g. if_statement, for_statement).
+    complexity_nodes: ClassVar[list[str]] = []
 
     def __init_subclass__(cls, **kwargs: object) -> None:
         super().__init_subclass__(**kwargs)
@@ -48,6 +50,7 @@ class LanguageDataBase(ABC):
     def to_language_data(cls) -> "LanguageData":
         """Build and validate a LanguageData instance from this class's attributes."""
         default_syms = getattr(cls, "default_symbol_types", [])
+        complexity_nodes = getattr(cls, "complexity_nodes", [])
         return LanguageData(
             id=cls.id,
             extensions=list(cls.extensions),
@@ -55,6 +58,7 @@ class LanguageDataBase(ABC):
             query_templates=dict(cls.query_templates),
             node_type_descriptions=getattr(cls, "node_type_descriptions", {}) or {},
             default_symbol_types=list(default_syms) if default_syms else DEFAULT_SYMBOL_TYPES,
+            complexity_nodes=list(complexity_nodes),
         )
 
 
@@ -82,6 +86,10 @@ class LanguageData(BaseModel):
     default_symbol_types: list[str] = Field(
         default_factory=lambda: list(DEFAULT_SYMBOL_TYPES),
         description="Default symbol types for extraction when not specified",
+    )
+    complexity_nodes: list[str] = Field(
+        default_factory=list,
+        description="Tree-sitter node types that count as decision points for cyclomatic complexity",
     )
 
     @model_validator(mode="after")
