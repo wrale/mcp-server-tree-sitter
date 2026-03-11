@@ -2,10 +2,9 @@
 
 from typing import Any, Dict, List, Optional
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp import Context, FastMCP
 
 from ..di import get_container
-from ..utils.context.mcp_context import MCPContextProtocol
 from .analysis import (
     analyze_code_complexity,
     analyze_project_structure,
@@ -46,7 +45,7 @@ def register_analysis_tools(mcp_server: FastMCP) -> None:
     def analyze_project(
         project: str,
         scan_depth: int = 3,
-        ctx: Optional[MCPContextProtocol] = None,
+        ctx: Context | None = None,
     ) -> Dict[str, Any]:
         """Analyze overall project structure.
 
