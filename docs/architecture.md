@@ -1,127 +1,205 @@
 # Architecture Overview
 
-This document provides an overview of the MCP Tree-sitter Server's architecture, focusing on key components and design patterns.
+This document describes the MCP Tree-sitter Server architecture: shared app state lifecycle, module dependencies, thread-safety, configuration precedence, and the language data loading pipeline.
 
-## Core Architecture
+## Shared App State (App Singleton)
 
-The MCP Tree-sitter Server follows a structured architecture with the following components:
+The server uses a single process-wide **App** instance as the container for all shared state. Access it via `get_app()`.
 
-1. **Bootstrap Layer**: Core initialization systems that must be available to all modules with minimal dependencies
-2. **Configuration Layer**: Configuration management with environment variable support
-3. **Dependency Injection Container**: Central container for managing and accessing services
-4. **Tree-sitter Integration**: Interfaces with the tree-sitter library for parsing and analysis
-5. **MCP Protocol Layer**: Handles interactions with the Model Context Protocol
+### Lifecycle
 
-## Bootstrap Layer
+1. **First access**  
+   When any code first calls `get_app()` (or `App()`), the singleton is created under a class-level `threading.RLock`. Only one thread creates the instance; others block until creation is done.
 
-The bootstrap layer handles critical initialization tasks that must happen before anything else:
+2. **Initialization (once per process)**  
+   `App.__init__` runs only once (guarded by `_initialized` and `_initializing` to avoid re-entrancy):
+   - **ConfigurationManager** is created; config is loaded from defaults, then optionally from YAML and environment (see [Config precedence](#config-precedence)).
+   - **ProjectRegistry** singleton is created (projects in memory for the process lifetime).
+   - **Language data** is loaded via `load_all_language_data()` (see [Language data loading pipeline](#language-data-loading-pipeline)).
+   - **LanguageRegistry** is created with preferred languages from config.
+   - **TreeCache** is created with cache settings from config.
+   - An **on_config_loaded** callback is registered so that when config is reloaded or updated, cache settings and log levels are applied.
+
+3. **Runtime**  
+   The same `App` instance is used for all MCP requests. Config can be updated at runtime via `ConfigurationManager.update_value()` or `load_from_file()`; the callback keeps cache and logging in sync.
+
+4. **Process exit**  
+   No explicit shutdown hook; when the process exits, all state is discarded. There is one App instance per process (e.g. one per MCP server process).
+
+### What lives on App
+
+| Attribute            | Type                 | Purpose                                      |
+|----------------------|----------------------|----------------------------------------------|
+| `config_manager`     | ConfigurationManager  | Load/update config, env, YAML, callbacks     |
+| `project_registry`   | ProjectRegistry      | Registered project roots and file lists      |
+| `language_registry`  | LanguageRegistry     | Tree-sitter parsers and language metadata    |
+| `tree_cache`         | TreeCache            | Cache of parsed trees (path + language + mtime) |
+
+Helpers: **api** (`get_config`, `get_project_registry`, etc.) and **context** (`ServerContext`, `global_context`) both use `get_app()` under the hood.
+
+---
+
+## Module Dependency Graph
+
+High-level dependency flow (excluding tests):
+
+- **Bootstrap** (logging) has no internal app dependencies and is used by everyone.
+- **App** depends on: bootstrap, config, cache, language (registry + loader), models (ProjectRegistry).
+- **API / Context** depend on App.
+- **Tools** (MCP tools) depend on api/context, cache, language, utils.
+- **Server** (FastMCP) depends on App, config, and tools.
+
+```mermaid
+flowchart TB
+    subgraph bootstrap["bootstrap"]
+        logging_bootstrap["logging_bootstrap"]
+    end
+
+    subgraph config["config"]
+        config_schema["config_schema"]
+        config_env["config_env"]
+        config_loader["config_loader"]
+    end
+
+    subgraph language["language"]
+        schema["schema"]
+        loader["loader"]
+        registry["registry"]
+        data["data/*.py"]
+    end
+
+    subgraph models["models"]
+        project["project (ProjectRegistry)"]
+    end
+
+    subgraph cache["cache"]
+        parser_cache["parser_cache"]
+    end
+
+    app["app (App)"]
+    api["api"]
+    context["context"]
+    server["server"]
+    tools["tools/*"]
+
+    logging_bootstrap --> app
+    config_schema --> config_env
+    config_schema --> config_loader
+    config_env --> config_loader
+    config_loader --> app
+    schema --> loader
+    schema --> data
+    data --> loader
+    loader --> app
+    registry --> app
+    project --> app
+    parser_cache --> app
+
+    app --> api
+    app --> context
+    app --> server
+    api --> tools
+    context --> tools
+    parser_cache --> tools
+    registry --> tools
+    loader --> registry
+```
+
+**ASCII alternative:**
 
 ```
-src/mcp_server_tree_sitter/bootstrap/
-├── __init__.py           # Exports key bootstrap functions
-└── logging_bootstrap.py  # Canonical logging configuration
+                    ┌─────────────────┐
+                    │   bootstrap     │
+                    │ (logging only)  │
+                    └────────┬────────┘
+                             │
+    ┌────────────┐    ┌──────┴──────┐    ┌─────────────┐
+    │  config_*  │    │     app     │    │ language/   │
+    │ (schema,   │───►│ (singleton) │◄───│ loader,     │
+    │  env,      │    │             │    │ registry,   │
+    │  loader)   │    │ - config_mgr│    │ data/*)     │
+    └────────────┘    │ - projects  │    └─────────────┘
+                      │ - languages │    ┌──────────────┐
+    ┌────────────┐    │ - tree_cache│◄───│ cache/       │
+    │ models/    │───►│             │    │ parser_cache │
+    │ project    │    └──────┬──────┘    └──────────────┘
+    └────────────┘           │
+                    ┌────────┴────────┐
+                    │  api, context   │
+                    │  server, tools  │
+                    └─────────────────┘
 ```
 
-This layer is imported first in the package's `__init__.py` and has minimal dependencies. The bootstrap module ensures that core services like logging are properly initialized and globally available to all modules.
+---
 
-**Key Design Principle**: Each component in the bootstrap layer must have minimal dependencies to avoid import cycles and ensure reliable initialization.
+## Thread-Safety Guarantees
 
-## Dependency Injection Pattern
+- **App singleton**: Creation is guarded by `App._lock` (`threading.RLock`). First call creates the instance; concurrent callers block until creation and initialization complete. After that, `__init__` is skipped.
 
-Instead of using global variables (which was the approach in earlier versions), the application now uses a structured dependency injection pattern:
+- **ProjectRegistry**: Also a `__new__`-based singleton with a class-level `threading.RLock`. Registration and lookup use this lock.
 
-1. **DependencyContainer**: The `DependencyContainer` class holds all application components and services
-2. **ServerContext**: A context class provides a clean interface for interacting with dependencies
-3. **Access Functions**: API functions like `get_logger()` and `update_log_levels()` provide easy access to functionality
+- **TreeCache**: Uses an instance-level `threading.RLock` for all get/set/invalidate operations.
 
-This approach has several benefits:
-- Cleaner testing with the ability to mock dependencies
-- Better encapsulation of implementation details
-- Reduced global state and improved thread safety
-- Clearer dependency relationships between components
+- **ConfigurationManager**: The in-memory config object is mutable. Updates (`update_value`, `load_from_file`) are not atomic with respect to readers. In practice the MCP server is single-threaded per request; if you introduce multi-threaded config writers, consider adding a lock.
 
-## Logging Design
+- **LanguageRegistry / LanguageDataLoader**: Language data is loaded once at startup (during App init). The loader uses class-level caches populated before any request handling; no locking is used for reads. Do not reload language data concurrently with reads.
 
-Logging follows a hierarchical model using Python's standard `logging` module:
+**Summary**: Singleton creation and shared mutable state (projects, cache) are thread-safe. Config and language data are safe for typical single-threaded MCP usage; for custom multi-threaded use, document or add locking where needed.
 
-1. **Root Package Logger**: Only the root package logger (`mcp_server_tree_sitter`) has its level explicitly set
-2. **Child Loggers**: Child loggers inherit their level from the root package logger
-3. **Handler Synchronization**: Handler levels are synchronized with their logger's effective level
+---
 
-**Canonical Implementation**: The logging system is defined in a single location - `bootstrap/logging_bootstrap.py`. Other modules import from this module to ensure consistent behavior.
+## Config Precedence
 
-### Logging Functions
+Configuration is merged from multiple sources. **Highest to lowest precedence:**
 
-The bootstrap module provides these key logging functions:
+1. **Explicit updates** — `ConfigurationManager.update_value()` (and any code that calls it, e.g. configure tool). These take effect immediately and are **not** overwritten by env or file when you load config later.
 
-```python
-# Get log level from environment variable
-get_log_level_from_env()
+2. **Environment variables** — All `MCP_TS_*` variables. Applied **at load time only** (when the config object is created or when a YAML file is loaded). They do not re-apply on every read; so once you use `update_value()`, that value wins until you load from file again (which re-applies env over the file).
 
-# Configure the root logger
-configure_root_logger()
+3. **YAML file** — Values from the config file when present (e.g. `~/.config/tree-sitter/config.yaml` or path from `MCP_TS_CONFIG_PATH` or passed to `load_from_file()`).
 
-# Get a properly configured logger
-get_logger(name)
+4. **Defaults** — `ServerConfig` / schema defaults (e.g. in `config_schema.py`).
 
-# Update log levels
-update_log_levels(level_name)
-```
+**Config file path resolution** (for `load_config()` or default load): explicit path argument &gt; `MCP_TS_CONFIG_PATH` env &gt; platform default path (e.g. `~/.config/tree-sitter/config.yaml`). Only existing, non-empty files are loaded; then env is applied on top of the loaded values.
 
-## Configuration System
+---
 
-The configuration system uses a layered approach:
+## Language Data Loading Pipeline
 
-1. **Environment Variables**: Highest precedence (e.g., `MCP_TS_LOG_LEVEL=DEBUG`)
-2. **Explicit Updates**: Updates made via `update_value()` calls
-3. **YAML Configuration**: Settings from YAML configuration files
-4. **Default Values**: Fallback defaults defined in model classes
+Language metadata (extensions, scope node types, query templates, etc.) is loaded once per process during **App** initialization.
 
-The `ConfigurationManager` is responsible for loading, managing, and applying configuration, while a `ServerConfig` model encapsulates the actual configuration settings.
+1. **Trigger**  
+   `App.__init__` calls `load_all_language_data()` (from `language.loader`).
 
-## Project and Language Management
+2. **Discovery**  
+   `LanguageDataLoader.load_all_language_data()` imports the package `mcp_server_tree_sitter.language.data` and uses `pkgutil.iter_modules()` to import every module in that package (e.g. `python.py`, `javascript.py`).
 
-Projects and languages are managed by registry classes:
+3. **Registration**  
+   Each module defines a class that subclasses `LanguageDataBase` (in `language.schema`). Subclasses register themselves via `__init_subclass__` in the base. So importing the module is enough to register the class.
 
-1. **ProjectRegistry**: Maintains active project registrations
-2. **LanguageRegistry**: Manages tree-sitter language parsers
+4. **Build**  
+   The loader iterates `LanguageDataBase.registered_subclasses()`, calls `to_language_data()` on each, and builds a dict `language_id -> LanguageData`. This dict is cached on the loader class.
 
-These registries are accessed through the dependency container or context, providing a clean interface for operations.
+5. **Derived caches**  
+   From that dict, the loader builds and caches:
+   - Scope node types (by kind: function/class/module)
+   - Extension → language id map
+   - Query templates, node type descriptions
+   - Query adaptation map (if present)
 
-## Use of Builder and Factory Patterns
+6. **Use**  
+   `LanguageRegistry` is then created (with config’s preferred languages). The registry uses the already-loaded language data and tree-sitter grammars to provide parsers and language info to tools.
 
-The server uses several design patterns for cleaner code:
+**Important**: Language data is loaded before `LanguageRegistry` is constructed. Adding a new language requires adding a new module under `language/data/` and implementing the `LanguageDataBase` contract; no separate registration step is needed. See [Adding a new language](troubleshooting.md#adding-a-new-language) in the troubleshooting guide.
 
-1. **Builder Pattern**: Used for constructing complex objects like `Project` instances
-2. **Factory Methods**: Used to create tree-sitter parsers and queries
-3. **Singleton Pattern**: Used for the dependency container to ensure consistent state
+---
 
-## Lifecycle Management
+## Other Design Notes
 
-The server's lifecycle is managed in a structured way:
+- **Bootstrap**: Logging and other minimal init live in `bootstrap/` and are imported early from the package `__init__.py` so all modules can use `get_logger()` and consistent log levels.
 
-1. **Bootstrap Phase**: Initializes logging and critical systems (from `__init__.py`)
-2. **Configuration Phase**: Loads configuration from files and environment
-3. **Dependency Initialization**: Sets up all dependencies in the container
-4. **Server Setup**: Configures MCP tools and capabilities
-5. **Running Phase**: Processes requests from the MCP client
-6. **Shutdown**: Gracefully handles shutdown and cleanup
+- **Errors**: Custom exceptions live in `exceptions.py` (e.g. `LanguageError`, `ProjectError`, `QueryError`). Tools and API layers map these to MCP responses or re-raise as appropriate.
 
-## Error Handling Strategy
+- **Lifecycle**: Bootstrap → Config load → App init (config, projects, language data, language registry, cache, config callback) → Server setup (FastMCP, tools) → Request handling. No formal shutdown hook; process exit drops all state.
 
-The server implements a layered error handling approach:
-
-1. **Custom Exceptions**: Defined in `exceptions.py` for specific error cases
-2. **Function-Level Handlers**: Most low-level functions do error handling
-3. **Tool-Level Handlers**: MCP tools handle errors and return structured responses
-4. **Global Exception Handling**: FastMCP provides top-level error handling
-
-## Future Architecture Improvements
-
-Planned architectural improvements include:
-
-1. **Complete Decoupling**: Further reduce dependencies between components
-2. **Module Structure Refinement**: Better organize modules by responsibility
-3. **Configuration Caching**: Optimize configuration access patterns
-4. **Async Support**: Add support for asynchronous operations
-5. **Plugin Architecture**: Support for extensibility through plugins
+For configuration file format and options, see [Configuration Guide](config.md). For runtime issues and debugging, see [Troubleshooting](troubleshooting.md).
