@@ -166,9 +166,7 @@ def pytest_runtest_teardown(item: pytest.Item) -> None:
     pass
 
 
-def pytest_terminal_summary(
-    terminalreporter: _TerminalReporterLike, exitstatus: int, config: pytest.Config
-) -> None:
+def pytest_terminal_summary(terminalreporter: _TerminalReporterLike, exitstatus: int, config: pytest.Config) -> None:
     """Add diagnostic summary to the terminal output."""
     if _DIAGNOSTICS:
         terminalreporter.write_sep("=", "Diagnostic Summary")
@@ -217,9 +215,7 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
 
 
 @pytest.hookimpl(tryfirst=True)
-def pytest_exception_interact(
-    node: pytest.Item, call: _CallInfoLike, report: object
-) -> None:
+def pytest_exception_interact(node: pytest.Item, call: _CallInfoLike, report: object) -> None:
     """Capture exception details for diagnostics. report is pytest TestReport (internal)."""
     if call.excinfo:
         try:

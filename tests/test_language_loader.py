@@ -31,12 +31,8 @@ def test_each_language_data_valid() -> None:
             f"{lang_id}: scope_node_types must have exactly {required_scope_kinds}"
         )
         assert isinstance(lang_data.query_templates, dict), f"{lang_id}: query_templates must be a dict"
-        assert isinstance(lang_data.node_type_descriptions, dict), (
-            f"{lang_id}: node_type_descriptions must be a dict"
-        )
-        assert isinstance(lang_data.default_symbol_types, list), (
-            f"{lang_id}: default_symbol_types must be a list"
-        )
+        assert isinstance(lang_data.node_type_descriptions, dict), f"{lang_id}: node_type_descriptions must be a dict"
+        assert isinstance(lang_data.default_symbol_types, list), f"{lang_id}: default_symbol_types must be a list"
 
 
 def test_derived_caches_consistent_with_loaded() -> None:
@@ -45,9 +41,7 @@ def test_derived_caches_consistent_with_loaded() -> None:
     loaded_ids = set(loaded.keys())
     scope = get_scope_node_types()
     for kind in ("function", "class", "module"):
-        assert set(scope[kind].keys()) == loaded_ids, (
-            f"scope_node_types[{kind}] should have same keys as loaded"
-        )
+        assert set(scope[kind].keys()) == loaded_ids, f"scope_node_types[{kind}] should have same keys as loaded"
     ext_map = get_extension_map()
     ext_lang_ids = set(ext_map.values())
     assert ext_lang_ids <= loaded_ids, "Extension map should only reference loaded language ids"

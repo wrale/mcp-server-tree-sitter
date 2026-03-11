@@ -349,9 +349,7 @@ def get_symbols(
     return extract_symbols(project_registry.get_project(project), file_path, language_registry, symbol_types)
 
 
-def analyze_project(
-    project: str, scan_depth: int = 3, ctx: Optional[MCPContextProtocol] = None
-) -> Dict[str, object]:
+def analyze_project(project: str, scan_depth: int = 3, ctx: Optional[MCPContextProtocol] = None) -> Dict[str, object]:
     """Analyze overall project structure."""
     project_registry = get_project_registry()
     language_registry = get_language_registry()
