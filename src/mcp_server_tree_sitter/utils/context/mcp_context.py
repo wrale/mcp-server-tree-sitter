@@ -98,8 +98,10 @@ class MCPContext:
             # Use MCP context if available
             try:
                 self.ctx.report_progress(current, total)
+            except (OSError, RuntimeError, ConnectionError, AttributeError) as e:
+                logger.warning("Failed to report progress: %s", e)
             except Exception as e:
-                logger.warning(f"Failed to report progress: {e}")
+                logger.exception("Unexpected error reporting progress: %s", e)
         else:
             # Log progress if no MCP context
             if total > 0:
@@ -117,8 +119,10 @@ class MCPContext:
         if self.ctx and hasattr(self.ctx, "info"):
             try:
                 self.ctx.info(message)
+            except (OSError, RuntimeError, ConnectionError, AttributeError) as e:
+                logger.warning("Failed to send info message: %s", e)
             except Exception as e:
-                logger.warning(f"Failed to send info message: {e}")
+                logger.exception("Unexpected error sending info message: %s", e)
 
     def warning(self, message: str) -> None:
         """
@@ -131,8 +135,10 @@ class MCPContext:
         if self.ctx and hasattr(self.ctx, "warning"):
             try:
                 self.ctx.warning(message)
+            except (OSError, RuntimeError, ConnectionError, AttributeError) as e:
+                logger.warning("Failed to send warning message: %s", e)
             except Exception as e:
-                logger.warning(f"Failed to send warning message: {e}")
+                logger.exception("Unexpected error sending warning message: %s", e)
 
     def error(self, message: str) -> None:
         """
@@ -145,8 +151,10 @@ class MCPContext:
         if self.ctx and hasattr(self.ctx, "error"):
             try:
                 self.ctx.error(message)
+            except (OSError, RuntimeError, ConnectionError, AttributeError) as e:
+                logger.warning("Failed to send error message: %s", e)
             except Exception as e:
-                logger.warning(f"Failed to send error message: {e}")
+                logger.exception("Unexpected error sending error message: %s", e)
 
     @contextmanager
     def progress_scope(self, total: int, description: str) -> Generator[ProgressScope, None, None]:

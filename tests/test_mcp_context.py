@@ -140,8 +140,11 @@ def test_mcp_context_report_progress_with_exception(mock_logger: MagicMock, mock
     # Verify MCP context was called
     mock_mcp_context.report_progress.assert_called_with(50, 100)
 
-    # Verify warning was logged
-    mock_logger.warning.assert_called_with("Failed to report progress: Test exception")
+    # Verify exception was logged (generic Exception triggers full traceback logging)
+    mock_logger.exception.assert_called_once()
+    call_args = mock_logger.exception.call_args[0]
+    assert "Unexpected error reporting progress" in call_args[0]
+    assert str(call_args[1]) == "Test exception"
 
 
 @patch("mcp_server_tree_sitter.utils.context.mcp_context.logger")

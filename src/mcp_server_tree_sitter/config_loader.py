@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Optional, Union
 
 import yaml
+from pydantic import ValidationError
 
 from .bootstrap import update_log_levels
 from .config_env import update_config_from_env
@@ -48,9 +49,8 @@ def load_config_from_file(path: str) -> ServerConfig:
         config = ServerConfig(**config_data)
         update_config_from_env(config)
         return config
-    except Exception as e:
-        logger.error(f"Error loading configuration from {path}: {e}")
-        logger.debug(__import__("traceback").format_exc())
+    except (yaml.YAMLError, OSError, ValidationError) as e:
+        logger.exception("Error loading configuration from %s: %s", path, e)
         return ServerConfig()
 
 
@@ -70,14 +70,14 @@ def update_config_from_new(original: ServerConfig, new: ServerConfig) -> None:
         original.language.preferred_languages = new.language.preferred_languages.copy()
         original.log_level = new.log_level
         original.max_results_default = new.max_results_default
-    except Exception as e:
-        logger.error(f"Error updating config: {e}")
+    except (AttributeError, TypeError) as e:
+        logger.exception("Error updating config: %s", e)
         try:
             original.cache.max_size_mb = new.cache.max_size_mb
             original.security.max_file_size_mb = new.security.max_file_size_mb
             original.language.default_max_depth = new.language.default_max_depth
-        except Exception as e2:
-            logger.error(f"Fallback update also failed: {e2}")
+        except (AttributeError, TypeError) as e2:
+            logger.exception("Fallback config update also failed: %s", e2)
 
 
 def load_config(config_path: Optional[str] = None) -> ServerConfig:
@@ -97,9 +97,8 @@ def load_config(config_path: Optional[str] = None) -> ServerConfig:
         try:
             if path_to_load.read_text().strip():
                 update_config_from_new(config, load_config_from_file(str(path_to_load)))
-        except Exception as e:
-            logger.error(f"Error loading configuration from {path_to_load}: {e}")
-            logger.debug(__import__("traceback").format_exc())
+        except (OSError, yaml.YAMLError, ValidationError) as e:
+            logger.exception("Error loading configuration from %s: %s", path_to_load, e)
     update_config_from_env(config)
     return config
 
@@ -144,9 +143,8 @@ class ConfigurationManager:
             except (ImportError, AttributeError) as e:
                 self._logger.warning(f"Could not apply config to dependencies: {e}")
             return self._config
-        except Exception as e:
-            self._logger.error(f"Error loading configuration from {path}: {e}")
-            self._logger.debug(__import__("traceback").format_exc())
+        except (OSError, yaml.YAMLError, ValidationError, AttributeError, TypeError) as e:
+            self._logger.exception("Error loading configuration from %s: %s", path, e)
             return self._config
 
     def update_value(self, path: str, value: ConfigValue) -> None:

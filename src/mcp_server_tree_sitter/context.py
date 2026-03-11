@@ -57,7 +57,10 @@ class ServerContext:
             project.scan_files(self.language_registry)
 
             return project.to_dict()
+        except (OSError, ValueError, ProjectError) as e:
+            raise ProjectError(f"Failed to register project: {e}") from e
         except Exception as e:
+            logger.exception("Unexpected error registering project: %s", e)
             raise ProjectError(f"Failed to register project: {e}") from e
 
     def list_projects(self) -> List[Dict[str, Any]]:

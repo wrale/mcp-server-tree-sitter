@@ -1,5 +1,6 @@
 """Project model for MCP server."""
 
+import logging
 import os
 import threading
 import time
@@ -9,6 +10,8 @@ from typing import Any, Dict, List, Optional, Set
 from ..exceptions import ProjectError
 from ..language.registry import LanguageRegistry
 from ..utils.path import get_project_root, normalize_path
+
+logger = logging.getLogger(__name__)
 
 
 class Project:
@@ -155,7 +158,10 @@ class ProjectRegistry:
                 project = Project(name, project_root, description)
                 self._projects[name] = project
                 return project
+            except (OSError, ValueError, ProjectError) as e:
+                raise ProjectError(f"Failed to register project: {e}") from e
             except Exception as e:
+                logger.exception("Unexpected error registering project: %s", e)
                 raise ProjectError(f"Failed to register project: {e}") from e
 
     def get_project(self, name: str) -> Project:
