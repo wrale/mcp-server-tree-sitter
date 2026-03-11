@@ -1,0 +1,20 @@
+# MCP Tree-sitter Server — example configuration
+# All keys and values are the schema defaults (ServerConfig).
+# Optional: security.allowed_extensions (list of extensions; omit for all).
+# Copy to ~/.config/tree-sitter/config.yaml or pass via --config.
+
+cache:
+  enabled: true
+  max_size_mb: 100
+  ttl_seconds: 300
+security:
+  max_file_size_mb: 5
+  excluded_dirs:
+  - .git
+  - node_modules
+  - __pycache__
+language:
+  default_max_depth: 5
+  preferred_languages: []
+log_level: INFO
+max_results_default: 100

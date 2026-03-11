@@ -48,6 +48,8 @@ cd mcp-server-tree-sitter
 pip install -e ".[dev,languages]"
 ```
 
+Optional: copy [docs/config.example.yaml](docs/config.example.yaml) to `~/.config/tree-sitter/config.yaml` (or pass its path via `--config`) to use the default configuration as a starting point.
+
 ## Quick Start
 
 ### Running with Claude Desktop
@@ -320,6 +322,8 @@ language_registry = app.language_registry
 ```
 
 ## Configuration
+
+An example configuration file with all options and their defaults is [docs/config.example.yaml](docs/config.example.yaml).
 
 Create a YAML configuration file:
 
