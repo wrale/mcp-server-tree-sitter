@@ -40,14 +40,26 @@ class App:
         config = self.config_manager.get_config()
         self.project_registry = ProjectRegistry()
 
+        from .bootstrap import update_log_levels
         from .language.loader import load_all_language_data
 
         load_all_language_data()
-        self.language_registry = LanguageRegistry()
+        self.language_registry = LanguageRegistry(
+            preferred_languages=config.language.preferred_languages,
+        )
         self.tree_cache = TreeCache(
             max_size_mb=config.cache.max_size_mb,
             ttl_seconds=config.cache.ttl_seconds,
+            enabled=config.cache.enabled,
         )
+
+        def _on_config_loaded(loaded_config: ServerConfig) -> None:
+            self.tree_cache.set_enabled(loaded_config.cache.enabled)
+            self.tree_cache.set_max_size_mb(loaded_config.cache.max_size_mb)
+            self.tree_cache.set_ttl_seconds(loaded_config.cache.ttl_seconds)
+            update_log_levels(loaded_config.log_level)
+
+        self.config_manager.set_on_config_loaded(_on_config_loaded)
 
         self._initializing = False
         self._initialized = True

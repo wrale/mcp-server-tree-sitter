@@ -23,15 +23,20 @@ logger = logging.getLogger(__name__)
 class TreeCache:
     """Cache for parsed syntax trees."""
 
-    def __init__(self, max_size_mb: Optional[int] = None, ttl_seconds: Optional[int] = None) -> None:
-        """Initialize the tree cache with explicit size and TTL settings."""
+    def __init__(
+        self,
+        max_size_mb: Optional[int] = None,
+        ttl_seconds: Optional[int] = None,
+        enabled: bool = True,
+    ) -> None:
+        """Initialize the tree cache with explicit size, TTL, and enabled settings."""
         self.cache: Dict[str, Tuple[Tree, bytes, float]] = {}  # (tree, source, timestamp)
         self.lock = threading.RLock()
         self.current_size_bytes = 0
         self.modified_trees: Dict[str, bool] = {}
         self.max_size_mb = max_size_mb or 100
         self.ttl_seconds = ttl_seconds or 300
-        self.enabled = True
+        self.enabled = enabled
 
     def _get_cache_key(self, file_path: Path, language: str) -> str:
         """Generate cache key from file path and language."""
@@ -50,46 +55,18 @@ class TreeCache:
         self.ttl_seconds = ttl_seconds
 
     def _get_max_size_mb(self) -> float:
-        """Get current max size setting."""
-        # Always get the latest from container config
-        try:
-            from ..app import get_app
-
-            config = get_app().get_config()
-            return config.cache.max_size_mb if self.enabled else 0  # Return 0 if disabled
-        except (ImportError, AttributeError):
-            # Fallback to instance value if app unavailable
-            return self.max_size_mb
+        """Get current max size setting (from instance, synced by app/config)."""
+        return float(self.max_size_mb if self.enabled else 0)
 
     def _get_ttl_seconds(self) -> int:
-        """Get current TTL setting."""
-        # Always get the latest from container config
-        try:
-            from ..app import get_app
-
-            config = get_app().get_config()
-            return config.cache.ttl_seconds
-        except (ImportError, AttributeError):
-            # Fallback to instance value if app unavailable
-            return self.ttl_seconds
+        """Get current TTL setting (from instance, synced by app/config)."""
+        return self.ttl_seconds
 
     def _is_cache_enabled(self) -> bool:
-        """Check if caching is enabled."""
-        # Honor both local setting and app config
-        try:
-            from ..app import get_app
-
-            config = get_app().get_config()
-            is_enabled = self.enabled and config.cache.enabled
-            # For very small caches, log the state
-            if not is_enabled:
-                logger.debug(
-                    f"Cache disabled: self.enabled={self.enabled}, config.cache.enabled={config.cache.enabled}"
-                )
-            return is_enabled
-        except (ImportError, AttributeError):
-            # Fallback to instance value if container unavailable
-            return self.enabled
+        """Check if caching is enabled (from instance, synced by app/config)."""
+        if not self.enabled:
+            logger.debug("Cache disabled: self.enabled=False")
+        return self.enabled
 
     def get(self, file_path: Path, language: str) -> Optional[Tuple[Tree, bytes]]:
         """
@@ -348,16 +325,7 @@ class TreeCache:
                         del self.modified_trees[key]
 
 
-# The TreeCache is now initialized and managed by the DependencyContainer in di.py
-# No global instance is needed here anymore.
-
-
-# The following function is maintained for backward compatibility
-def get_tree_cache() -> TreeCache:
-    """Get the tree cache from the app."""
-    from ..app import get_app
-
-    return get_app().tree_cache
+# TreeCache is created and owned by App. Use get_app().tree_cache or api.get_tree_cache().
 
 
 @lru_cache(maxsize=32)

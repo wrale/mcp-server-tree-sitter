@@ -6,8 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple, cast
 
 from tree_sitter_language_pack import get_language, get_parser
 
-# Import parser_cache functions inside methods to avoid circular imports
-# Import global_context inside methods to avoid circular imports
+from ..cache.parser_cache import get_cached_parser
 from ..exceptions import LanguageNotFoundError
 from ..utils.tree_sitter_types import (
     Language,
@@ -48,7 +47,10 @@ _EXTENSION_FALLBACK: Dict[str, str] = {
 class LanguageRegistry:
     """Manages tree-sitter language parsers."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        preferred_languages: Optional[List[str]] = None,
+    ) -> None:
         """Initialize the registry. Extension map comes from loader (language/data/); fallback for others."""
         self._lock = threading.RLock()
         self.languages: Dict[str, Language] = {}
@@ -66,20 +68,13 @@ class LanguageRegistry:
                     self._language_map[ext],
                 )
 
-        # Pre-load preferred languages if configured
-        # Get dependencies within the method to avoid circular imports
-        try:
-            from ..app import get_app
-
-            config = get_app().get_config()
-            for lang in config.language.preferred_languages:
+        # Pre-load preferred languages if provided (by App from config)
+        if preferred_languages:
+            for lang in preferred_languages:
                 try:
                     self.get_language(lang)
                 except Exception as e:
                     logger.warning(f"Failed to pre-load language {lang}: {e}")
-        except ImportError:
-            # If dependency container isn't available yet, just skip this step
-            logger.warning("Skipping pre-loading of languages due to missing app")
 
     def language_for_file(self, file_path: str) -> Optional[str]:
         """
@@ -211,8 +206,6 @@ class LanguageRegistry:
             parser = get_parser(cast(Any, language_name))
             return parser
         except Exception:
-            # Fall back to older method, importing at runtime to avoid circular imports
-            from ..cache.parser_cache import get_cached_parser
-
+            # Fall back to cached parser for this language
             language = self.get_language(language_name)
             return get_cached_parser(language)

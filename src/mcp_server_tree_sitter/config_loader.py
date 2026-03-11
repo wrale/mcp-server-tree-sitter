@@ -2,13 +2,13 @@
 
 import logging
 import os
+from collections.abc import Callable
 from pathlib import Path
 from typing import Optional, Union
 
 import yaml
 from pydantic import ValidationError
 
-from .bootstrap import update_log_levels
 from .config_env import update_config_from_env
 from .config_schema import ConfigDict, ConfigValue, ServerConfig
 
@@ -108,7 +108,12 @@ class ConfigurationManager:
     def __init__(self, initial_config: Optional[ServerConfig] = None) -> None:
         self._config = initial_config or ServerConfig()
         self._logger = logging.getLogger(__name__)
+        self._on_config_loaded: Optional[Callable[[ServerConfig], None]] = None
         update_config_from_env(self._config)
+
+    def set_on_config_loaded(self, callback: Callable[[ServerConfig], None]) -> None:
+        """Register a callback to run when config is loaded or updated (e.g. sync cache, log level)."""
+        self._on_config_loaded = callback
 
     def get_config(self) -> ServerConfig:
         """Return the current configuration."""
@@ -131,16 +136,8 @@ class ConfigurationManager:
                 return self._config
             update_config_from_new(self._config, ServerConfig(**config_data))
             update_config_from_env(self._config)
-            try:
-                from .app import get_app
-
-                app = get_app()
-                app.tree_cache.set_enabled(self._config.cache.enabled)
-                app.tree_cache.set_max_size_mb(self._config.cache.max_size_mb)
-                app.tree_cache.set_ttl_seconds(self._config.cache.ttl_seconds)
-                update_log_levels(self._config.log_level)
-            except (ImportError, AttributeError) as e:
-                self._logger.warning(f"Could not apply config to dependencies: {e}")
+            if self._on_config_loaded is not None:
+                self._on_config_loaded(self._config)
             return self._config
         except (OSError, yaml.YAMLError, ValidationError, AttributeError, TypeError) as e:
             self._logger.exception("Error loading configuration from %s: %s", path, e)
@@ -166,12 +163,12 @@ class ConfigurationManager:
                 old_value = getattr(self._config, path)
                 setattr(self._config, path, value)
                 self._logger.debug(f"Updated {path} from {old_value} to {value}")
-                if path == "log_level" and isinstance(value, (str, int)):
-                    update_log_levels(value)
             else:
                 self._logger.warning(f"Unknown config path: {path}")
 
         update_config_from_env(self._config)
+        if self._on_config_loaded is not None:
+            self._on_config_loaded(self._config)
 
     def to_dict(self) -> ConfigDict:
         """Return configuration as a serialized dictionary."""
