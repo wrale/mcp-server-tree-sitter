@@ -4,7 +4,6 @@ Covers: LRU eviction, TTL expiration, max-size enforcement, concurrent access,
 and cache hit/miss ratio.
 """
 
-import tempfile
 import threading
 import time
 from pathlib import Path
@@ -29,20 +28,14 @@ def _make_real_tree(source: bytes) -> object:
 
 
 @pytest.fixture
-def temp_dir() -> tempfile.TemporaryDirectory[str]:
-    """Temporary directory with real files for cache keys (st_mtime)."""
-    return tempfile.TemporaryDirectory()
-
-
-@pytest.fixture
 def small_cache() -> TreeCache:
     """Cache with small max size and short TTL for unit tests."""
     return TreeCache(max_size_mb=0.01, ttl_seconds=1, enabled=True)
 
 
-def test_lru_eviction(small_cache: TreeCache, temp_dir: tempfile.TemporaryDirectory[str]) -> None:
+def test_lru_eviction(small_cache: TreeCache, tmp_path: Path) -> None:
     """Cache evicts oldest entries when full (LRU-style by timestamp)."""
-    root = Path(temp_dir.name)
+    root = tmp_path
     # Create several small files; total size over 10KB to force eviction
     for i in range(20):
         f = root / f"f{i}.py"
@@ -60,9 +53,9 @@ def test_lru_eviction(small_cache: TreeCache, temp_dir: tempfile.TemporaryDirect
     assert len(small_cache.cache) < 20
 
 
-def test_ttl_expiration(small_cache: TreeCache, temp_dir: tempfile.TemporaryDirectory[str]) -> None:
+def test_ttl_expiration(small_cache: TreeCache, tmp_path: Path) -> None:
     """Entries expire after TTL seconds."""
-    root = Path(temp_dir.name)
+    root = tmp_path
     f = root / "a.py"
     f.write_text("x = 1\n")
     data = f.read_bytes()
@@ -74,9 +67,9 @@ def test_ttl_expiration(small_cache: TreeCache, temp_dir: tempfile.TemporaryDire
     assert small_cache.get(f, "python") is None
 
 
-def test_max_size_enforcement(small_cache: TreeCache, temp_dir: tempfile.TemporaryDirectory[str]) -> None:
+def test_max_size_enforcement(small_cache: TreeCache, tmp_path: Path) -> None:
     """Cache does not exceed max_size_mb."""
-    root = Path(temp_dir.name)
+    root = tmp_path
     # Add entries until we've added more than max size; eviction should keep total under limit
     for i in range(25):
         p = root / f"big{i}.py"
@@ -90,9 +83,9 @@ def test_max_size_enforcement(small_cache: TreeCache, temp_dir: tempfile.Tempora
     assert small_cache.current_size_bytes <= max_bytes + 2048
 
 
-def test_concurrent_access(small_cache: TreeCache, temp_dir: tempfile.TemporaryDirectory[str]) -> None:
+def test_concurrent_access(small_cache: TreeCache, tmp_path: Path) -> None:
     """Concurrent get/put from multiple threads do not corrupt cache."""
-    root = Path(temp_dir.name)
+    root = tmp_path
     errors: list[Exception] = []
 
     def worker(thread_id: int) -> None:
@@ -119,9 +112,9 @@ def test_concurrent_access(small_cache: TreeCache, temp_dir: tempfile.TemporaryD
     assert small_cache.current_size_bytes == total_stored
 
 
-def test_cache_hit_miss_ratio(small_cache: TreeCache, temp_dir: tempfile.TemporaryDirectory[str]) -> None:
+def test_cache_hit_miss_ratio(small_cache: TreeCache, tmp_path: Path) -> None:
     """Cache hit and miss counts behave as expected."""
-    root = Path(temp_dir.name)
+    root = tmp_path
     a = root / "a.py"
     b = root / "b.py"
     a.write_text("a = 1\n")
@@ -139,10 +132,10 @@ def test_cache_hit_miss_ratio(small_cache: TreeCache, temp_dir: tempfile.Tempora
     assert hit2 is not None
 
 
-def test_cache_disabled_no_put(small_cache: TreeCache, temp_dir: tempfile.TemporaryDirectory[str]) -> None:
+def test_cache_disabled_no_put(small_cache: TreeCache, tmp_path: Path) -> None:
     """When disabled, put does not store and get always returns None."""
     small_cache.set_enabled(False)
-    root = Path(temp_dir.name)
+    root = tmp_path
     f = root / "x.py"
     f.write_text("x\n")
     data = f.read_bytes()
@@ -152,9 +145,9 @@ def test_cache_disabled_no_put(small_cache: TreeCache, temp_dir: tempfile.Tempor
     assert len(small_cache.cache) == 0
 
 
-def test_invalidate_clears_entries(small_cache: TreeCache, temp_dir: tempfile.TemporaryDirectory[str]) -> None:
+def test_invalidate_clears_entries(small_cache: TreeCache, tmp_path: Path) -> None:
     """invalidate() clears entries for a file or entire cache."""
-    root = Path(temp_dir.name)
+    root = tmp_path
     f = root / "f.py"
     f.write_text("x\n")
     data = f.read_bytes()

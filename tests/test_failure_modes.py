@@ -9,7 +9,6 @@ in the tree-sitter integration:
 These tests help ensure robust behavior in various scenarios.
 """
 
-import tempfile
 from pathlib import Path
 from typing import Any, Callable, Dict, Generator
 
@@ -28,32 +27,30 @@ from tests.test_helpers import (
 
 
 @pytest.fixture
-def mock_project(request: pytest.FixtureRequest) -> Generator[Dict[str, Any], None, None]:
+def mock_project(request: pytest.FixtureRequest, tmp_path: Path) -> Generator[Dict[str, Any], None, None]:
     """Create a mock project fixture for testing with unique names."""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        project_path = Path(temp_dir)
+    project_path = tmp_path
 
-        # Create a simple Python file for testing
-        test_file = project_path / "test.py"
-        with open(test_file, "w") as f:
-            f.write("import os\n\ndef hello():\n    print('Hello, world!')\n\nhello()\n")
+    # Create a simple Python file for testing
+    test_file = project_path / "test.py"
+    test_file.write_text("import os\n\ndef hello():\n    print('Hello, world!')\n\nhello()\n")
 
-        # Generate a unique project name based on the test name
-        test_name = request.node.name
-        unique_id = abs(hash(test_name)) % 10000
-        project_name = f"test_project_{unique_id}"
+    # Generate a unique project name based on the test name
+    test_name = request.node.name
+    unique_id = abs(hash(test_name)) % 10000
+    project_name = f"test_project_{unique_id}"
 
-        # Register the project
-        try:
-            register_project_tool(path=str(project_path), name=project_name)
-        except Exception:
-            # If registration fails, try with an even more unique name
-            import time
+    # Register the project
+    try:
+        register_project_tool(path=str(project_path), name=project_name)
+    except Exception:
+        # If registration fails, try with an even more unique name
+        import time
 
-            project_name = f"test_project_{unique_id}_{int(time.time())}"
-            register_project_tool(path=str(project_path), name=project_name)
+        project_name = f"test_project_{unique_id}_{int(time.time())}"
+        register_project_tool(path=str(project_path), name=project_name)
 
-        yield {"name": project_name, "path": str(project_path), "file": "test.py"}
+    yield {"name": project_name, "path": str(project_path), "file": "test.py"}
 
 
 class TestQueryExecution:

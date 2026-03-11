@@ -4,7 +4,6 @@ Uses ThreadPoolExecutor to simulate concurrent calls; asserts no data
 corruption or deadlock.
 """
 
-import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
@@ -20,12 +19,12 @@ def _project_registry() -> ProjectRegistry:
 
 
 @pytest.fixture
-def temp_projects() -> list[tuple[str, Path]]:
+def temp_projects(tmp_path: Path) -> list[tuple[str, Path]]:
     """Create several temp project dirs (caller registers them)."""
     dirs: list[tuple[str, Path]] = []
     for i in range(3):
-        tmp = tempfile.mkdtemp(prefix="concurrency_")
-        root = Path(tmp)
+        root = tmp_path / f"proj_{i}"
+        root.mkdir()
         (root / "f.py").write_text(f"x = {i}\n")
         dirs.append((f"concurrent_proj_{i}", root))
     yield dirs

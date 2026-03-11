@@ -4,7 +4,6 @@ Covers: happy path, missing project, invalid language, parse error.
 Uses existing test helpers; get_app() is used as-is (real app).
 """
 
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -21,20 +20,19 @@ from tests.test_helpers import (
 
 
 @pytest.fixture
-def project_with_python() -> tuple[str, Path]:
+def project_with_python(tmp_path: Path) -> tuple[str, Path]:
     """Register a temp project with a valid Python file."""
-    with tempfile.TemporaryDirectory() as tmp:
-        root = Path(tmp)
-        (root / "main.py").write_text("def hello():\n    print('world')\n")
-        name = "tools_integration_project"
-        register_project_tool(path=str(root), name=name)
+    root = tmp_path
+    (root / "main.py").write_text("def hello():\n    print('world')\n")
+    name = "tools_integration_project"
+    register_project_tool(path=str(root), name=name)
+    try:
+        yield name, root
+    finally:
         try:
-            yield name, root
-        finally:
-            try:
-                remove_project_tool(name)
-            except Exception:
-                pass
+            remove_project_tool(name)
+        except Exception:
+            pass
 
 
 def test_tools_happy_path_get_ast(project_with_python: tuple[str, Path]) -> None:

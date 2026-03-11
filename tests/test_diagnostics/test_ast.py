@@ -1,9 +1,7 @@
 """Example of using pytest with diagnostic plugin for testing."""
 
-import tempfile
-from collections.abc import Generator
 from pathlib import Path
-from typing import Any
+from typing import Any, Generator
 
 import pytest
 
@@ -17,24 +15,22 @@ pytest.importorskip("mcp_server_tree_sitter.testing")
 
 
 @pytest.fixture
-def test_project() -> Generator[dict[str, Any], None, None]:
+def test_project(tmp_path: Path) -> Generator[dict[str, Any], None, None]:
     """Create a temporary test project with a sample file."""
-    # Set up a temporary directory
-    with tempfile.TemporaryDirectory() as temp_dir:
-        project_path = Path(temp_dir)
+    project_path = tmp_path
 
-        # Create a test file
-        test_file = project_path / "test.py"
-        with open(test_file, "w") as f:
-            f.write("def hello():\n    print('Hello, world!')\n\nhello()\n")
+    # Create a test file
+    test_file = project_path / "test.py"
+    test_file.write_text("def hello():\n    print('Hello, world!')\n\nhello()\n")
 
-        # Register project
-        project_name = "diagnostic_test_project"
-        register_project_tool(path=str(project_path), name=project_name)
+    # Register project
+    project_name = "diagnostic_test_project"
+    register_project_tool(path=str(project_path), name=project_name)
 
+    try:
         # Yield the project info
         yield {"name": project_name, "path": project_path, "file": "test.py"}
-
+    finally:
         # Clean up
         project_registry = get_project_registry()
         try:

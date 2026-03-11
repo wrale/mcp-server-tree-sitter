@@ -2,7 +2,7 @@
 
 import logging
 import os
-import tempfile
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -145,31 +145,22 @@ def test_configure_with_context_log_level(mock_app: MagicMock) -> None:
     mock_root_logger.setLevel.assert_called_with(logging.DEBUG)
 
 
-def test_configure_with_context_config_path(mock_app: MagicMock) -> None:
+def test_configure_with_context_config_path(mock_app: MagicMock, tmp_path: Path) -> None:
     """Test configuration with config_path setting."""
-    # Create a temporary YAML file
-    with tempfile.NamedTemporaryFile(suffix=".yaml", mode="w", delete=False) as temp_file:
-        temp_file.write("""
+    config_file = tmp_path / "config.yaml"
+    config_file.write_text("""
 cache:
   enabled: true
   max_size_mb: 200
 """)
-        temp_file.flush()
-        config_path = temp_file.name
+    config_path = str(config_file)
+    abs_path = str(config_file.resolve())
 
-    try:
-        # Get the absolute path for comparison
-        abs_path = os.path.abspath(config_path)
+    # Call configure_with_context with the config path
+    config_dict, config = configure_with_context(mock_app, config_path=config_path)
 
-        # Call configure_with_context with the config path
-        config_dict, config = configure_with_context(mock_app, config_path=config_path)
-
-        # Verify load_from_file was called with correct path
-        mock_app.config_manager.load_from_file.assert_called_with(abs_path)
-
-    finally:
-        # Clean up the temporary file
-        os.unlink(config_path)
+    # Verify load_from_file was called with correct path
+    mock_app.config_manager.load_from_file.assert_called_with(abs_path)
 
 
 def test_configure_with_context_nonexistent_config_path(mock_app: MagicMock) -> None:

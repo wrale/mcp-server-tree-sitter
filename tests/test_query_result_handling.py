@@ -4,7 +4,6 @@ Tests for tree-sitter query result handling.
 This module contains tests focused on ensuring query result handling is robust and correct.
 """
 
-import tempfile
 from pathlib import Path
 from typing import Any, Dict, Generator, List, Optional
 
@@ -14,16 +13,13 @@ from tests.test_helpers import register_project_tool, run_query
 
 
 @pytest.fixture
-def test_project(request: pytest.FixtureRequest) -> Generator[Dict[str, Any], None, None]:
+def test_project(request: pytest.FixtureRequest, tmp_path: Path) -> Generator[Dict[str, Any], None, None]:
     """Create a test project with Python files containing known constructs."""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        project_path = Path(temp_dir)
+    project_path = tmp_path
 
-        # Create a simple test file with various Python constructs
-        test_file = project_path / "test.py"
-        with open(test_file, "w") as f:
-            f.write(
-                """
+    # Create a simple test file with various Python constructs
+    test_file = project_path / "test.py"
+    test_file.write_text("""
 import os
 import sys
 from typing import List, Dict, Optional
@@ -48,25 +44,24 @@ if __name__ == "__main__":
 
     data = process_data(["apple", "banana", "cherry"])
     print(data)
-"""
-            )
+""")
 
-        # Generate a unique project name based on the test name
-        test_name = request.node.name
-        unique_id = abs(hash(test_name)) % 10000
-        project_name = f"query_test_project_{unique_id}"
+    # Generate a unique project name based on the test name
+    test_name = request.node.name
+    unique_id = abs(hash(test_name)) % 10000
+    project_name = f"query_test_project_{unique_id}"
 
-        # Register project
-        try:
-            register_project_tool(path=str(project_path), name=project_name)
-        except Exception:
-            # If registration fails, try with an even more unique name
-            import time
+    # Register project
+    try:
+        register_project_tool(path=str(project_path), name=project_name)
+    except Exception:
+        # If registration fails, try with an even more unique name
+        import time
 
-            project_name = f"query_test_project_{unique_id}_{int(time.time())}"
-            register_project_tool(path=str(project_path), name=project_name)
+        project_name = f"query_test_project_{unique_id}_{int(time.time())}"
+        register_project_tool(path=str(project_path), name=project_name)
 
-        yield {"name": project_name, "path": str(project_path), "file": "test.py"}
+    yield {"name": project_name, "path": str(project_path), "file": "test.py"}
 
 
 def test_query_capture_processing(test_project: Dict[str, Any]) -> None:

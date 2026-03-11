@@ -1,8 +1,6 @@
 """Tests for cache-specific configuration settings."""
 
-import tempfile
 import time
-from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
@@ -13,35 +11,32 @@ from tests.test_helpers import get_ast, register_project_tool, temp_config
 
 
 @pytest.fixture
-def test_project() -> Generator[dict[str, Any], None, None]:
+def test_project(tmp_path: Path) -> dict[str, Any]:
     """Create a temporary test project with sample files."""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        project_path = Path(temp_dir)
+    project_path = tmp_path
 
-        # Create multiple files to test cache capacity
-        for i in range(10):
-            test_file = project_path / f"file{i}.py"
-            with open(test_file, "w") as f:
-                # Make each file unique and sizeable
-                f.write(f"# File {i}\n")
-                f.write(f"def function{i}():\n")
-                f.write(f"    print('This is function {i}')\n\n")
-                # Add more content to make files reasonably sized
-                for j in range(20):
-                    f.write(f"    # Comment line {j} to add size\n")
+    # Create multiple files to test cache capacity
+    for i in range(10):
+        test_file = project_path / f"file{i}.py"
+        lines = [
+            f"# File {i}\n",
+            f"def function{i}():\n",
+            f"    print('This is function {i}')\n\n",
+        ]
+        for j in range(20):
+            lines.append(f"    # Comment line {j} to add size\n")
+        test_file.write_text("".join(lines))
 
-        # Register the project
-        project_name = "cache_test_project"
-        try:
-            register_project_tool(path=str(project_path), name=project_name)
-        except Exception:
-            # If registration fails, try with a more unique name
-            import time
+    # Register the project
+    project_name = "cache_test_project"
+    try:
+        register_project_tool(path=str(project_path), name=project_name)
+    except Exception:
+        # If registration fails, try with a more unique name
+        project_name = f"cache_test_project_{int(time.time())}"
+        register_project_tool(path=str(project_path), name=project_name)
 
-            project_name = f"cache_test_project_{int(time.time())}"
-            register_project_tool(path=str(project_path), name=project_name)
-
-        yield {"name": project_name, "path": str(project_path)}
+    return {"name": project_name, "path": str(project_path)}
 
 
 def test_cache_max_size_setting(test_project: dict[str, Any]) -> None:

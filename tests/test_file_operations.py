@@ -1,6 +1,5 @@
 """Tests for file_operations.py module."""
 
-import tempfile
 from pathlib import Path
 from typing import Any, Dict, Generator
 
@@ -17,69 +16,63 @@ from tests.test_helpers import register_project_tool
 
 
 @pytest.fixture
-def test_project() -> Generator[Dict[str, Any], None, None]:
+def test_project(tmp_path: Path) -> Generator[Dict[str, Any], None, None]:
     """Create a temporary test project with various file types."""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        project_path = Path(temp_dir)
+    project_path = tmp_path
 
-        # Create different file types
-        # Python file
-        python_file = project_path / "test.py"
-        with open(python_file, "w") as f:
-            f.write("def hello():\n    print('Hello, world!')\n\nhello()\n")
+    # Create different file types
+    # Python file
+    python_file = project_path / "test.py"
+    python_file.write_text("def hello():\n    print('Hello, world!')\n\nhello()\n")
 
-        # Text file
-        text_file = project_path / "readme.txt"
-        with open(text_file, "w") as f:
-            f.write("This is a readme file.\nIt has multiple lines.\n")
+    # Text file
+    text_file = project_path / "readme.txt"
+    text_file.write_text("This is a readme file.\nIt has multiple lines.\n")
 
-        # Empty file
-        empty_file = project_path / "empty.md"
-        empty_file.touch()
+    # Empty file
+    empty_file = project_path / "empty.md"
+    empty_file.touch()
 
-        # Nested directory structure
-        nested_dir = project_path / "nested"
-        nested_dir.mkdir()
-        nested_file = nested_dir / "nested.py"
-        with open(nested_file, "w") as f:
-            f.write("# A nested Python file\n")
+    # Nested directory structure
+    nested_dir = project_path / "nested"
+    nested_dir.mkdir()
+    nested_file = nested_dir / "nested.py"
+    nested_file.write_text("# A nested Python file\n")
 
-        # A large file
-        large_file = project_path / "large.log"
-        with open(large_file, "w") as f:
-            f.write("Line " + "x" * 100 + "\n" * 1000)  # 1000 lines with 100+ chars each
+    # A large file
+    large_file = project_path / "large.log"
+    large_file.write_text("Line " + "x" * 100 + "\n" * 1000)  # 1000 lines with 100+ chars each
 
-        # A hidden file and directory
-        hidden_dir = project_path / ".hidden"
-        hidden_dir.mkdir()
-        hidden_file = hidden_dir / "hidden.txt"
-        with open(hidden_file, "w") as f:
-            f.write("This is a hidden file.\n")
+    # A hidden file and directory
+    hidden_dir = project_path / ".hidden"
+    hidden_dir.mkdir()
+    hidden_file = hidden_dir / "hidden.txt"
+    hidden_file.write_text("This is a hidden file.\n")
 
-        # Register the project
-        project_name = "file_operations_test"
-        try:
-            register_project_tool(path=str(project_path), name=project_name)
-        except Exception:
-            # If registration fails, try with a more unique name
-            import time
+    # Register the project
+    project_name = "file_operations_test"
+    try:
+        register_project_tool(path=str(project_path), name=project_name)
+    except Exception:
+        # If registration fails, try with a more unique name
+        import time
 
-            project_name = f"file_operations_test_{int(time.time())}"
-            register_project_tool(path=str(project_path), name=project_name)
+        project_name = f"file_operations_test_{int(time.time())}"
+        register_project_tool(path=str(project_path), name=project_name)
 
-        yield {
-            "name": project_name,
-            "path": str(project_path),
-            "files": {
-                "python": "test.py",
-                "text": "readme.txt",
-                "empty": "empty.md",
-                "nested": "nested/nested.py",
-                "large": "large.log",
-                "hidden_dir": ".hidden",
-                "hidden_file": ".hidden/hidden.txt",
-            },
-        }
+    yield {
+        "name": project_name,
+        "path": str(project_path),
+        "files": {
+            "python": "test.py",
+            "text": "readme.txt",
+            "empty": "empty.md",
+            "nested": "nested/nested.py",
+            "large": "large.log",
+            "hidden_dir": ".hidden",
+            "hidden_file": ".hidden/hidden.txt",
+        },
+    }
 
 
 # Test list_project_files function

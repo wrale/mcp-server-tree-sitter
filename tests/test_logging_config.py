@@ -5,7 +5,6 @@ This file is being kept as an integration test but has been updated to fully use
 
 import io
 import logging
-import tempfile
 from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
@@ -59,28 +58,26 @@ def capture_logs(logger_name: str = "mcp_server_tree_sitter") -> Generator[io.St
 
 
 @pytest.fixture
-def test_project() -> Generator[dict[str, Any], None, None]:
+def test_project(tmp_path: Path) -> Generator[dict[str, Any], None, None]:
     """Create a temporary test project with a sample file."""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        project_path = Path(temp_dir)
+    project_path = tmp_path
 
-        # Create a simple Python file
-        test_file = project_path / "test.py"
-        with open(test_file, "w") as f:
-            f.write("def hello():\n    print('Hello, world!')\n\nhello()\n")
+    # Create a simple Python file
+    test_file = project_path / "test.py"
+    test_file.write_text("def hello():\n    print('Hello, world!')\n\nhello()\n")
 
-        # Register the project
-        project_name = "logging_test_project"
-        try:
-            register_project_tool(path=str(project_path), name=project_name)
-        except Exception:
-            # If registration fails, try with a more unique name
-            import time
+    # Register the project
+    project_name = "logging_test_project"
+    try:
+        register_project_tool(path=str(project_path), name=project_name)
+    except Exception:
+        # If registration fails, try with a more unique name
+        import time
 
-            project_name = f"logging_test_project_{int(time.time())}"
-            register_project_tool(path=str(project_path), name=project_name)
+        project_name = f"logging_test_project_{int(time.time())}"
+        register_project_tool(path=str(project_path), name=project_name)
 
-        yield {"name": project_name, "path": str(project_path), "file": "test.py"}
+    yield {"name": project_name, "path": str(project_path), "file": "test.py"}
 
 
 def test_log_level_setting(test_project: dict[str, Any]) -> None:
@@ -142,47 +139,36 @@ def test_log_level_setting(test_project: dict[str, Any]) -> None:
         app.config_manager.update_value("log_level", original_log_level)
 
 
-def test_log_level_in_yaml_config() -> None:
+def test_log_level_in_yaml_config(tmp_path: Path) -> None:
     """Test that log_level can be configured via YAML."""
-    # Create a temporary YAML file
-    with tempfile.NamedTemporaryFile(suffix=".yaml", mode="w+", delete=False) as temp_file:
-        # Write a configuration with explicit log level
-        temp_file.write("""
+    temp_file_path = tmp_path / "config.yaml"
+    temp_file_path.write_text("""
 log_level: DEBUG
 
 cache:
   enabled: true
   max_size_mb: 100
 """)
-        temp_file.flush()
-        temp_file_path = temp_file.name
+
+    # Get app for checking values later
+    app = get_app()
+    original_log_level = app.get_config().log_level
 
     try:
-        # Get app for checking values later
-        app = get_app()
-        original_log_level = app.get_config().log_level
+        # Load the configuration
+        result = configure(config_path=str(temp_file_path))
 
-        try:
-            # Load the configuration
-            result = configure(config_path=temp_file_path)
+        # Verify the log level was set correctly
+        assert result["log_level"] == "DEBUG", "Log level should be set from YAML"
 
-            # Verify the log level was set correctly
-            assert result["log_level"] == "DEBUG", "Log level should be set from YAML"
+        # Verify it's applied to loggers
+        with capture_logs("mcp_server_tree_sitter") as log_capture:
+            logger = logging.getLogger("mcp_server_tree_sitter.test")
+            logger.debug("Test debug message")
 
-            # Verify it's applied to loggers
-            with capture_logs("mcp_server_tree_sitter") as log_capture:
-                logger = logging.getLogger("mcp_server_tree_sitter.test")
-                logger.debug("Test debug message")
-
-                logs = log_capture.getvalue()
-                assert "Test debug message" in logs, "DEBUG log level should be applied"
-
-        finally:
-            # Restore original log level
-            app.config_manager.update_value("log_level", original_log_level)
+            logs = log_capture.getvalue()
+            assert "Test debug message" in logs, "DEBUG log level should be applied"
 
     finally:
-        # Clean up
-        import os
-
-        os.unlink(temp_file_path)
+        # Restore original log level
+        app.config_manager.update_value("log_level", original_log_level)

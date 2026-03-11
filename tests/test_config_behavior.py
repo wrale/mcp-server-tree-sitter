@@ -1,7 +1,5 @@
 """Tests for how configuration settings affect actual system behavior."""
 
-import tempfile
-from collections.abc import Generator
 from pathlib import Path
 from typing import TypedDict
 
@@ -21,28 +19,26 @@ class _ProjectFixturePayload(TypedDict):
 
 
 @pytest.fixture
-def test_project() -> Generator[_ProjectFixturePayload, None, None]:
+def test_project(tmp_path: Path) -> _ProjectFixturePayload:
     """Create a temporary test project with sample files."""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        project_path = Path(temp_dir)
+    project_path = tmp_path
 
-        # Create a simple Python file
-        test_file = project_path / "test.py"
-        with open(test_file, "w") as f:
-            f.write("def hello():\n    print('Hello, world!')\n\nhello()\n")
+    # Create a simple Python file
+    test_file = project_path / "test.py"
+    test_file.write_text("def hello():\n    print('Hello, world!')\n\nhello()\n")
 
-        # Register the project
-        project_name = "config_behavior_test"
-        try:
-            register_project_tool(path=str(project_path), name=project_name)
-        except Exception:
-            # If registration fails, try with a more unique name
-            import time
+    # Register the project
+    project_name = "config_behavior_test"
+    try:
+        register_project_tool(path=str(project_path), name=project_name)
+    except Exception:
+        # If registration fails, try with a more unique name
+        import time
 
-            project_name = f"config_behavior_test_{int(time.time())}"
-            register_project_tool(path=str(project_path), name=project_name)
+        project_name = f"config_behavior_test_{int(time.time())}"
+        register_project_tool(path=str(project_path), name=project_name)
 
-        yield {"name": project_name, "path": str(project_path), "file": "test.py"}
+    return {"name": project_name, "path": str(project_path), "file": "test.py"}
 
 
 def test_cache_enabled_setting(test_project: _ProjectFixturePayload) -> None:

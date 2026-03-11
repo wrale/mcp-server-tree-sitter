@@ -7,7 +7,6 @@ dependency analysis issues identified in FEATURES.md.
 
 import json
 import os
-import tempfile
 from pathlib import Path
 from typing import Dict, Generator, TypedDict, cast
 
@@ -30,16 +29,15 @@ class _SymbolProjectFixturePayload(TypedDict):
 
 
 @pytest.fixture
-def test_project(request: pytest.FixtureRequest) -> Generator[_SymbolProjectFixturePayload, None, None]:
+def test_project(
+    request: pytest.FixtureRequest, tmp_path: Path
+) -> Generator[_SymbolProjectFixturePayload, None, None]:
     """Create a test project with Python files containing known symbols and imports."""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        project_path = Path(temp_dir)
+    project_path = tmp_path
 
-        # Create a Python file with known symbols and dependencies
-        test_file = project_path / "test.py"
-        with open(test_file, "w") as f:
-            f.write(
-                """
+    # Create a Python file with known symbols and dependencies
+    test_file = project_path / "test.py"
+    test_file.write_text("""
 import os
 import sys
 from typing import List, Dict, Optional
@@ -88,14 +86,11 @@ if __name__ == "__main__":
     bob_birthday = dt(1998, 5, 15)
     bob_age = calculate_age(bob_birthday)
     print(f"Bob's age is {bob_age}")
-"""
-            )
+""")
 
-        # Create a second file with additional imports and symbols
-        utils_file = project_path / "utils.py"
-        with open(utils_file, "w") as f:
-            f.write(
-                """
+    # Create a second file with additional imports and symbols
+    utils_file = project_path / "utils.py"
+    utils_file.write_text("""
 import json
 import csv
 import random
@@ -134,29 +129,28 @@ class FileHandler:
     def load_data(self, filename: str) -> Dict[str, Any]:
         file_path = self.base_path / filename
         return load_json(str(file_path))
-"""
-            )
+""")
 
-        # Generate a unique project name based on the test name
-        test_name = request.node.name
-        unique_id = abs(hash(test_name)) % 10000
-        project_name = f"symbol_test_project_{unique_id}"
+    # Generate a unique project name based on the test name
+    test_name = request.node.name
+    unique_id = abs(hash(test_name)) % 10000
+    project_name = f"symbol_test_project_{unique_id}"
 
-        # Register project
-        try:
-            register_project_tool(path=str(project_path), name=project_name)
-        except Exception:
-            # If registration fails, try with an even more unique name
-            import time
+    # Register project
+    try:
+        register_project_tool(path=str(project_path), name=project_name)
+    except Exception:
+        # If registration fails, try with an even more unique name
+        import time
 
-            project_name = f"symbol_test_project_{unique_id}_{int(time.time())}"
-            register_project_tool(path=str(project_path), name=project_name)
+        project_name = f"symbol_test_project_{unique_id}_{int(time.time())}"
+        register_project_tool(path=str(project_path), name=project_name)
 
-        yield {
-            "name": project_name,
-            "path": str(project_path),
-            "files": ["test.py", "utils.py"],
-        }
+    yield {
+        "name": project_name,
+        "path": str(project_path),
+        "files": ["test.py", "utils.py"],
+    }
 
 
 def test_extract_symbols_without_symbol_types_uses_per_language_default(

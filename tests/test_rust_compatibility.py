@@ -1,6 +1,5 @@
 """Tests for Rust compatibility in the Tree-sitter server."""
 
-import tempfile
 import time
 from pathlib import Path
 from typing import Any, Dict, Generator
@@ -17,16 +16,13 @@ from tests.test_helpers import (
 
 
 @pytest.fixture
-def rust_project(request: pytest.FixtureRequest) -> Generator[Dict[str, Any], None, None]:
+def rust_project(request: pytest.FixtureRequest, tmp_path: Path) -> Generator[Dict[str, Any], None, None]:
     """Create a test project with Rust files."""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        project_path = Path(temp_dir)
+    project_path = tmp_path
 
-        # Create a simple Rust file
-        main_rs = project_path / "main.rs"
-        with open(main_rs, "w") as f:
-            f.write(
-                """
+    # Create a simple Rust file
+    main_rs = project_path / "main.rs"
+    main_rs.write_text("""
 use std::io;
 use std::collections::HashMap;
 
@@ -70,14 +66,11 @@ fn main() {
     let ages = calculate_ages(&people);
     println!("Ages: {:?}", ages);
 }
-"""
-            )
+""")
 
-        # Create a library file
-        lib_rs = project_path / "lib.rs"
-        with open(lib_rs, "w") as f:
-            f.write(
-                """
+    # Create a library file
+    lib_rs = project_path / "lib.rs"
+    lib_rs.write_text("""
 use std::fs;
 use std::fs::File;
 use std::io::{self, Read, Write};
@@ -122,27 +115,26 @@ pub fn list_files(dir: &str) -> Result<Vec<String>, io::Error> {
     }
     Ok(files)
 }
-"""
-            )
+""")
 
-        # Generate a unique project name based on the test name
-        test_name = request.node.name
-        unique_id = abs(hash(test_name)) % 10000
-        project_name = f"rust_test_project_{unique_id}"
+    # Generate a unique project name based on the test name
+    test_name = request.node.name
+    unique_id = abs(hash(test_name)) % 10000
+    project_name = f"rust_test_project_{unique_id}"
 
-        # Register project with retry mechanism
-        try:
-            register_project_tool(path=str(project_path), name=project_name)
-        except Exception:
-            # If registration fails, try with an even more unique name
-            project_name = f"rust_test_project_{unique_id}_{int(time.time())}"
-            register_project_tool(path=str(project_path), name=project_name)
+    # Register project with retry mechanism
+    try:
+        register_project_tool(path=str(project_path), name=project_name)
+    except Exception:
+        # If registration fails, try with an even more unique name
+        project_name = f"rust_test_project_{unique_id}_{int(time.time())}"
+        register_project_tool(path=str(project_path), name=project_name)
 
-        yield {
-            "name": project_name,
-            "path": str(project_path),
-            "files": ["main.rs", "lib.rs"],
-        }
+    yield {
+        "name": project_name,
+        "path": str(project_path),
+        "files": ["main.rs", "lib.rs"],
+    }
 
 
 def test_rust_ast_parsing(rust_project: Dict[str, Any]) -> None:

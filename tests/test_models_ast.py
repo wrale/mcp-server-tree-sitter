@@ -1,8 +1,7 @@
 """Tests for ast.py module."""
 
-import tempfile
 from pathlib import Path
-from typing import Any, Dict, Generator, List
+from typing import Any, Dict, List
 
 import pytest
 
@@ -16,15 +15,13 @@ from mcp_server_tree_sitter.models.ast import (
 
 
 @pytest.fixture
-def test_files() -> Generator[Dict[str, Path], None, None]:
+def test_files(tmp_path: Path) -> Dict[str, Path]:
     """Create temporary test files in various languages."""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        dir_path = Path(temp_dir)
+    dir_path = tmp_path
 
-        # Python file
-        python_file = dir_path / "test.py"
-        with open(python_file, "w") as f:
-            f.write("""
+    # Python file
+    python_file = dir_path / "test.py"
+    python_file.write_text("""
 def hello(name):
     return f"Hello, {name}!"
 
@@ -41,10 +38,9 @@ if __name__ == "__main__":
     print(person.greet())
 """)
 
-        # JavaScript file
-        js_file = dir_path / "test.js"
-        with open(js_file, "w") as f:
-            f.write("""
+    # JavaScript file
+    js_file = dir_path / "test.js"
+    js_file.write_text("""
 function hello(name) {
     return `Hello, ${name}!`;
 }
@@ -64,11 +60,11 @@ const person = new Person("Alice", 30);
 console.log(person.greet());
 """)
 
-        yield {
-            "python": python_file,
-            "javascript": js_file,
-            "dir": dir_path,
-        }
+    return {
+        "python": python_file,
+        "javascript": js_file,
+        "dir": dir_path,
+    }
 
 
 @pytest.fixture

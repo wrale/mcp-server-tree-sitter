@@ -1,6 +1,6 @@
 """Pytest-based diagnostic tests for AST parsing functionality."""
 
-import tempfile
+import time
 from pathlib import Path
 from typing import Any, Dict, Generator, Tuple
 
@@ -13,32 +13,28 @@ from tests.test_helpers import get_ast, register_project_tool
 
 
 @pytest.fixture
-def test_project() -> Generator[Dict[str, Any], None, None]:
+def test_project(tmp_path: Path) -> Generator[Dict[str, Any], None, None]:
     """Create a temporary test project with a sample file."""
-    # Set up a temporary directory
-    with tempfile.TemporaryDirectory() as temp_dir:
-        project_path = Path(temp_dir)
+    project_path = tmp_path
 
-        # Create a test file
-        test_file = project_path / "test.py"
-        with open(test_file, "w") as f:
-            f.write("def hello():\n    print('Hello, world!')\n\nhello()\n")
+    # Create a test file
+    test_file = project_path / "test.py"
+    test_file.write_text("def hello():\n    print('Hello, world!')\n\nhello()\n")
 
-        # Register project
-        project_registry = get_project_registry()
-        project_name = "ast_test_project"
-        try:
-            register_project_tool(path=str(project_path), name=project_name)
-        except Exception:
-            # If registration fails, try again with timestamp
-            import time
+    # Register project
+    project_registry = get_project_registry()
+    project_name = "ast_test_project"
+    try:
+        register_project_tool(path=str(project_path), name=project_name)
+    except Exception:
+        # If registration fails, try again with timestamp
+        project_name = f"ast_test_project_{int(time.time())}"
+        register_project_tool(path=str(project_path), name=project_name)
 
-            project_name = f"ast_test_project_{int(time.time())}"
-            register_project_tool(path=str(project_path), name=project_name)
-
+    try:
         # Yield the project info
         yield {"name": project_name, "path": project_path, "file": "test.py"}
-
+    finally:
         # Clean up
         try:
             project_registry.remove_project(project_name)

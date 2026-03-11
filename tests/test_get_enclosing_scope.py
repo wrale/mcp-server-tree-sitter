@@ -1,7 +1,5 @@
 """Integration tests for get_enclosing_scope_for_path."""
 
-import tempfile
-from collections.abc import Generator
 from pathlib import Path
 from typing import Any, Tuple
 
@@ -85,15 +83,14 @@ class TestEnclosingScopeForPath:
     """
 
     @pytest.fixture
-    def project_with_python_file(self) -> Generator[dict[str, Any], None, None]:
+    def project_with_python_file(self, tmp_path: Path) -> dict[str, Any]:
         """Register a temporary project with test.py containing one function."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            root = Path(temp_dir)
-            test_py = root / "test.py"
-            test_py.write_text(self.PROJECT_SOURCE, encoding="utf-8")
-            name = "enclosing_scope_integration_test"
-            register_project_tool(path=str(root), name=name)
-            yield {"name": name, "root": root}
+        root = tmp_path
+        test_py = root / "test.py"
+        test_py.write_text(self.PROJECT_SOURCE, encoding="utf-8")
+        name = "enclosing_scope_integration_test"
+        register_project_tool(path=str(root), name=name)
+        return {"name": name, "root": root}
 
     def test_get_enclosing_scope_for_path_returns_scope_dict(self, project_with_python_file: dict[str, Any]) -> None:
         """Register temp project with test.py; call get_enclosing_scope_for_path; assert result has kind,

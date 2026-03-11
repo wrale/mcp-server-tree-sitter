@@ -1,6 +1,7 @@
 """Basic tests for mcp-server-tree-sitter."""
 
-import tempfile
+import os
+from pathlib import Path
 
 from mcp_server_tree_sitter.config import ServerConfig
 from mcp_server_tree_sitter.language.registry import LanguageRegistry
@@ -19,37 +20,34 @@ def test_config_default() -> None:
     assert ".git" in config.security.excluded_dirs
 
 
-def test_project_registry() -> None:
+def test_project_registry(tmp_path: Path) -> None:
     """Test project registry functionality."""
     registry = ProjectRegistry()
 
-    # Create a temporary directory
-    with tempfile.TemporaryDirectory() as temp_dir:
-        # Register a project
-        project = registry.register_project("test", temp_dir)
+    temp_dir = str(tmp_path)
+    # Register a project
+    project = registry.register_project("test", temp_dir)
 
-        # Check project details
-        assert project.name == "test"
-        # Use os.path.samefile to compare paths instead of string comparison
-        # This handles platform-specific path normalization
-        # (e.g., /tmp -> /private/tmp on macOS)
-        import os
+    # Check project details
+    assert project.name == "test"
+    # Use os.path.samefile to compare paths instead of string comparison
+    # This handles platform-specific path normalization
+    # (e.g., /tmp -> /private/tmp on macOS)
+    assert os.path.samefile(str(project.root_path), temp_dir)
 
-        assert os.path.samefile(str(project.root_path), temp_dir)
+    # List projects
+    projects = registry.list_projects()
+    assert len(projects) == 1
+    assert projects[0]["name"] == "test"
 
-        # List projects
-        projects = registry.list_projects()
-        assert len(projects) == 1
-        assert projects[0]["name"] == "test"
+    # Get project
+    project2 = registry.get_project("test")
+    assert project2.name == "test"
 
-        # Get project
-        project2 = registry.get_project("test")
-        assert project2.name == "test"
-
-        # Remove project
-        registry.remove_project("test")
-        projects = registry.list_projects()
-        assert len(projects) == 0
+    # Remove project
+    registry.remove_project("test")
+    projects = registry.list_projects()
+    assert len(projects) == 0
 
 
 def test_language_registry() -> None:

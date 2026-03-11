@@ -1,8 +1,6 @@
 """Tests for environment variable configuration overrides."""
 
-import os
-import tempfile
-from collections.abc import Generator
+from pathlib import Path
 
 import pytest
 import yaml
@@ -11,22 +9,16 @@ from mcp_server_tree_sitter.config import ConfigurationManager
 
 
 @pytest.fixture
-def temp_yaml_file() -> Generator[str, None, None]:
+def temp_yaml_file(tmp_path: Path) -> str:
     """Create a temporary YAML file with test configuration."""
-    with tempfile.NamedTemporaryFile(suffix=".yaml", mode="w+", delete=False) as temp_file:
-        test_config = {
-            "cache": {"enabled": True, "max_size_mb": 256, "ttl_seconds": 3600},
-            "security": {"max_file_size_mb": 10, "excluded_dirs": [".git", "node_modules", "__pycache__", ".cache"]},
-            "language": {"default_max_depth": 7},
-        }
-        yaml.dump(test_config, temp_file)
-        temp_file.flush()
-        temp_file_path = temp_file.name
-
-    yield temp_file_path
-
-    # Clean up
-    os.unlink(temp_file_path)
+    test_config = {
+        "cache": {"enabled": True, "max_size_mb": 256, "ttl_seconds": 3600},
+        "security": {"max_file_size_mb": 10, "excluded_dirs": [".git", "node_modules", "__pycache__", ".cache"]},
+        "language": {"default_max_depth": 7},
+    }
+    path = tmp_path / "config.yaml"
+    path.write_text(yaml.dump(test_config))
+    return str(path)
 
 
 def test_env_overrides_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
