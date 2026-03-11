@@ -33,7 +33,7 @@ class LanguageDataBase(ABC):
     node_type_descriptions: ClassVar[dict[str, str]]
     # Optional: default symbol types for extraction when not specified. Use [] to inherit default.
     default_symbol_types: ClassVar[list[str]] = []
-    # Optional: tree-sitter node types that count as decision points for cyclomatic complexity (e.g. if_statement, for_statement).
+    # Optional: node types that count as decision points for cyclomatic complexity (e.g. if_statement, for_statement).
     complexity_nodes: ClassVar[list[str]] = []
 
     def __init_subclass__(cls, **kwargs: object) -> None:
