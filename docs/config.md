@@ -41,7 +41,6 @@ Controls language behavior:
 
 ```yaml
 language:
-  auto_install: false          # DEPRECATED: No longer used with tree-sitter-language-pack
   default_max_depth: 5         # Default max depth for AST traversal (default: 5)
   preferred_languages:         # List of languages to pre-load at server startup for improved performance
     - python                   # Pre-loading reduces latency for first operations
@@ -95,16 +94,9 @@ log_level: INFO
 max_results_default: 100
 ```
 
-## Deprecated Settings
+## Migration note: `language.auto_install` removed
 
-The following settings are deprecated and should not be used in new configurations:
-
-```yaml
-language:
-  auto_install: true  # DEPRECATED: No longer used with tree-sitter-language-pack
-```
-
-This setting was used to control automatic installation of language parsers, but it's no longer relevant since the server now uses tree-sitter-language-pack which includes all supported languages.
+The `language.auto_install` setting has been removed. It was deprecated and unused (the server uses tree-sitter-language-pack). If your config still contains `auto_install`, you can remove that key; it will be ignored when present in YAML.
 
 ## Language Settings: preferred_languages
 

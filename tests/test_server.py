@@ -36,7 +36,6 @@ def mock_container() -> MagicMock:
 
     mock_language = MagicMock()
     mock_language.default_max_depth = 5
-    mock_language.auto_install = False
 
     # Attach nested objects to config
     initial_config.cache = mock_cache
@@ -60,7 +59,6 @@ def mock_container() -> MagicMock:
             "excluded_dirs": [".git", "node_modules", "__pycache__"],
         },
         "language": {
-            "auto_install": False,
             "default_max_depth": 5,
         },
         "log_level": "INFO",

@@ -65,7 +65,6 @@ def update_config_from_new(original: ServerConfig, new: ServerConfig) -> None:
         original.security.allowed_extensions = (
             new.security.allowed_extensions.copy() if new.security.allowed_extensions else None
         )
-        original.language.auto_install = new.language.auto_install
         original.language.default_max_depth = new.language.default_max_depth
         original.language.preferred_languages = new.language.preferred_languages.copy()
         original.log_level = new.log_level
@@ -187,7 +186,6 @@ class ConfigurationManager:
                 "excluded_dirs": self._config.security.excluded_dirs,
             },
             "language": {
-                "auto_install": self._config.language.auto_install,
                 "default_max_depth": self._config.language.default_max_depth,
             },
             "log_level": self._config.log_level,

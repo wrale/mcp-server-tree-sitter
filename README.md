@@ -23,6 +23,10 @@ A Model Context Protocol (MCP) server that provides code analysis capabilities u
 
 For a comprehensive list of all available commands, their current implementation status, and detailed feature matrix, please refer to the [FEATURES.md](FEATURES.md) document.
 
+### Configuration migration
+
+The `language.auto_install` config field has been removed (it was deprecated and unused). If your YAML config still contains `auto_install` under `language`, you can remove it; the key is ignored when present. See [CHANGELOG.md](CHANGELOG.md) for details.
+
 ## Installation
 
 ### Prerequisites

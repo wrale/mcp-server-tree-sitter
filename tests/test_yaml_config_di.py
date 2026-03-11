@@ -19,7 +19,7 @@ def temp_yaml_file() -> Generator[str, None, None]:
         test_config = {
             "cache": {"enabled": True, "max_size_mb": 256, "ttl_seconds": 3600},
             "security": {"max_file_size_mb": 10, "excluded_dirs": [".git", "node_modules", "__pycache__", ".cache"]},
-            "language": {"auto_install": True, "default_max_depth": 7},
+            "language": {"default_max_depth": 7},
         }
         yaml.dump(test_config, temp_file)
         temp_file.flush()
@@ -50,7 +50,6 @@ def test_server_config_from_file(temp_yaml_file: str) -> None:
     assert config.cache.ttl_seconds == 3600
     assert config.security.max_file_size_mb == 10
     assert ".git" in config.security.excluded_dirs
-    assert config.language.auto_install is True
     assert config.language.default_max_depth == 7
 
 
@@ -118,7 +117,6 @@ def test_configure_helper(temp_yaml_file: str) -> None:
         assert ".git" in result["security"]["excluded_dirs"]
 
         # Language settings
-        assert result["language"]["auto_install"] is True
         assert result["language"]["default_max_depth"] == 7
 
         # Also verify the container's config was updated
@@ -183,7 +181,6 @@ security:
     - .windsurfrules
 
 language:
-  auto_install: true
   default_max_depth: 7
 """)
         temp_file.flush()
@@ -210,7 +207,6 @@ language:
             assert result["cache"]["max_size_mb"] == 256
             assert result["security"]["max_file_size_mb"] == 10
             assert ".claude" in result["security"]["excluded_dirs"]
-            assert result["language"]["auto_install"] is True
             assert result["language"]["default_max_depth"] == 7
 
             # Also verify the container's config was updated

@@ -1,3 +1,6 @@
+# Local task list (keep out of repo)
+TASKS.md
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

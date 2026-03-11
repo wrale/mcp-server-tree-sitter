@@ -17,7 +17,7 @@ def temp_yaml_file() -> Generator[str, None, None]:
         test_config = {
             "cache": {"enabled": True, "max_size_mb": 256, "ttl_seconds": 3600},
             "security": {"max_file_size_mb": 10, "excluded_dirs": [".git", "node_modules", "__pycache__", ".cache"]},
-            "language": {"auto_install": True, "default_max_depth": 7},
+            "language": {"default_max_depth": 7},
         }
         yaml.dump(test_config, temp_file)
         temp_file.flush()
@@ -66,7 +66,6 @@ def test_env_overrides_yaml(temp_yaml_file: str, monkeypatch: pytest.MonkeyPatch
     # But YAML values that aren't overridden by env vars should remain
     assert cfg.cache.ttl_seconds == 3600
     assert cfg.language.default_max_depth == 7
-    assert cfg.language.auto_install is True
 
 
 def test_log_level_env_var(monkeypatch: pytest.MonkeyPatch) -> None:

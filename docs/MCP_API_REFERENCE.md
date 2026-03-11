@@ -23,7 +23,7 @@ Configure the server (YAML load and/or overrides).
 {
   "cache": { "enabled": true, "max_size_mb": 100, "ttl_seconds": 300 },
   "security": { "max_file_size_mb": 5, "excluded_dirs": [".git", "node_modules", ...] },
-  "language": { "auto_install": false, "default_max_depth": 5 },
+  "language": { "default_max_depth": 5 },
   "log_level": "INFO"
 }
 ```

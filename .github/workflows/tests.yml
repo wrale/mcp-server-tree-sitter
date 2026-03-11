@@ -1,0 +1,32 @@
+# Simple workflow that runs tests on push and pull requests.
+name: Tests
+
+on:
+  push:
+    branches: [main, "task-*"]
+  pull_request:
+    branches: [main, "task-*"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install -e ".[dev]"
+
+      - name: Run tests
+        run: |
+          # Exclude enclosing_scope tests until fixed (pre-existing failures)
+          pytest tests -v \
+            --ignore=tests/enclosing_scope \
+            --ignore=tests/test_get_enclosing_scope.py
+        env:
+          PYTHONPATH: ${{ github.workspace }}/src

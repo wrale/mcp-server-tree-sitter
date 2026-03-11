@@ -6,9 +6,8 @@ Env format: MCP_TS_SECTION_SETTING (e.g. MCP_TS_CACHE_MAX_SIZE_MB) or MCP_TS_SET
 
 from typing import List, Optional, TypeAlias, Union
 
-from typing_extensions import TypedDict
-
 from pydantic import BaseModel, Field
+from typing_extensions import TypedDict
 
 ConfigValue: TypeAlias = Union[int, float, bool, str, None, List[str]]
 
@@ -25,7 +24,6 @@ class _SecurityDict(TypedDict):
 
 
 class _LanguageDict(TypedDict):
-    auto_install: bool
     default_max_depth: int
 
 
@@ -50,16 +48,13 @@ class SecurityConfig(BaseModel):
     """Security settings."""
 
     max_file_size_mb: int = 5
-    excluded_dirs: List[str] = Field(
-        default_factory=lambda: [".git", "node_modules", "__pycache__"]
-    )
+    excluded_dirs: List[str] = Field(default_factory=lambda: [".git", "node_modules", "__pycache__"])
     allowed_extensions: Optional[List[str]] = None
 
 
 class LanguageConfig(BaseModel):
     """Language-specific configuration."""
 
-    auto_install: bool = False
     default_max_depth: int = 5
     preferred_languages: List[str] = Field(default_factory=list)
 
