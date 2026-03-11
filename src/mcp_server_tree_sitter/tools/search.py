@@ -3,7 +3,7 @@
 import concurrent.futures
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import TypedDict
 
 from ..cache.parser_cache import TreeCache
 from ..exceptions import QueryError, SecurityError
@@ -13,16 +13,42 @@ from ..utils.security import validate_file_access
 from ..utils.tree_sitter_helpers import run_query_captures
 
 
+class _ContextLine(TypedDict):
+    line: int
+    text: str
+    is_match: bool
+
+
+class TextMatchResult(TypedDict):
+    file: str
+    line: int
+    text: str
+    context: list[_ContextLine]
+
+
+class _QueryStartEnd(TypedDict):
+    row: int
+    column: int
+
+
+class QueryMatchResult(TypedDict, total=False):
+    file: str
+    capture: str
+    start: _QueryStartEnd
+    end: _QueryStartEnd
+    text: str
+
+
 def search_text(
     project: Project,
     pattern: str,
-    file_pattern: Optional[str] = None,
+    file_pattern: str | None = None,
     max_results: int = 100,
     case_sensitive: bool = False,
     whole_word: bool = False,
     use_regex: bool = False,
     context_lines: int = 0,
-) -> List[Dict[str, Any]]:
+) -> list[TextMatchResult]:
     """
     Search for text pattern in project files.
 
@@ -41,7 +67,7 @@ def search_text(
     """
     root = project.root_path
 
-    results: List[Dict[str, Any]] = []
+    results: list[TextMatchResult] = []
     pattern_obj = None
 
     # Prepare the pattern
@@ -63,8 +89,8 @@ def search_text(
     file_pattern = file_pattern or "**/*"
 
     # Process files in parallel
-    def process_file(file_path: Path) -> List[Dict[str, Any]]:
-        file_results = []
+    def process_file(file_path: Path) -> list[TextMatchResult]:
+        file_results: list[TextMatchResult] = []
         try:
             validate_file_access(file_path, root)
 
@@ -92,24 +118,22 @@ def search_text(
                     start = max(0, i - 1 - context_lines)
                     end = min(len(lines), i + context_lines)
 
-                    context = []
-                    for ctx_i in range(start, end):
-                        ctx_line = lines[ctx_i].rstrip("\n")
-                        context.append(
-                            {
-                                "line": ctx_i + 1,
-                                "text": ctx_line,
-                                "is_match": ctx_i == i - 1,
-                            }
+                    context = [
+                        _ContextLine(
+                            line=ctx_i + 1,
+                            text=lines[ctx_i].rstrip("\n"),
+                            is_match=(ctx_i == i - 1),
                         )
+                        for ctx_i in range(start, end)
+                    ]
 
                     file_results.append(
-                        {
-                            "file": str(file_path.relative_to(root)),
-                            "line": i,
-                            "text": line.rstrip("\n"),
-                            "context": context,
-                        }
+                        TextMatchResult(
+                            file=str(file_path.relative_to(root)),
+                            line=i,
+                            text=line.rstrip("\n"),
+                            context=context,
+                        )
                     )
 
                     if len(file_results) >= max_results:
@@ -145,11 +169,11 @@ def query_code(
     query_string: str,
     language_registry: LanguageRegistry,
     tree_cache: TreeCache,
-    file_path: Optional[str] = None,
-    language: Optional[str] = None,
+    file_path: str | None = None,
+    language: str | None = None,
     max_results: int = 100,
     include_snippets: bool = True,
-) -> List[Dict[str, Any]]:
+) -> list[QueryMatchResult]:
     """
     Run a tree-sitter query on code files.
 
@@ -167,7 +191,7 @@ def query_code(
         List of query matches
     """
     root = project.root_path
-    results: List[Dict[str, Any]] = []
+    results: list[QueryMatchResult] = []
 
     if file_path is not None:
         # Query a specific file
@@ -223,22 +247,17 @@ def query_code(
                         except Exception:
                             text = "<binary data>"
 
-                        result = {
-                            "file": file_path,
-                            "capture": capture_name,
-                            "start": {
-                                "row": node.start_point[0],
-                                "column": node.start_point[1],
-                            },
-                            "end": {
-                                "row": node.end_point[0],
-                                "column": node.end_point[1],
-                            },
-                        }
-
+                        text_str = (
+                            text.decode("utf-8", errors="replace") if isinstance(text, bytes) else text
+                        )
+                        result = QueryMatchResult(
+                            file=file_path,
+                            capture=capture_name,
+                            start=_QueryStartEnd(row=node.start_point[0], column=node.start_point[1]),
+                            end=_QueryStartEnd(row=node.end_point[0], column=node.end_point[1]),
+                        )
                         if include_snippets:
-                            result["text"] = text.decode("utf-8", errors="replace") if isinstance(text, bytes) else text
-
+                            result["text"] = text_str
                         results.append(result)
             else:
                 # List format: [(node1, capture_name1), (node2, capture_name2), ...]
@@ -268,20 +287,18 @@ def query_code(
                     except Exception:
                         text = "<binary data>"
 
-                    result = {
-                        "file": file_path,
-                        "capture": capture_name,
-                        "start": {
-                            "row": node.start_point[0],
-                            "column": node.start_point[1],
-                        },
-                        "end": {"row": node.end_point[0], "column": node.end_point[1]},
-                    }
-
+                    text_str2 = (
+                        text.decode("utf-8", errors="replace") if isinstance(text, bytes) else text
+                    )
+                    result2 = QueryMatchResult(
+                        file=file_path,
+                        capture=capture_name,
+                        start=_QueryStartEnd(row=node.start_point[0], column=node.start_point[1]),
+                        end=_QueryStartEnd(row=node.end_point[0], column=node.end_point[1]),
+                    )
                     if include_snippets:
-                        result["text"] = text.decode("utf-8", errors="replace") if isinstance(text, bytes) else text
-
-                    results.append(result)
+                        result2["text"] = text_str2
+                    results.append(result2)
         except Exception as e:
             raise QueryError(f"Error querying {file_path}: {e}") from e
     else:
@@ -296,7 +313,7 @@ def query_code(
             raise QueryError(f"No file extensions found for language {language}")
 
         # Process files in parallel
-        def process_file(rel_path: str) -> List[Dict[str, Any]]:
+        def process_file(rel_path: str) -> list[QueryMatchResult]:
             try:
                 # Use single-file version of query_code
                 file_results = query_code(

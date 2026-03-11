@@ -5,8 +5,6 @@ handler modules: project_tools, file_tools, ast_tools, search_tools, analysis_to
 Tools obtain the dependency container at runtime via get_container().
 """
 
-from typing import Optional
-
 from mcp.server.fastmcp import FastMCP
 
 from ..di import get_container
@@ -79,7 +77,7 @@ def _register_prompts(mcp_server: FastMCP) -> None:
         """
 
     @mcp_server.prompt()
-    def explain_code(project: str, file_path: str, focus: Optional[str] = None) -> str:
+    def explain_code(project: str, file_path: str, focus: str | None = None) -> str:
         """Create a prompt for explaining a code file"""
         from .file_operations import get_file_content
 

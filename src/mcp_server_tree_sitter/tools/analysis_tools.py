@@ -1,17 +1,20 @@
 """Analysis tool handlers (symbols, dependencies, complexity, similar code, usage)."""
 
-from typing import Any, Dict, List, Optional
+from typing import cast
 
 from mcp.server.fastmcp import Context, FastMCP
 
 from ..di import get_container
+from ..utils.context import MCPContextProtocol
 from .analysis import (
+    ComplexityResult,
+    ProjectStructureResult,
     analyze_code_complexity,
     analyze_project_structure,
     extract_symbols,
     find_dependencies,
 )
-from .search import query_code, search_text
+from .search import QueryMatchResult, TextMatchResult, query_code, search_text
 
 
 def register_analysis_tools(mcp_server: FastMCP) -> None:
@@ -21,8 +24,8 @@ def register_analysis_tools(mcp_server: FastMCP) -> None:
     def get_symbols(
         project: str,
         file_path: str,
-        symbol_types: Optional[List[str]] = None,
-    ) -> Dict[str, List[Dict[str, Any]]]:
+        symbol_types: list[str] | None = None,
+    ) -> dict[str, list[dict[str, object]]]:
         """Extract symbols from a file.
 
         Args:
@@ -46,7 +49,7 @@ def register_analysis_tools(mcp_server: FastMCP) -> None:
         project: str,
         scan_depth: int = 3,
         ctx: Context | None = None,
-    ) -> Dict[str, Any]:
+    ) -> ProjectStructureResult:
         """Analyze overall project structure.
 
         Args:
@@ -62,11 +65,11 @@ def register_analysis_tools(mcp_server: FastMCP) -> None:
             container.project_registry.get_project(project),
             container.language_registry,
             scan_depth,
-            ctx,
+            cast(MCPContextProtocol | None, ctx),
         )
 
     @mcp_server.tool()
-    def get_dependencies(project: str, file_path: str) -> Dict[str, List[str]]:
+    def get_dependencies(project: str, file_path: str) -> dict[str, list[str]]:
         """Find dependencies of a file.
 
         Args:
@@ -84,7 +87,7 @@ def register_analysis_tools(mcp_server: FastMCP) -> None:
         )
 
     @mcp_server.tool()
-    def analyze_complexity(project: str, file_path: str) -> Dict[str, Any]:
+    def analyze_complexity(project: str, file_path: str) -> ComplexityResult:
         """Analyze code complexity.
 
         Args:
@@ -105,10 +108,10 @@ def register_analysis_tools(mcp_server: FastMCP) -> None:
     def find_similar_code(
         project: str,
         snippet: str,
-        language: Optional[str] = None,
+        language: str | None = None,
         threshold: float = 0.8,
         max_results: int = 10,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[TextMatchResult]:
         """Find similar code to a snippet.
 
         Args:
@@ -155,9 +158,9 @@ def register_analysis_tools(mcp_server: FastMCP) -> None:
     def find_usage(
         project: str,
         symbol: str,
-        file_path: Optional[str] = None,
-        language: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        file_path: str | None = None,
+        language: str | None = None,
+    ) -> list[QueryMatchResult]:
         """Find usage of a symbol.
 
         Args:

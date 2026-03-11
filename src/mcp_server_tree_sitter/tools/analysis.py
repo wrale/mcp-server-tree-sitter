@@ -6,7 +6,7 @@ metrics. Symbol extraction in symbol_extraction; metrics in metrics; dependencie
 
 import os
 from collections import Counter
-from typing import Any, Dict, Optional
+from typing import TypedDict
 
 from ..exceptions import SecurityError
 from ..language.registry import LanguageRegistry
@@ -19,7 +19,50 @@ from .dependencies import find_dependencies
 from .metrics import compute_cyclomatic_complexity, count_lines_and_comments
 from .symbol_extraction import extract_symbols
 
+
+class _EntryPoint(TypedDict):
+    path: str
+    language: str
+
+
+class _BuildFile(TypedDict):
+    path: str
+    type: str
+
+
+class _KeyFileSymbolCounts(TypedDict):
+    file: str
+    symbols: dict[str, int]
+
+
+class ProjectStructureResult(TypedDict, total=False):
+    name: str
+    path: str
+    languages: dict[str, int]
+    entry_points: list[_EntryPoint]
+    build_files: list[_BuildFile]
+    dir_counts: dict[str, int]
+    file_counts: dict[str, int]
+    total_files: int
+    key_files_analysis: dict[str, list[_KeyFileSymbolCounts]]
+
+
+class ComplexityResult(TypedDict):
+    line_count: int
+    code_lines: int
+    empty_lines: int
+    comment_lines: int
+    comment_ratio: float
+    function_count: int
+    class_count: int
+    avg_function_lines: float
+    cyclomatic_complexity: int
+    language: str
+
+
 __all__ = [
+    "ComplexityResult",
+    "ProjectStructureResult",
     "extract_symbols",
     "analyze_project_structure",
     "find_dependencies",
@@ -31,8 +74,8 @@ def analyze_project_structure(
     project: Project,
     language_registry: LanguageRegistry,
     scan_depth: int = 3,
-    mcp_ctx: Optional[MCPContextProtocol] = None,
-) -> Dict[str, Any]:
+    mcp_ctx: MCPContextProtocol | None = None,
+) -> ProjectStructureResult:
     """
     Analyze the overall structure of a project.
 
@@ -59,7 +102,7 @@ def analyze_project_structure(
     languages = project.languages
 
     # Find potential entry points based on common patterns
-    entry_points = []
+    entry_points: list[_EntryPoint] = []
     entry_patterns = {
         "python": ["__main__.py", "main.py", "app.py", "run.py", "manage.py"],
         "javascript": ["index.js", "app.js", "main.js", "server.js"],
@@ -77,15 +120,10 @@ def analyze_project_structure(
                     candidate = root / entry_path / pattern
                     if candidate.is_file():
                         rel_path = str(candidate.relative_to(root))
-                        entry_points.append(
-                            {
-                                "path": rel_path,
-                                "language": language,
-                            }
-                        )
+                        entry_points.append(_EntryPoint(path=rel_path, language=language))
 
     # Look for build configuration files
-    build_files = []
+    build_files: list[_BuildFile] = []
     build_patterns = {
         "python": [
             "setup.py",
@@ -107,12 +145,7 @@ def analyze_project_structure(
             candidate = root / pattern
             if candidate.is_file():
                 rel_path = str(candidate.relative_to(root))
-                build_files.append(
-                    {
-                        "path": rel_path,
-                        "type": category,
-                    }
-                )
+                build_files.append(_BuildFile(path=rel_path, type=category))
 
     # Analyze directory structure
     dir_counts: Counter = Counter()
@@ -143,7 +176,7 @@ def analyze_project_structure(
                 file_counts[key] += 1
 
     # Detailed analysis of key files if scan_depth > 0
-    key_files_analysis = {}
+    key_files_analysis: dict[str, list[_KeyFileSymbolCounts]] = {}
 
     if scan_depth > 0:
         # Analyze a sample of files from each language
@@ -154,7 +187,7 @@ def analyze_project_structure(
                 continue
 
             # Find sample files
-            sample_files = []
+            sample_files: list[str] = []
             for ext in extensions:
                 pattern = f"**/*.{ext}"
                 for path in root.glob(pattern):
@@ -170,7 +203,7 @@ def analyze_project_structure(
 
             # Analyze sample files
             if sample_files:
-                language_analysis = []
+                language_analysis: list[_KeyFileSymbolCounts] = []
 
                 for file_path in sample_files:
                     try:
@@ -182,10 +215,7 @@ def analyze_project_structure(
                         }
 
                         language_analysis.append(
-                            {
-                                "file": file_path,
-                                "symbols": symbol_counts,
-                            }
+                            _KeyFileSymbolCounts(file=file_path, symbols=symbol_counts)
                         )
                     except Exception:
                         # Skip problematic files
@@ -194,24 +224,24 @@ def analyze_project_structure(
                 if language_analysis:
                     key_files_analysis[language] = language_analysis
 
-    return {
-        "name": project.name,
-        "path": str(project.root_path),
-        "languages": languages,
-        "entry_points": entry_points,
-        "build_files": build_files,
-        "dir_counts": dict(dir_counts),
-        "file_counts": dict(file_counts),
-        "total_files": sum(languages.values()),
-        "key_files_analysis": key_files_analysis,
-    }
+    return ProjectStructureResult(
+        name=project.name,
+        path=str(project.root_path),
+        languages=languages,
+        entry_points=entry_points,
+        build_files=build_files,
+        dir_counts=dict(dir_counts),
+        file_counts=dict(file_counts),
+        total_files=sum(languages.values()),
+        key_files_analysis=key_files_analysis,
+    )
 
 
 def analyze_code_complexity(
     project: Project,
     file_path: str,
     language_registry: LanguageRegistry,
-) -> Dict[str, Any]:
+) -> ComplexityResult:
     """
     Analyze code complexity.
 
@@ -258,18 +288,18 @@ def analyze_code_complexity(
         code_lines = line_metrics["code_lines"]
         avg_func_lines = float(code_lines / function_count if function_count > 0 else code_lines)
 
-        return {
-            "line_count": line_metrics["line_count"],
-            "code_lines": code_lines,
-            "empty_lines": line_metrics["empty_lines"],
-            "comment_lines": line_metrics["comment_lines"],
-            "comment_ratio": line_metrics["comment_ratio"],
-            "function_count": function_count,
-            "class_count": class_count,
-            "avg_function_lines": round(avg_func_lines, 2),
-            "cyclomatic_complexity": cyclomatic_complexity,
-            "language": language,
-        }
+        return ComplexityResult(
+            line_count=line_metrics["line_count"],
+            code_lines=code_lines,
+            empty_lines=line_metrics["empty_lines"],
+            comment_lines=line_metrics["comment_lines"],
+            comment_ratio=line_metrics["comment_ratio"],
+            function_count=function_count,
+            class_count=class_count,
+            avg_function_lines=round(avg_func_lines, 2),
+            cyclomatic_complexity=cyclomatic_complexity,
+            language=language,
+        )
 
     except Exception as e:
         raise ValueError(f"Error analyzing complexity in {file_path}: {e}") from e

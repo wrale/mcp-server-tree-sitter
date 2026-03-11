@@ -1,12 +1,10 @@
 """Search, query, and enclosing-scope tool handlers."""
 
-from typing import Any, Dict, List, Optional
-
 from mcp.server.fastmcp import FastMCP
 
 from ..di import get_container
 from .ast_operations import get_enclosing_scope_for_path
-from .search import query_code, search_text
+from .search import QueryMatchResult, TextMatchResult, query_code, search_text
 
 
 def register_search_tools(mcp_server: FastMCP) -> None:
@@ -16,13 +14,13 @@ def register_search_tools(mcp_server: FastMCP) -> None:
     def find_text(
         project: str,
         pattern: str,
-        file_pattern: Optional[str] = None,
+        file_pattern: str | None = None,
         max_results: int = 100,
         case_sensitive: bool = False,
         whole_word: bool = False,
         use_regex: bool = False,
         context_lines: int = 2,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[TextMatchResult]:
         """Search for text pattern in project files.
 
         Args:
@@ -57,9 +55,9 @@ def register_search_tools(mcp_server: FastMCP) -> None:
         file_path: str,
         row: int,
         column: int,
-        label: Optional[str] = None,
+        label: str | None = None,
         max_lines: int = 0,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, object]:
         """Find the enclosing scope (function, class, or module) for a position.
 
         Args:
@@ -92,10 +90,10 @@ def register_search_tools(mcp_server: FastMCP) -> None:
     def run_query(
         project: str,
         query: str,
-        file_path: Optional[str] = None,
-        language: Optional[str] = None,
+        file_path: str | None = None,
+        language: str | None = None,
         max_results: int = 100,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[QueryMatchResult]:
         """Run a tree-sitter query on project files.
 
         Args:
@@ -121,7 +119,7 @@ def register_search_tools(mcp_server: FastMCP) -> None:
         )
 
     @mcp_server.tool()
-    def get_query_template_tool(language: str, template_name: str) -> Dict[str, Any]:
+    def get_query_template_tool(language: str, template_name: str) -> dict[str, str]:
         """Get a predefined tree-sitter query template.
 
         Args:
@@ -144,7 +142,7 @@ def register_search_tools(mcp_server: FastMCP) -> None:
         }
 
     @mcp_server.tool()
-    def list_query_templates_tool(language: Optional[str] = None) -> Dict[str, Any]:
+    def list_query_templates_tool(language: str | None = None) -> dict[str, object]:
         """List available query templates.
 
         Args:
@@ -158,7 +156,7 @@ def register_search_tools(mcp_server: FastMCP) -> None:
         return list_query_templates(language)
 
     @mcp_server.tool()
-    def build_query(language: str, patterns: List[str], combine: str = "or") -> Dict[str, str]:
+    def build_query(language: str, patterns: list[str], combine: str = "or") -> dict[str, str]:
         """Build a tree-sitter query from templates or patterns.
 
         Args:
@@ -178,7 +176,7 @@ def register_search_tools(mcp_server: FastMCP) -> None:
         }
 
     @mcp_server.tool()
-    def adapt_query(query: str, from_language: str, to_language: str) -> Dict[str, str]:
+    def adapt_query(query: str, from_language: str, to_language: str) -> dict[str, str]:
         """Adapt a query from one language to another.
 
         Args:
@@ -200,7 +198,7 @@ def register_search_tools(mcp_server: FastMCP) -> None:
         }
 
     @mcp_server.tool()
-    def get_node_types(language: str) -> Dict[str, str]:
+    def get_node_types(language: str) -> dict[str, str]:
         """Get descriptions of common node types for a language.
 
         Args:
