@@ -3,9 +3,9 @@ name: Tests
 
 on:
   push:
-    branches: [main, "task-*"]
+    branches: [main, master, CxMaster]
   pull_request:
-    branches: [main, "task-*"]
+    branches: [main, master, CxMaster]
 
 jobs:
   test:
