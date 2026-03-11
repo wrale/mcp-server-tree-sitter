@@ -473,9 +473,7 @@ def test_query_based_symbol_extraction(test_project: _SymbolProjectFixturePayloa
         imports: Dict[str, Dict[str, object]] = {}
 
         # Helper function to process captures with different formats
-        def process_capture(
-            captures: object, target_type: str, result_dict: Dict[str, Dict[str, object]]
-        ) -> None:
+        def process_capture(captures: object, target_type: str, result_dict: Dict[str, Dict[str, object]]) -> None:
             # Check if it's returning a dictionary format
             if isinstance(captures, dict):
                 # Dictionary format: {capture_name: [node1, node2, ...], ...}

@@ -191,9 +191,7 @@ def test_clear_cache_all(server_context: ServerContext, mock_dependencies: _Mock
     assert result == {"status": "success", "message": "Cache cleared"}
 
 
-def test_clear_cache_for_file(
-    server_context: ServerContext, mock_dependencies: _MockDependenciesPayload
-) -> None:
+def test_clear_cache_for_file(server_context: ServerContext, mock_dependencies: _MockDependenciesPayload) -> None:
     """Test that clear_cache clears cache for a specific file."""
     # Setup
     tree_cache = mock_dependencies["tree_cache"]
@@ -232,9 +230,7 @@ def test_configure_with_yaml(
     config_manager.to_dict.assert_called_once()
 
 
-def test_configure_cache_enabled(
-    server_context: ServerContext, mock_dependencies: _MockDependenciesPayload
-) -> None:
+def test_configure_cache_enabled(server_context: ServerContext, mock_dependencies: _MockDependenciesPayload) -> None:
     """Test that configure sets cache.enabled correctly."""
     # Setup
     config_manager = mock_dependencies["config_manager"]
@@ -249,9 +245,7 @@ def test_configure_cache_enabled(
     config_manager.to_dict.assert_called_once()
 
 
-def test_configure_max_file_size(
-    server_context: ServerContext, mock_dependencies: _MockDependenciesPayload
-) -> None:
+def test_configure_max_file_size(server_context: ServerContext, mock_dependencies: _MockDependenciesPayload) -> None:
     """Test that configure sets security.max_file_size_mb correctly."""
     # Setup
     config_manager = mock_dependencies["config_manager"]

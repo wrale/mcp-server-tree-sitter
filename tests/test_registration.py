@@ -72,12 +72,10 @@ def mock_container() -> MagicMock:
     return container
 
 
-def test_register_tools_registers_all_tools(
-    mock_mcp_server: MockMCPServer, mock_container: MagicMock
-) -> None:
+def test_register_tools_registers_all_tools(mock_mcp_server: MockMCPServer, mock_container: MagicMock) -> None:
     """Test that register_tools registers all the expected tools."""
     # Call the function
-    register_tools(mock_mcp_server, mock_container)
+    register_tools(mock_mcp_server)
 
     # Verify all expected tools are registered
     expected_tools = [
@@ -117,7 +115,7 @@ def test_get_enclosing_scope_tool_registered_with_correct_contract(
     mock_mcp_server: MockMCPServer, mock_container: MagicMock
 ) -> None:
     """After registration, get_enclosing_scope exists and signature/docstring mention project, path, row, column."""
-    register_tools(mock_mcp_server, mock_container)
+    register_tools(mock_mcp_server)
 
     assert "get_enclosing_scope" in mock_mcp_server.tools, "Tool get_enclosing_scope was not registered"
     tool_fn = mock_mcp_server.tools["get_enclosing_scope"]
@@ -133,12 +131,10 @@ def test_get_enclosing_scope_tool_registered_with_correct_contract(
     assert "column" in combined, "get_enclosing_scope contract should mention column"
 
 
-def test_register_prompts_registers_all_prompts(
-    mock_mcp_server: MockMCPServer, mock_container: MagicMock
-) -> None:
+def test_register_prompts_registers_all_prompts(mock_mcp_server: MockMCPServer, mock_container: MagicMock) -> None:
     """Test that _register_prompts registers all the expected prompts."""
     # Call the function
-    _register_prompts(mock_mcp_server, mock_container)
+    _register_prompts(mock_mcp_server)
 
     # Verify all expected prompts are registered
     expected_prompts = [
@@ -153,7 +149,7 @@ def test_register_prompts_registers_all_prompts(
         assert prompt_name in mock_mcp_server.prompts, f"Prompt {prompt_name} was not registered"
 
 
-@patch("mcp_server_tree_sitter.tools.analysis.extract_symbols")
+@patch("mcp_server_tree_sitter.tools.analysis_tools.extract_symbols")
 def test_get_symbols_tool_calls_extract_symbols(
     mock_extract_symbols: MagicMock,
     mock_mcp_server: MockMCPServer,
@@ -161,11 +157,12 @@ def test_get_symbols_tool_calls_extract_symbols(
 ) -> None:
     """Test that the get_symbols tool correctly calls extract_symbols."""
     # Setup
-    register_tools(mock_mcp_server, mock_container)
+    register_tools(mock_mcp_server)
     mock_extract_symbols.return_value = {"functions": [], "classes": []}
 
-    # Call the tool and discard result
-    mock_mcp_server.tools["get_symbols"](project="test_project", file_path="test.py")
+    # Tool resolves container at call time via get_container()
+    with patch("mcp_server_tree_sitter.tools.analysis_tools.get_container", return_value=mock_container):
+        mock_mcp_server.tools["get_symbols"](project="test_project", file_path="test.py")
 
     # Verify extract_symbols was called with correct parameters
     mock_extract_symbols.assert_called_once()
@@ -175,7 +172,7 @@ def test_get_symbols_tool_calls_extract_symbols(
     assert args[2] == mock_container.language_registry
 
 
-@patch("mcp_server_tree_sitter.tools.search.query_code")
+@patch("mcp_server_tree_sitter.tools.search_tools.query_code")
 def test_run_query_tool_calls_query_code(
     mock_query_code: MagicMock,
     mock_mcp_server: MockMCPServer,
@@ -183,13 +180,13 @@ def test_run_query_tool_calls_query_code(
 ) -> None:
     """Test that the run_query tool correctly calls query_code."""
     # Setup
-    register_tools(mock_mcp_server, mock_container)
+    register_tools(mock_mcp_server)
     mock_query_code.return_value = []
 
-    # Call the tool and discard result
-    mock_mcp_server.tools["run_query"](
-        project="test_project", query="test query", file_path="test.py", language="python"
-    )
+    with patch("mcp_server_tree_sitter.tools.search_tools.get_container", return_value=mock_container):
+        mock_mcp_server.tools["run_query"](
+            project="test_project", query="test query", file_path="test.py", language="python"
+        )
 
     # Verify query_code was called with correct parameters
     mock_query_code.assert_called_once()
@@ -202,15 +199,13 @@ def test_run_query_tool_calls_query_code(
     assert args[5] == "python"
 
 
-def test_configure_tool_updates_config(
-    mock_mcp_server: MockMCPServer, mock_container: MagicMock
-) -> None:
+def test_configure_tool_updates_config(mock_mcp_server: MockMCPServer, mock_container: MagicMock) -> None:
     """Test that the configure tool updates the configuration correctly."""
     # Setup
-    register_tools(mock_mcp_server, mock_container)
+    register_tools(mock_mcp_server)
 
-    # Call the tool and discard result
-    mock_mcp_server.tools["configure"](cache_enabled=False, max_file_size_mb=10, log_level="DEBUG")
+    with patch("mcp_server_tree_sitter.tools.project_tools.get_container", return_value=mock_container):
+        mock_mcp_server.tools["configure"](cache_enabled=False, max_file_size_mb=10, log_level="DEBUG")
 
     # Verify the config manager was updated
     mock_container.config_manager.update_value.assert_any_call("cache.enabled", False)
@@ -219,7 +214,7 @@ def test_configure_tool_updates_config(
     mock_container.tree_cache.set_enabled.assert_called_with(False)
 
 
-@patch("mcp_server_tree_sitter.tools.file_operations.list_project_files")
+@patch("mcp_server_tree_sitter.tools.file_tools.list_project_files")
 def test_list_files_tool_calls_list_project_files(
     mock_list_files: MagicMock,
     mock_mcp_server: MockMCPServer,
@@ -227,11 +222,11 @@ def test_list_files_tool_calls_list_project_files(
 ) -> None:
     """Test that the list_files tool correctly calls list_project_files."""
     # Setup
-    register_tools(mock_mcp_server, mock_container)
+    register_tools(mock_mcp_server)
     mock_list_files.return_value = ["file1.py", "file2.py"]
 
-    # Call the tool and discard result
-    mock_mcp_server.tools["list_files"](project="test_project", pattern="**/*.py")
+    with patch("mcp_server_tree_sitter.tools.file_tools.get_container", return_value=mock_container):
+        mock_mcp_server.tools["list_files"](project="test_project", pattern="**/*.py")
 
     # Verify list_project_files was called with correct parameters
     mock_list_files.assert_called_once()
@@ -240,7 +235,7 @@ def test_list_files_tool_calls_list_project_files(
     assert args[1] == "**/*.py"
 
 
-@patch("mcp_server_tree_sitter.tools.ast_operations.get_file_ast")
+@patch("mcp_server_tree_sitter.tools.ast_tools.get_file_ast")
 def test_get_ast_tool_calls_get_file_ast(
     mock_get_ast: MagicMock,
     mock_mcp_server: MockMCPServer,
@@ -248,11 +243,11 @@ def test_get_ast_tool_calls_get_file_ast(
 ) -> None:
     """Test that the get_ast tool correctly calls get_file_ast."""
     # Setup
-    register_tools(mock_mcp_server, mock_container)
+    register_tools(mock_mcp_server)
     mock_get_ast.return_value = {"tree": {}, "file": "test.py", "language": "python"}
 
-    # Call the tool and discard result
-    mock_mcp_server.tools["get_ast"](project="test_project", path="test.py", max_depth=3)
+    with patch("mcp_server_tree_sitter.tools.ast_tools.get_container", return_value=mock_container):
+        mock_mcp_server.tools["get_ast"](project="test_project", path="test.py", max_depth=3)
 
     # Verify get_file_ast was called with correct parameters
     mock_get_ast.assert_called_once()

@@ -152,7 +152,7 @@ def main() -> None:
     from .tools.registration import register_tools
 
     register_capabilities(mcp)
-    register_tools(mcp, container)
+    register_tools(mcp)
 
     # Load configuration from environment
     config = container.get_config()

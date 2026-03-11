@@ -123,9 +123,7 @@ def test_mcp_context_report_progress_without_ctx(mock_logger: MagicMock) -> None
 
 
 @patch("mcp_server_tree_sitter.utils.context.mcp_context.logger")
-def test_mcp_context_report_progress_with_exception(
-    mock_logger: MagicMock, mock_mcp_context: MagicMock
-) -> None:
+def test_mcp_context_report_progress_with_exception(mock_logger: MagicMock, mock_mcp_context: MagicMock) -> None:
     """Test MCPContext.report_progress when an exception occurs."""
     # Configure mock to raise exception
     mock_mcp_context.report_progress.side_effect = Exception("Test exception")
