@@ -133,6 +133,7 @@ def get_enclosing_scope_for_path(
     label: str,
     language_registry: LanguageRegistry,
     tree_cache: TreeCache,
+    max_lines: int = 0,
 ) -> Dict[str, Any]:
     """
     Resolve file, parse it (with cache), and return the enclosing scope at (row, column).
@@ -146,9 +147,10 @@ def get_enclosing_scope_for_path(
         column: Column (0-based).
         language_registry: Language registry for detection and parsing.
         tree_cache: Tree cache instance.
+        max_lines: Maximum number of lines to return (0 = no limit).
 
     Returns:
-        Dict with kind, text, start_line, end_line.
+        Dict with kind, text, start_line, end_line, and truncated flag.
     """
     abs_path = project.get_file_path(path)
 
@@ -163,7 +165,7 @@ def get_enclosing_scope_for_path(
 
     tree, source_bytes = parse_file(abs_path, language, language_registry, tree_cache)
 
-    return find_enclosing_scope(tree.root_node, source_bytes, row, column, label, language)
+    return find_enclosing_scope(tree.root_node, source_bytes, row, column, label, language, max_lines)
 
 
 def find_node_at_position(root_node: Node, row: int, column: int) -> Optional[Node]:

@@ -58,6 +58,7 @@ def register_search_tools(mcp_server: FastMCP) -> None:
         row: int,
         column: int,
         label: Optional[str] = None,
+        max_lines: int = 0,
     ) -> Dict[str, Any]:
         """Find the enclosing scope (function, class, or module) for a position.
 
@@ -67,6 +68,8 @@ def register_search_tools(mcp_server: FastMCP) -> None:
             row: Line number (0-based)
             column: Column number (0-based)
             label: Optional text label at the position (e.g., variable name)
+            max_lines: Maximum number of lines to return (0 = no limit). When exceeded,
+                      returns a centered window around the target row with truncation markers.
 
         Returns:
             Information about the enclosing scope, including type, name, and range
@@ -82,6 +85,7 @@ def register_search_tools(mcp_server: FastMCP) -> None:
             label if label is not None else "",
             container.language_registry,
             container.tree_cache,
+            max_lines,
         )
 
     @mcp_server.tool()
