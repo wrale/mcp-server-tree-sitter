@@ -101,8 +101,9 @@ def find_node_at_position(root_node: Node, row: int, column: int) -> Optional[No
     safe_node = ensure_node(root_node)
     point = (row, column)
 
-    # Check if point is within root_node
-    if not (safe_node.start_point <= point <= safe_node.end_point):
+    # Check if point is within root_node.
+    # end_point in tree-sitter is exclusive (one past the last character), so use < for the upper bound.
+    if not (safe_node.start_point <= point < safe_node.end_point):
         return None
 
     # Find the smallest node that contains the point
@@ -111,14 +112,13 @@ def find_node_at_position(root_node: Node, row: int, column: int) -> Optional[No
 
     # Special handling for function definitions and identifiers
     def check_for_specific_nodes(node: Node) -> Optional[Node]:
-        # For function definitions, check if position is over the function name
+        # For function definitions, check if position is over the function name.
+        # Use tuple comparison (same as the main traversal) so multi-line names are
+        # handled correctly, and use < for end_point (exclusive upper bound).
         if node.type == "function_definition":
             for child in node.children:
                 if child.type in ["identifier", "name"]:
-                    if (
-                        child.start_point[0] <= row <= child.end_point[0]
-                        and child.start_point[1] <= column <= child.end_point[1]
-                    ):
+                    if child.start_point <= point < child.end_point:
                         return child
         return None
 
@@ -129,7 +129,7 @@ def find_node_at_position(root_node: Node, row: int, column: int) -> Optional[No
 
     while cursor.goto_first_child():
         # If current node contains the point, it's better than the parent
-        if cursor.node is not None and cursor.node.start_point <= point <= cursor.node.end_point:
+        if cursor.node is not None and cursor.node.start_point <= point < cursor.node.end_point:
             current_best = cursor.node
 
             # Check for specific nodes like identifiers
@@ -142,7 +142,7 @@ def find_node_at_position(root_node: Node, row: int, column: int) -> Optional[No
         # Try siblings
         found_in_sibling = False
         while cursor.goto_next_sibling():
-            if cursor.node is not None and cursor.node.start_point <= point <= cursor.node.end_point:
+            if cursor.node is not None and cursor.node.start_point <= point < cursor.node.end_point:
                 current_best = cursor.node
 
                 # Check for specific nodes
