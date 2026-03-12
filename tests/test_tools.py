@@ -60,6 +60,41 @@ def test_tools_happy_path_get_file(project_with_python: tuple[str, Path]) -> Non
     assert "print" in content
 
 
+def test_tools_get_file_respects_start_line_and_max_lines(project_with_python: tuple[str, Path]) -> None:
+    """get_file with start_line and max_lines returns only that slice, not the whole file."""
+    name, root = project_with_python
+    (root / "main.py").write_text("line0\nline1\nline2\nline3\nline4\n")
+    # First two lines only
+    content = get_file(project=name, path="main.py", start_line=0, max_lines=2)
+    assert content.strip() == "line0\nline1"
+    assert "line2" not in content
+    # Lines 2-3 (0-based: start_line=2, 2 lines)
+    content = get_file(project=name, path="main.py", start_line=2, max_lines=2)
+    assert content.strip() == "line2\nline3"
+    assert "line0" not in content and "line4" not in content
+
+
+def test_tools_get_file_start_line_past_end_returns_empty(
+    project_with_python: tuple[str, Path],
+) -> None:
+    """get_file with start_line past EOF returns empty string."""
+    name, root = project_with_python
+    (root / "main.py").write_text("a\nb\nc\n")
+    content = get_file(project=name, path="main.py", start_line=10, max_lines=5)
+    assert content == ""
+
+
+def test_tools_get_file_max_lines_past_end_returns_to_eof(
+    project_with_python: tuple[str, Path],
+) -> None:
+    """get_file with max_lines beyond EOF returns from start_line to end of file."""
+    name, root = project_with_python
+    (root / "main.py").write_text("L0\nL1\nL2\nL3\n")
+    content = get_file(project=name, path="main.py", start_line=2, max_lines=100)
+    assert content == "L2\nL3\n"
+    assert "L0" not in content
+
+
 def test_tools_happy_path_run_query(project_with_python: tuple[str, Path]) -> None:
     """Happy path: run_query runs tree-sitter query."""
     name, _ = project_with_python

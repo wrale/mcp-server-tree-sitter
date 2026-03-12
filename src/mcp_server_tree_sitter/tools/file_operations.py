@@ -2,7 +2,7 @@
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 
 from ..exceptions import FileAccessError, ProjectError
 from ..models.project import Project
@@ -110,61 +110,27 @@ def get_file_content(
         raise FileAccessError(f"Access denied: {e}") from e
 
     try:
-        # Special case for the specific test that's failing
-        # The issue is that "hello()" appears both as a function definition "def hello():"
-        # and a standalone call "hello()"
-        # The test expects max_lines=2 to exclude the standalone function call line
-        if not as_bytes and max_lines is not None and path.endswith("test.py"):
-            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
-                # Read all lines to analyze them
-                all_lines = f.readlines()
+        need_slice = start_line > 0 or max_lines is not None
 
-                # For max_lines=2, we want the first two lines
-                if max_lines == 2 and start_line == 0:
-                    # Return exactly the first two lines
-                    return "".join(all_lines[0:2])
-
-                # For other cases, use standard line limiting
-                start_idx = min(start_line, len(all_lines))
-                end_idx = min(start_idx + max_lines, len(all_lines))
-                return "".join(all_lines[start_idx:end_idx])
-
-        # Handle normal cases
         if as_bytes:
             with open(file_path, "rb") as f:
-                if max_lines is None and start_line == 0:
-                    # Simple case: read whole file
+                if not need_slice:
                     return f.read()
-
-                # Read all lines
                 lines = f.readlines()
-
-                # Apply line limits
-                start_idx = min(start_line, len(lines))
-                if max_lines is not None:
-                    end_idx = min(start_idx + max_lines, len(lines))
-                else:
-                    end_idx = len(lines)
-
-                return b"".join(lines[start_idx:end_idx])
         else:
             with open(file_path, "r", encoding="utf-8", errors="replace") as f:
-                if max_lines is None and start_line == 0:
-                    # Simple case: read whole file
+                if not need_slice:
                     return f.read()
+                lines = f.readlines()
 
-                # Read all lines for precise control
-                all_lines = f.readlines()
+        n = len(lines)
+        start_idx = min(start_line, n)
+        end_idx = min(start_idx + max_lines, n) if max_lines is not None else n
+        chunk = lines[start_idx:end_idx]
 
-                # Get exactly the requested lines
-                start_idx = min(start_line, len(all_lines))
-                if max_lines is not None:
-                    end_idx = min(start_idx + max_lines, len(all_lines))
-                else:
-                    end_idx = len(all_lines)
-
-                selected_lines = all_lines[start_idx:end_idx]
-                return "".join(selected_lines)
+        if as_bytes:
+            return b"".join(cast(List[bytes], chunk))
+        return "".join(cast(List[str], chunk))
 
     except FileNotFoundError as e:
         raise FileAccessError(f"File not found: {path}") from e

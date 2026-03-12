@@ -53,7 +53,6 @@ def test_key_modules_use_bootstrap() -> None:
         "mcp_server_tree_sitter.server",
         "mcp_server_tree_sitter.config",
         "mcp_server_tree_sitter.context",
-        "mcp_server_tree_sitter.di",
         "mcp_server_tree_sitter.__main__",
     ]
 

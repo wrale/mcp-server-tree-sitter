@@ -49,6 +49,10 @@ def test_project(tmp_path: Path) -> Generator[Dict[str, Any], None, None]:
     hidden_file = hidden_dir / "hidden.txt"
     hidden_file.write_text("This is a hidden file.\n")
 
+    # Small file with known line count for boundary tests (5 lines, 0-based 0..4)
+    small_file = project_path / "small.txt"
+    small_file.write_text("L0\nL1\nL2\nL3\nL4\n")
+
     # Register the project
     project_name = "file_operations_test"
     try:
@@ -71,6 +75,7 @@ def test_project(tmp_path: Path) -> Generator[Dict[str, Any], None, None]:
             "large": "large.log",
             "hidden_dir": ".hidden",
             "hidden_file": ".hidden/hidden.txt",
+            "small": "small.txt",  # exactly 5 lines for boundary tests
         },
     }
 
@@ -208,6 +213,249 @@ def test_get_file_content_with_line_limits(test_project: Dict[str, Any]) -> None
     # Verify only lines after start_line are returned
     assert "def hello()" not in content
     assert "hello()" in content
+
+
+# Edge cases: out-of-bounds and boundary conditions for get_file_content
+def test_get_file_content_start_line_at_end_of_file_returns_empty(
+    test_project: Dict[str, Any],
+) -> None:
+    """start_line equal to line count returns empty (no lines to read)."""
+    from mcp_server_tree_sitter.api import get_project_registry
+
+    project = get_project_registry().get_project(test_project["name"])
+    # small.txt has 5 lines (indices 0..4); start_line=5 is past last line
+    content = get_file_content(project, test_project["files"]["small"], start_line=5)
+    assert content == ""
+
+
+def test_get_file_content_start_line_past_end_of_file_returns_empty(
+    test_project: Dict[str, Any],
+) -> None:
+    """start_line beyond file length returns empty."""
+    from mcp_server_tree_sitter.api import get_project_registry
+
+    project = get_project_registry().get_project(test_project["name"])
+    content = get_file_content(
+        project, test_project["files"]["small"], start_line=100, max_lines=10
+    )
+    assert content == ""
+
+
+def test_get_file_content_start_in_file_max_lines_past_end_returns_to_eof(
+    test_project: Dict[str, Any],
+) -> None:
+    """start_line in range but max_lines beyond EOF returns from start to end of file."""
+    from mcp_server_tree_sitter.api import get_project_registry
+
+    project = get_project_registry().get_project(test_project["name"])
+    # small.txt: 5 lines; start_line=2, max_lines=100 -> lines 2,3,4
+    content = get_file_content(
+        project, test_project["files"]["small"], start_line=2, max_lines=100
+    )
+    assert content == "L2\nL3\nL4\n"
+    assert "L0" not in content
+    assert "L1" not in content
+
+
+def test_get_file_content_max_lines_larger_than_file_returns_whole_file(
+    test_project: Dict[str, Any],
+) -> None:
+    """start_line=0 and max_lines larger than file returns full file."""
+    from mcp_server_tree_sitter.api import get_project_registry
+
+    project = get_project_registry().get_project(test_project["name"])
+    content = get_file_content(
+        project, test_project["files"]["small"], start_line=0, max_lines=9999
+    )
+    assert content == "L0\nL1\nL2\nL3\nL4\n"
+
+
+def test_get_file_content_empty_file_with_start_line_returns_empty(
+    test_project: Dict[str, Any],
+) -> None:
+    """Empty file with start_line > 0 returns empty."""
+    from mcp_server_tree_sitter.api import get_project_registry
+
+    project = get_project_registry().get_project(test_project["name"])
+    content = get_file_content(
+        project, test_project["files"]["empty"], start_line=2, max_lines=5
+    )
+    assert content == ""
+
+
+def test_get_file_content_empty_file_with_max_lines_returns_empty(
+    test_project: Dict[str, Any],
+) -> None:
+    """Empty file with max_lines returns empty."""
+    from mcp_server_tree_sitter.api import get_project_registry
+
+    project = get_project_registry().get_project(test_project["name"])
+    content = get_file_content(
+        project, test_project["files"]["empty"], start_line=0, max_lines=10
+    )
+    assert content == ""
+
+
+def test_get_file_content_last_line_only(
+    test_project: Dict[str, Any],
+) -> None:
+    """start_line at last valid index returns only last line."""
+    from mcp_server_tree_sitter.api import get_project_registry
+
+    project = get_project_registry().get_project(test_project["name"])
+    # small.txt: 5 lines; index 4 is last
+    content = get_file_content(
+        project, test_project["files"]["small"], start_line=4, max_lines=1
+    )
+    assert content == "L4\n"
+
+
+def test_get_file_content_start_line_past_end_with_max_lines_returns_empty(
+    test_project: Dict[str, Any],
+) -> None:
+    """start_line past EOF with max_lines still returns empty (no crash)."""
+    from mcp_server_tree_sitter.api import get_project_registry
+
+    project = get_project_registry().get_project(test_project["name"])
+    content = get_file_content(
+        project, test_project["files"]["small"], start_line=10, max_lines=5
+    )
+    assert content == ""
+
+
+def test_get_file_content_as_bytes_edge_case_max_lines_past_end(
+    test_project: Dict[str, Any],
+) -> None:
+    """as_bytes=True with start_line + max_lines past EOF returns correct slice."""
+    from mcp_server_tree_sitter.api import get_project_registry
+
+    project = get_project_registry().get_project(test_project["name"])
+    content = get_file_content(
+        project,
+        test_project["files"]["small"],
+        as_bytes=True,
+        start_line=1,
+        max_lines=100,
+    )
+    assert content == b"L1\nL2\nL3\nL4\n"
+
+
+def test_get_file_content_as_bytes_start_line_past_end_returns_empty(
+    test_project: Dict[str, Any],
+) -> None:
+    """as_bytes=True with start_line past EOF returns empty bytes."""
+    from mcp_server_tree_sitter.api import get_project_registry
+
+    project = get_project_registry().get_project(test_project["name"])
+    content = get_file_content(
+        project,
+        test_project["files"]["small"],
+        as_bytes=True,
+        start_line=5,
+        max_lines=2,
+    )
+    assert content == b""
+
+
+def test_get_file_content_as_bytes_start_line_at_end_of_file_returns_empty(
+    test_project: Dict[str, Any],
+) -> None:
+    """as_bytes=True with start_line equal to line count returns empty bytes."""
+    from mcp_server_tree_sitter.api import get_project_registry
+
+    project = get_project_registry().get_project(test_project["name"])
+    content = get_file_content(
+        project,
+        test_project["files"]["small"],
+        as_bytes=True,
+        start_line=5,
+    )
+    assert content == b""
+
+
+def test_get_file_content_as_bytes_max_lines_larger_than_file_returns_whole_file(
+    test_project: Dict[str, Any],
+) -> None:
+    """as_bytes=True with max_lines larger than file returns full file as bytes."""
+    from mcp_server_tree_sitter.api import get_project_registry
+
+    project = get_project_registry().get_project(test_project["name"])
+    content = get_file_content(
+        project,
+        test_project["files"]["small"],
+        as_bytes=True,
+        start_line=0,
+        max_lines=9999,
+    )
+    assert content == b"L0\nL1\nL2\nL3\nL4\n"
+
+
+def test_get_file_content_as_bytes_empty_file_with_start_line_returns_empty(
+    test_project: Dict[str, Any],
+) -> None:
+    """as_bytes=True on empty file with start_line and max_lines returns empty bytes."""
+    from mcp_server_tree_sitter.api import get_project_registry
+
+    project = get_project_registry().get_project(test_project["name"])
+    content = get_file_content(
+        project,
+        test_project["files"]["empty"],
+        as_bytes=True,
+        start_line=2,
+        max_lines=5,
+    )
+    assert content == b""
+
+
+def test_get_file_content_as_bytes_empty_file_with_max_lines_returns_empty(
+    test_project: Dict[str, Any],
+) -> None:
+    """as_bytes=True on empty file with max_lines returns empty bytes."""
+    from mcp_server_tree_sitter.api import get_project_registry
+
+    project = get_project_registry().get_project(test_project["name"])
+    content = get_file_content(
+        project,
+        test_project["files"]["empty"],
+        as_bytes=True,
+        start_line=0,
+        max_lines=10,
+    )
+    assert content == b""
+
+
+def test_get_file_content_as_bytes_last_line_only(
+    test_project: Dict[str, Any],
+) -> None:
+    """as_bytes=True with start_line at last line and max_lines=1 returns last line as bytes."""
+    from mcp_server_tree_sitter.api import get_project_registry
+
+    project = get_project_registry().get_project(test_project["name"])
+    content = get_file_content(
+        project,
+        test_project["files"]["small"],
+        as_bytes=True,
+        start_line=4,
+        max_lines=1,
+    )
+    assert content == b"L4\n"
+
+
+def test_get_file_content_as_bytes_slice_first_two_lines(
+    test_project: Dict[str, Any],
+) -> None:
+    """as_bytes=True with start_line=0 and max_lines=2 returns first two lines as bytes."""
+    from mcp_server_tree_sitter.api import get_project_registry
+
+    project = get_project_registry().get_project(test_project["name"])
+    content = get_file_content(
+        project,
+        test_project["files"]["small"],
+        as_bytes=True,
+        start_line=0,
+        max_lines=2,
+    )
+    assert content == b"L0\nL1\n"
 
 
 def test_get_file_content_nonexistent_file(test_project: Dict[str, Any]) -> None:
