@@ -8,16 +8,15 @@ Tests for the MCP Tree-sitter Server. Run with `make test` or `uv run --extra de
 
 ## Configuration
 
-| File                        | Purpose                                                                                       |
-|-----------------------------|-----------------------------------------------------------------------------------------------|
-| **test_basic.py**           | Default config values and basic project registry; minimal smoke tests.                        |
-| **test_config_manager.py**  | `ConfigurationManager`: init, load from file, `update_value`, `to_dict`, env overrides.       |
-| **test_config_behavior.py** | How config (cache, security, max depth) affects real behavior (AST, file access, exclusions). |
-| **test_yaml_config.py**     | Loading and applying server config from YAML files (no DI).                                   |
-| **test_yaml_config_di.py**  | Same as above but through the DI/configure path.                                              |
-| **test_env_config.py**      | Environment variable overrides (precedence over YAML and defaults).                           |
-| **test_cache_config.py**    | Cache-specific config: enabled, size, TTL, and cache behavior under those settings.           |
-| **test_debug_flag.py**      | Debug flag and `MCP_TS_LOG_LEVEL`; `update_log_levels` and handler sync.                      |
+| File                                      | Purpose                                                                                       |
+|-------------------------------------------|-----------------------------------------------------------------------------------------------|
+| **test_basic.py**                         | Default config values and basic project registry; minimal smoke tests.                        |
+| **test_config/test_config_manager.py**   | `ConfigurationManager`: init, load from file, `update_value`, `to_dict`, env overrides.       |
+| **test_config/test_config_behavior.py**  | How config (cache, security, max depth) affects real behavior (AST, file access, exclusions). |
+| **test_config/test_config_edge_cases.py**| Malformed YAML, unknown keys, env overrides, runtime `update_value`, precedence.               |
+| **test_config/test_yaml_config_di.py**   | Loading and applying server config from YAML via the DI/configure path.                        |
+| **test_config/test_env_config.py**       | Environment variable overrides (precedence over YAML and defaults).                           |
+| **test_config/test_cache_config.py**     | Cache-specific config: enabled, size, TTL, and cache behavior under those settings.           |
 
 ---
 
@@ -32,14 +31,15 @@ Tests for the MCP Tree-sitter Server. Run with `make test` or `uv run --extra de
 
 ## Logging
 
-| File                           | Purpose                                                                                        |
-|--------------------------------|------------------------------------------------------------------------------------------------|
-| **test_logging_bootstrap.py**  | Logging bootstrap: import order, delegation to bootstrap, key modules using it, level updates. |
-| **test_logging_config.py**     | Log level configuration (without DI).                                                          |
-| **test_logging_config_di.py**  | Log level configuration with DI and YAML.                                                      |
-| **test_logging_env_vars.py**   | `MCP_TS_LOG_LEVEL` and `get_log_level_from_env` / `update_log_levels`.                         |
-| **test_logging_early_init.py** | Logging configured early in lifecycle; env vars and handler sync at import.                    |
-| **test_logging_handlers.py**   | Handler level synchronization and multiple handlers with log streams.                          |
+| File                                          | Purpose                                                                                        |
+|-----------------------------------------------|------------------------------------------------------------------------------------------------|
+| **test_logging/test_logging_bootstrap.py**    | Logging bootstrap: import order, delegation to bootstrap, key modules using it, level updates. |
+| **test_logging/test_logging_config.py**       | Log level configuration (without DI).                                                          |
+| **test_logging/test_logging_config_di.py**    | Log level configuration with DI and YAML.                                                      |
+| **test_logging/test_logging_env_vars.py**     | `MCP_TS_LOG_LEVEL` and `get_log_level_from_env` / `update_log_levels`.                         |
+| **test_logging/test_logging_early_init.py**   | Logging configured early in lifecycle; env vars and handler sync at import.                    |
+| **test_logging/test_logging_handlers.py**     | Handler level synchronization and multiple handlers with log streams.                          |
+| **test_logging/test_debug_flag.py**           | Debug flag and `MCP_TS_LOG_LEVEL`; `update_log_levels` and handler sync.                       |
 
 ---
 
@@ -78,6 +78,7 @@ Tests for the MCP Tree-sitter Server. Run with `make test` or `uv run --extra de
 |---------------------------------|-----------------------------------------------------------------------------------------------|
 | **test_scope_node_types.py**    | Scope node types and enclosure order per language (used by find_enclosing_scope).             |
 | **test_get_enclosing_scope.py** | get_enclosing_scope tool and find_enclosing_scope helper; position in function/class/module. |
+| **enclosing_scope/**            | Per-language scope tests (C, C#, C++, Go, Java, JavaScript, Julia, Kotlin, Python, Rust, Swift, TypeScript) and `scope_assertions.py` helpers. |
 
 ---
 
