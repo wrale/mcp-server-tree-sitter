@@ -1,6 +1,6 @@
 """Python language data."""
 
-from typing import Any, Dict, Set
+from typing import Any, Dict
 
 from ...utils.tree_sitter_helpers import get_node_text, run_query_captures
 from ..import_enrichers import (
@@ -55,7 +55,7 @@ def _enrich_symbol_imports(
 
 
 def _enrich_dependency_modules(
-    module_imports: Set[str],
+    module_imports: set[str],
     safe_lang: Any,  # noqa: ANN401 (tree-sitter Language)
     tree: Any,  # noqa: ANN401 (tree-sitter Tree)
     source_bytes: bytes,

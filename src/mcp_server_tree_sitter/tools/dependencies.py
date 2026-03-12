@@ -1,7 +1,7 @@
 """Dependency discovery (imports/includes) from source files."""
 
 from collections import defaultdict
-from typing import Dict, List, Set
+from typing import Dict, List
 
 from ..exceptions import SecurityError
 from ..language.import_enrichers import get_dependency_module_enricher
@@ -59,7 +59,7 @@ def find_dependencies(
         matches = run_query_captures(safe_lang, query_string, tree.root_node)
 
         imports: Dict[str, List[str]] = defaultdict(list)
-        module_imports: Set[str] = set()
+        module_imports: set[str] = set()
 
         def process_import_node(node: Node, capture_name: str) -> None:
             try:

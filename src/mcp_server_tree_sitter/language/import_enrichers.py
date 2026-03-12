@@ -5,7 +5,7 @@ extra queries and add aliased/supplementary imports. Tools call get_*_enricher(l
 and invoke the callback if present.
 """
 
-from typing import Any, Callable, Dict, Set
+from typing import Any, Callable, Dict
 
 from ..utils.tree_sitter_types import Node
 
@@ -21,7 +21,7 @@ def node_location(node: Node) -> Dict[str, Dict[str, int]]:
 # Language id -> (symbols, safe_lang, tree, source_bytes) -> None
 _SymbolImportEnricher = Callable[[Dict[str, list], Any, Any, bytes], None]  # noqa: ANN401
 # Language id -> (module_imports, safe_lang, tree, source_bytes) -> None
-_DependencyModuleEnricher = Callable[[Set[str], Any, Any, bytes], None]  # noqa: ANN401
+_DependencyModuleEnricher = Callable[[set[str], Any, Any, bytes], None]  # noqa: ANN401
 
 _symbol_enrichers: Dict[str, _SymbolImportEnricher] = {}
 _dependency_enrichers: Dict[str, _DependencyModuleEnricher] = {}

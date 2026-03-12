@@ -11,7 +11,7 @@ import os
 import threading
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List
 
 from ..exceptions import ProjectError
 from ..language.registry import LanguageRegistry
@@ -58,7 +58,7 @@ class Project:
 
         with self.scan_lock:
             languages: Dict[str, int] = {}
-            scanned: Set[str] = set()
+            scanned: set[str] = set()
 
             for root, _, files in os.walk(self.root_path):
                 # Skip hidden directories
