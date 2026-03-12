@@ -1,6 +1,6 @@
 """Symbol extraction from source files using tree-sitter queries."""
 
-from typing import Any, Dict, Generator, List, Optional, Tuple, Union
+from typing import Any, Dict, Generator, List, Optional, Union
 
 from ..exceptions import SecurityError
 from ..language.import_enrichers import get_symbol_import_enricher
@@ -145,7 +145,7 @@ def process_symbol_matches(
     symbols_dict: Dict[str, List[Dict[str, Any]]],
     source_bytes: bytes,
     tree: Tree,
-    class_ranges: Optional[List[Tuple[int, int]]] = None,
+    class_ranges: Optional[List[tuple[int, int]]] = None,
 ) -> None:
     """
     Process matches from a query and extract symbols.
@@ -238,7 +238,7 @@ def process_symbol_matches(
             # Skip problematic nodes
             pass
 
-    def iter_matches() -> Generator[Tuple[Node, str], None, None]:
+    def iter_matches() -> Generator[tuple[Node, str], None, None]:
         if isinstance(matches, dict):
             for capture_name, nodes in matches.items():
                 for node in nodes:

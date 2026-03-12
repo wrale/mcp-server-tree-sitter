@@ -5,7 +5,7 @@ and consistent interfaces for both text and binary operations.
 """
 
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Union
 
 
 def read_text_file(path: Union[str, Path]) -> List[str]:
@@ -36,7 +36,7 @@ def read_binary_file(path: Union[str, Path]) -> bytes:
         return f.read()
 
 
-def get_file_content_and_lines(path: Union[str, Path]) -> Tuple[bytes, List[str]]:
+def get_file_content_and_lines(path: Union[str, Path]) -> tuple[bytes, List[str]]:
     """
     Get both binary content and text lines from a file.
 
@@ -117,7 +117,7 @@ def get_comment_prefix(language: str) -> Optional[str]:
     return comment_starters.get(language)
 
 
-def parse_file_with_encoding(path: Union[str, Path], encoding: str = "utf-8") -> Tuple[bytes, List[str]]:
+def parse_file_with_encoding(path: Union[str, Path], encoding: str = "utf-8") -> tuple[bytes, List[str]]:
     """
     Parse a file with explicit encoding handling, returning both binary and text.
 

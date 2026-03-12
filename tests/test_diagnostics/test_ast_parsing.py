@@ -2,7 +2,7 @@
 
 import time
 from pathlib import Path
-from typing import Any, Dict, Generator, Tuple
+from typing import Any, Dict, Generator
 
 import pytest
 
@@ -42,7 +42,7 @@ def test_project(tmp_path: Path) -> Generator[Dict[str, Any], None, None]:
             pass
 
 
-def parse_file(file_path: Path, language: str) -> Tuple[Any, bytes]:
+def parse_file(file_path: Path, language: str) -> tuple[Any, bytes]:
     """Replacement for the relocated parse_file function."""
     language_registry = get_language_registry()
     tree_cache = get_tree_cache()

@@ -2,7 +2,7 @@
 
 import logging
 import threading
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, Dict, List, Optional, cast
 
 from tree_sitter_language_pack import get_language, get_parser
 
@@ -135,7 +135,7 @@ class LanguageRegistry:
         # Return as a sorted list
         return sorted(available)
 
-    def list_installable_languages(self) -> List[Tuple[str, str]]:
+    def list_installable_languages(self) -> List[tuple[str, str]]:
         """
         List languages that can be installed.
         With tree-sitter-language-pack, no additional installation is needed.

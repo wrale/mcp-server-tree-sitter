@@ -5,7 +5,7 @@ import threading
 import time
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple, cast
+from typing import Any, Dict, Optional, cast
 
 # Import global_context at runtime to avoid circular imports
 from ..utils.tree_sitter_types import (
@@ -30,7 +30,7 @@ class TreeCache:
         enabled: bool = True,
     ) -> None:
         """Initialize the tree cache with explicit size, TTL, and enabled settings."""
-        self.cache: Dict[str, Tuple[Tree, bytes, float]] = {}  # (tree, source, timestamp)
+        self.cache: Dict[str, tuple[Tree, bytes, float]] = {}  # (tree, source, timestamp)
         self.lock = threading.RLock()
         self.current_size_bytes = 0
         self.modified_trees: Dict[str, bool] = {}
@@ -68,7 +68,7 @@ class TreeCache:
             logger.debug("Cache disabled: self.enabled=False")
         return self.enabled
 
-    def get(self, file_path: Path, language: str) -> Optional[Tuple[Tree, bytes]]:
+    def get(self, file_path: Path, language: str) -> Optional[tuple[Tree, bytes]]:
         """
         Get cached tree if available and not expired.
 

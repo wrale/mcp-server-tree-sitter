@@ -4,7 +4,7 @@ This module provides functions for converting tree-sitter AST nodes to dictionar
 finding nodes at specific positions, and other AST-related operations.
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from ..language.scope_node_types import get_enclosure_node_types, node_type_to_kind
 from ..utils.tree_sitter_helpers import (
@@ -166,7 +166,7 @@ def find_node_at_position(root_node: Node, row: int, column: int) -> Optional[No
 def extract_node_path(
     root_node: Node,
     target_node: Node,
-) -> List[Tuple[str, Optional[str]]]:
+) -> List[tuple[str, Optional[str]]]:
     """
     Extract the path from root to a specific node using safe node handling.
 
@@ -293,7 +293,7 @@ def _truncate_scope_text(
     original_end_line: int,
     target_row: int,
     max_lines: int,
-) -> Tuple[str, int, int]:
+) -> tuple[str, int, int]:
     """
     Truncate scope text to max_lines, centered around target_row.
 

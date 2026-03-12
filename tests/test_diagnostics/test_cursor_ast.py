@@ -1,7 +1,7 @@
 """Pytest-based diagnostic tests for cursor-based AST functionality."""
 
 from pathlib import Path
-from typing import Any, Dict, Generator, Tuple
+from typing import Any, Dict, Generator
 
 import pytest
 
@@ -12,7 +12,7 @@ from mcp_server_tree_sitter.testing import DiagnosticData
 from tests.test_helpers import register_project_tool
 
 
-def parse_file(file_path: Path, language: str) -> Tuple[Any, bytes]:
+def parse_file(file_path: Path, language: str) -> tuple[Any, bytes]:
     """Replacement for the relocated parse_file function."""
     language_registry = get_language_registry()
 
