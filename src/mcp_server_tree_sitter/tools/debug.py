@@ -1,7 +1,7 @@
 """Debug tools for diagnosing configuration issues."""
 
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import yaml
 
@@ -9,7 +9,7 @@ from ..config import ServerConfig, update_config_from_new
 from ..context import global_context
 
 
-def diagnose_yaml_config(config_path: str) -> Dict[str, Any]:
+def diagnose_yaml_config(config_path: str) -> dict[str, Any]:
     """Diagnose issues with YAML configuration loading.
 
     Args:
@@ -18,7 +18,7 @@ def diagnose_yaml_config(config_path: str) -> Dict[str, Any]:
     Returns:
         Dictionary with diagnostic information
     """
-    result: Dict[str, Any] = {
+    result: dict[str, Any] = {
         "file_path": config_path,
         "exists": False,
         "readable": False,

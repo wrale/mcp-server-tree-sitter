@@ -2,7 +2,7 @@
 
 import logging
 import os
-from typing import Any, Dict, List
+from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
@@ -74,7 +74,7 @@ def register_project_tools(mcp_server: FastMCP) -> None:
     @mcp_server.tool()
     def register_project_tool(
         path: str, name: str | None = None, description: str | None = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Register a project directory for code exploration.
 
         Args:
@@ -96,7 +96,7 @@ def register_project_tools(mcp_server: FastMCP) -> None:
             raise ProjectError(f"Failed to register project: {e}") from e
 
     @mcp_server.tool()
-    def list_projects_tool() -> List[Dict[str, Any]]:
+    def list_projects_tool() -> list[dict[str, Any]]:
         """List all registered projects.
 
         Returns:
@@ -105,7 +105,7 @@ def register_project_tools(mcp_server: FastMCP) -> None:
         return get_app().project_registry.list_projects()
 
     @mcp_server.tool()
-    def remove_project_tool(name: str) -> Dict[str, str]:
+    def remove_project_tool(name: str) -> dict[str, str]:
         """Remove a registered project.
 
         Args:
@@ -121,7 +121,7 @@ def register_project_tools(mcp_server: FastMCP) -> None:
             raise ProjectError(f"Failed to remove project: {e}") from e
 
     @mcp_server.tool()
-    def list_languages() -> Dict[str, Any]:
+    def list_languages() -> dict[str, Any]:
         """List available languages.
 
         Returns:
@@ -134,7 +134,7 @@ def register_project_tools(mcp_server: FastMCP) -> None:
         }
 
     @mcp_server.tool()
-    def check_language_available(language: str) -> Dict[str, str]:
+    def check_language_available(language: str) -> dict[str, str]:
         """Check if a tree-sitter language parser is available.
 
         Args:
@@ -155,7 +155,7 @@ def register_project_tools(mcp_server: FastMCP) -> None:
         }
 
     @mcp_server.tool()
-    def clear_cache(project: str | None = None, file_path: str | None = None) -> Dict[str, str]:
+    def clear_cache(project: str | None = None, file_path: str | None = None) -> dict[str, str]:
         """Clear the parse tree cache.
 
         Args:
@@ -183,7 +183,7 @@ def register_project_tools(mcp_server: FastMCP) -> None:
         return {"status": "success", "message": message}
 
     @mcp_server.tool()
-    def diagnose_config(config_path: str) -> Dict[str, Any]:
+    def diagnose_config(config_path: str) -> dict[str, Any]:
         """Diagnose issues with YAML configuration loading.
 
         Args:

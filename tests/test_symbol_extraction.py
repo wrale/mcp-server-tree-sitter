@@ -7,8 +7,9 @@ dependency analysis issues identified in FEATURES.md.
 
 import json
 import os
+from collections.abc import Generator
 from pathlib import Path
-from typing import Dict, Generator, TypedDict, cast
+from typing import TypedDict, cast
 
 import pytest
 
@@ -40,7 +41,7 @@ def test_project(
     test_file.write_text("""
 import os
 import sys
-from typing import List, Dict
+from typing import List
 from datetime import datetime as dt
 
 class Person:
@@ -60,7 +61,7 @@ class Employee(Person):
         basic_greeting = super().greet()
         return f"{basic_greeting} I am employee {self.employee_id}."
 
-def process_data(items: List[str]) -> Dict[str, int]:
+def process_data(items: list[str]) -> dict[str, int]:
     result = {}
     for item in items:
         result[item] = len(item)
@@ -94,18 +95,18 @@ if __name__ == "__main__":
 import json
 import csv
 import random
-from typing import Any, List, Dict, Tuple
+from typing import Any, Tuple
 from pathlib import Path
 
-def save_json(data: Dict[str, Any], filename: str) -> None:
+def save_json(data: dict[str, Any], filename: str) -> None:
     with open(filename, 'w') as f:
         json.dump(data, f, indent=2)
 
-def load_json(filename: str) -> Dict[str, Any]:
+def load_json(filename: str) -> dict[str, Any]:
     with open(filename, 'r') as f:
         return json.load(f)
 
-def generate_random_data(count: int) -> List[Dict[str, Any]]:
+def generate_random_data(count: int) -> list[dict[str, Any]]:
     result = []
     for i in range(count):
         person = {
@@ -121,12 +122,12 @@ class FileHandler:
     def __init__(self, base_path: str):
         self.base_path = Path(base_path)
 
-    def save_data(self, data: Dict[str, Any], filename: str) -> str:
+    def save_data(self, data: dict[str, Any], filename: str) -> str:
         file_path = self.base_path / filename
         save_json(data, str(file_path))
         return str(file_path)
 
-    def load_data(self, filename: str) -> Dict[str, Any]:
+    def load_data(self, filename: str) -> dict[str, Any]:
         file_path = self.base_path / filename
         return load_json(str(file_path))
 """)
@@ -462,12 +463,12 @@ def test_query_based_symbol_extraction(test_project: _SymbolProjectFixturePayloa
         import_captures = QueryCursor(imports_q).captures(tree.root_node)
 
         # Process and extract unique symbols
-        functions: Dict[str, Dict[str, object]] = {}
-        classes: Dict[str, Dict[str, object]] = {}
-        imports: Dict[str, Dict[str, object]] = {}
+        functions: dict[str, dict[str, object]] = {}
+        classes: dict[str, dict[str, object]] = {}
+        imports: dict[str, dict[str, object]] = {}
 
         # Helper function to process captures with different formats
-        def process_capture(captures: object, target_type: str, result_dict: Dict[str, Dict[str, object]]) -> None:
+        def process_capture(captures: object, target_type: str, result_dict: dict[str, dict[str, object]]) -> None:
             # Check if it's returning a dictionary format
             if isinstance(captures, dict):
                 # Dictionary format: {capture_name: [node1, node2, ...], ...}

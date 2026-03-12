@@ -13,7 +13,7 @@ import importlib
 import logging
 import pkgutil
 from types import ModuleType
-from typing import ClassVar, Dict
+from typing import ClassVar
 
 from .schema import DEFAULT_SYMBOL_TYPES, LanguageData, LanguageDataBase
 
@@ -27,15 +27,15 @@ class LanguageDataLoader:
     Derived structures are built once at load time; getters are accessors only.
     """
 
-    _loaded: ClassVar[Dict[str, LanguageData] | None] = None
-    _scope_node_types: ClassVar[(dict[str, dict[str, list[str]]] | None)] = None
-    _extension_map: ClassVar[(dict[str, str] | None)] = None
-    _query_templates: ClassVar[(dict[str, dict[str, str]] | None)] = None
-    _node_type_descriptions: ClassVar[(dict[str, dict[str, str]] | None)] = None
-    _query_adaptation: ClassVar[(dict[tuple[str, str], dict[str, str]] | None)] = None
+    _loaded: ClassVar[dict[str, LanguageData] | None] = None
+    _scope_node_types: ClassVar[dict[str, dict[str, list[str]]] | None] = None
+    _extension_map: ClassVar[dict[str, str] | None] = None
+    _query_templates: ClassVar[dict[str, dict[str, str]] | None] = None
+    _node_type_descriptions: ClassVar[dict[str, dict[str, str]] | None] = None
+    _query_adaptation: ClassVar[dict[tuple[str, str], dict[str, str]] | None] = None
 
     @classmethod
-    def _get_loaded(cls) -> Dict[str, LanguageData]:
+    def _get_loaded(cls) -> dict[str, LanguageData]:
         """Return loaded language data, loading and caching once."""
         if cls._loaded is None:
             cls.load_all_language_data()
@@ -43,7 +43,7 @@ class LanguageDataLoader:
         return cls._loaded
 
     @classmethod
-    def _populate_derived_caches(cls, loaded: Dict[str, LanguageData]) -> None:
+    def _populate_derived_caches(cls, loaded: dict[str, LanguageData]) -> None:
         """Build and cache derived structures from loaded data. Called at load time."""
         scope: dict[str, dict[str, list[str]]] = {"function": {}, "class": {}, "module": {}}
         for lang_id, data in loaded.items():
@@ -61,7 +61,7 @@ class LanguageDataLoader:
         cls._node_type_descriptions = {lang_id: dict(data.node_type_descriptions) for lang_id, data in loaded.items()}
 
     @classmethod
-    def load_all_language_data(cls) -> Dict[str, LanguageData]:
+    def load_all_language_data(cls) -> dict[str, LanguageData]:
         """
         Import all language/data modules (so LanguageDataBase subclasses register),
         then build and return a dict mapping language id -> LanguageData. Caches on the class.
@@ -88,7 +88,7 @@ class LanguageDataLoader:
             except Exception as e:
                 logger.warning("Skipping language data module %s: %s", modname, e)
 
-        result: Dict[str, LanguageData] = {}
+        result: dict[str, LanguageData] = {}
         for reg_cls in LanguageDataBase.registered_subclasses():
             try:
                 data: LanguageData = reg_cls.to_language_data()
@@ -115,7 +115,7 @@ class LanguageDataLoader:
         return list(data.default_symbol_types) if data else list(DEFAULT_SYMBOL_TYPES)
 
     @classmethod
-    def get_all_language_data(cls) -> Dict[str, LanguageData]:
+    def get_all_language_data(cls) -> dict[str, LanguageData]:
         """Return all loaded language data as language id -> LanguageData (cached at load time)."""
         return cls._get_loaded()
 
@@ -161,12 +161,12 @@ class LanguageDataLoader:
 
 
 # Public API: keep the same names so callers can import functions unchanged.
-def load_all_language_data() -> Dict[str, LanguageData]:
+def load_all_language_data() -> dict[str, LanguageData]:
     """Load all language data (cached). See LanguageDataLoader.load_all_language_data."""
     return LanguageDataLoader.load_all_language_data()
 
 
-def get_all_language_data() -> Dict[str, LanguageData]:
+def get_all_language_data() -> dict[str, LanguageData]:
     """Return all loaded language data (cached). See LanguageDataLoader.get_all_language_data."""
     return LanguageDataLoader.get_all_language_data()
 

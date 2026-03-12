@@ -1,7 +1,7 @@
 """Tests for ast.py module."""
 
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import pytest
 
@@ -15,7 +15,7 @@ from mcp_server_tree_sitter.models.ast import (
 
 
 @pytest.fixture
-def test_files(tmp_path: Path) -> Dict[str, Path]:
+def test_files(tmp_path: Path) -> dict[str, Path]:
     """Create temporary test files in various languages."""
     dir_path = tmp_path
 
@@ -68,7 +68,7 @@ console.log(person.greet());
 
 
 @pytest.fixture
-def parsed_trees(test_files: Dict[str, Path]) -> Dict[str, Any]:
+def parsed_trees(test_files: dict[str, Path]) -> dict[str, Any]:
     """Parse the test files and return trees and source code."""
     result = {}
 
@@ -101,7 +101,7 @@ def parsed_trees(test_files: Dict[str, Path]) -> Dict[str, Any]:
 
 
 # Test node_to_dict function
-def test_node_to_dict_basic(parsed_trees: Dict[str, Any]) -> None:
+def test_node_to_dict_basic(parsed_trees: dict[str, Any]) -> None:
     """Test basic functionality of node_to_dict."""
     # Get Python tree and source
     py_tree = parsed_trees["python"]["tree"]
@@ -129,7 +129,7 @@ def test_node_to_dict_basic(parsed_trees: Dict[str, Any]) -> None:
                     assert "truncated" in grandchild or len(grandchild["children"]) == 0
 
 
-def test_node_to_dict_with_text(parsed_trees: Dict[str, Any]) -> None:
+def test_node_to_dict_with_text(parsed_trees: dict[str, Any]) -> None:
     """Test node_to_dict with include_text=True."""
     # Get Python tree only - source not needed for extract_node_path
     py_tree = parsed_trees["python"]["tree"]
@@ -148,7 +148,7 @@ def test_node_to_dict_with_text(parsed_trees: Dict[str, Any]) -> None:
             assert len(child["text"]) > 0
 
 
-def test_node_to_dict_without_text(parsed_trees: Dict[str, Any]) -> None:
+def test_node_to_dict_without_text(parsed_trees: dict[str, Any]) -> None:
     """Test node_to_dict with include_text=False."""
     # Get Python tree and source
     py_tree = parsed_trees["python"]["tree"]
@@ -165,7 +165,7 @@ def test_node_to_dict_without_text(parsed_trees: Dict[str, Any]) -> None:
         assert "text" not in child
 
 
-def test_node_to_dict_without_children(parsed_trees: Dict[str, Any]) -> None:
+def test_node_to_dict_without_children(parsed_trees: dict[str, Any]) -> None:
     """Test node_to_dict with include_children=False."""
     # Get Python tree and source
     py_tree = parsed_trees["python"]["tree"]
@@ -178,7 +178,7 @@ def test_node_to_dict_without_children(parsed_trees: Dict[str, Any]) -> None:
     assert "children" not in root_dict
 
 
-def test_node_to_dict_different_languages(parsed_trees: Dict[str, Any]) -> None:
+def test_node_to_dict_different_languages(parsed_trees: dict[str, Any]) -> None:
     """Test node_to_dict with different languages."""
     # Test with Python
     py_tree = parsed_trees["python"]["tree"]
@@ -193,7 +193,7 @@ def test_node_to_dict_different_languages(parsed_trees: Dict[str, Any]) -> None:
     assert js_dict["type"] == "program"
 
 
-def test_node_to_dict_with_large_depth(parsed_trees: Dict[str, Any]) -> None:
+def test_node_to_dict_with_large_depth(parsed_trees: dict[str, Any]) -> None:
     """Test node_to_dict with a large max_depth to ensure it handles deep trees."""
     # Get Python tree and source
     py_tree = parsed_trees["python"]["tree"]
@@ -203,7 +203,7 @@ def test_node_to_dict_with_large_depth(parsed_trees: Dict[str, Any]) -> None:
     root_dict = node_to_dict(py_tree.root_node, py_source, max_depth=10)
 
     # Verify we can get deep into the tree (e.g., to function body)
-    def find_deep_node(node_dict: Dict[str, Any], node_types: List[str]) -> bool:
+    def find_deep_node(node_dict: dict[str, Any], node_types: list[str]) -> bool:
         """Recursively search for a node of a specific type."""
         if node_dict["type"] in node_types:
             return True
@@ -220,7 +220,7 @@ def test_node_to_dict_with_large_depth(parsed_trees: Dict[str, Any]) -> None:
 
 
 # Test summarize_node function
-def test_summarize_node(parsed_trees: Dict[str, Any]) -> None:
+def test_summarize_node(parsed_trees: dict[str, Any]) -> None:
     """Test the summarize_node function."""
     # Get Python tree and source
     py_tree = parsed_trees["python"]["tree"]
@@ -240,7 +240,7 @@ def test_summarize_node(parsed_trees: Dict[str, Any]) -> None:
     assert len(summary["preview"]) <= 53  # 50 + "..."
 
 
-def test_summarize_node_without_source(parsed_trees: Dict[str, Any]) -> None:
+def test_summarize_node_without_source(parsed_trees: dict[str, Any]) -> None:
     """Test summarize_node without source (should not include preview)."""
     # Get Python tree
     py_tree = parsed_trees["python"]["tree"]
@@ -256,7 +256,7 @@ def test_summarize_node_without_source(parsed_trees: Dict[str, Any]) -> None:
 
 
 # Test find_node_at_position function
-def test_find_node_at_position(parsed_trees: Dict[str, Any]) -> None:
+def test_find_node_at_position(parsed_trees: dict[str, Any]) -> None:
     """Test the find_node_at_position function."""
     # Get Python tree
     py_tree = parsed_trees["python"]["tree"]
@@ -276,7 +276,7 @@ def test_find_node_at_position(parsed_trees: Dict[str, Any]) -> None:
     assert node.type in ["identifier", "name"]
 
 
-def test_find_node_at_position_out_of_bounds(parsed_trees: Dict[str, Any]) -> None:
+def test_find_node_at_position_out_of_bounds(parsed_trees: dict[str, Any]) -> None:
     """Test find_node_at_position with out-of-bounds coordinates."""
     # Get Python tree
     py_tree = parsed_trees["python"]["tree"]
@@ -292,7 +292,7 @@ def test_find_node_at_position_out_of_bounds(parsed_trees: Dict[str, Any]) -> No
 
 
 # Test extract_node_path function
-def test_extract_node_path(parsed_trees: Dict[str, Any]) -> None:
+def test_extract_node_path(parsed_trees: dict[str, Any]) -> None:
     """Test the extract_node_path function."""
     # Get Python tree only - source not needed for extract_node_path
     py_tree = parsed_trees["python"]["tree"]
@@ -310,7 +310,7 @@ def test_extract_node_path(parsed_trees: Dict[str, Any]) -> None:
     assert path[-1][0] in ["identifier", "name"]  # Target node type
 
 
-def test_extract_node_path_same_node(parsed_trees: Dict[str, Any]) -> None:
+def test_extract_node_path_same_node(parsed_trees: dict[str, Any]) -> None:
     """Test extract_node_path when root and target are the same node."""
     # Get Python tree
     py_tree = parsed_trees["python"]["tree"]
@@ -320,7 +320,7 @@ def test_extract_node_path_same_node(parsed_trees: Dict[str, Any]) -> None:
     assert len(path) == 0
 
 
-def test_extract_node_path_intermediate_node(parsed_trees: Dict[str, Any]) -> None:
+def test_extract_node_path_intermediate_node(parsed_trees: dict[str, Any]) -> None:
     """Test extract_node_path with an intermediate node."""
     # Get Python tree
     py_tree = parsed_trees["python"]["tree"]

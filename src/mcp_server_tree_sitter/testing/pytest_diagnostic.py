@@ -8,9 +8,10 @@ import json
 import time
 import traceback
 import types
+from collections.abc import Generator
 from json import JSONEncoder
 from pathlib import Path
-from typing import Any, Dict, Generator, List, Protocol
+from typing import Any, Protocol
 
 import pytest
 
@@ -70,8 +71,8 @@ class DiagnosticJSONEncoder(JSONEncoder):
 
 
 # Global storage for test context and diagnostic results
-_DIAGNOSTICS: Dict[str, "DiagnosticData"] = {}
-_CURRENT_TEST: Dict[str, Any] = {}
+_DIAGNOSTICS: dict[str, "DiagnosticData"] = {}
+_CURRENT_TEST: dict[str, Any] = {}
 
 
 class DiagnosticData:
@@ -83,9 +84,9 @@ class DiagnosticData:
         self.start_time = time.time()
         self.end_time: float | None = None
         self.status = "pending"
-        self.details: Dict[str, Any] = {}
-        self.errors: List[Dict[str, Any]] = []
-        self.artifacts: Dict[str, Any] = {}
+        self.details: dict[str, Any] = {}
+        self.errors: list[dict[str, Any]] = []
+        self.artifacts: dict[str, Any] = {}
 
     def add_error(self, error_type: str, message: str, tb: str | None = None) -> None:
         """Add an error to the diagnostic data."""
@@ -112,7 +113,7 @@ class DiagnosticData:
         if not self.errors:
             self.status = status
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             "test_id": self.test_id,

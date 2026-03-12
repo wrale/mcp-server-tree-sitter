@@ -4,8 +4,9 @@ This module provides wrappers and utility functions for common tree-sitter opera
 to ensure type safety and consistent handling of tree-sitter objects.
 """
 
+from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, SupportsIndex, TypedDict, TypeVar, cast
+from typing import TYPE_CHECKING, Any, SupportsIndex, TypedDict, TypeVar, cast
 
 import tree_sitter
 

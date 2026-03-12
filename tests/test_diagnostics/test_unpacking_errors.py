@@ -1,7 +1,8 @@
 """Pytest-based diagnostic tests for the unpacking errors in analysis functions."""
 
+from collections.abc import Generator
 from pathlib import Path
-from typing import Any, Dict, Generator
+from typing import Any
 
 import pytest
 
@@ -11,7 +12,7 @@ from tests.test_helpers import analyze_complexity, get_dependencies, get_symbols
 
 
 @pytest.fixture
-def test_project(tmp_path: Path) -> Generator[Dict[str, Any], None, None]:
+def test_project(tmp_path: Path) -> Generator[dict[str, Any], None, None]:
     """Create a temporary test project with a sample file."""
     project_path = tmp_path
 
@@ -56,7 +57,7 @@ if __name__ == "__main__":
 
 
 @pytest.mark.diagnostic
-def test_get_symbols_error(test_project: Dict[str, Any], diagnostic: DiagnosticData) -> None:
+def test_get_symbols_error(test_project: dict[str, Any], diagnostic: DiagnosticData) -> None:
     """Test get_symbols and diagnose unpacking errors."""
     diagnostic.add_detail("project", test_project["name"])
     diagnostic.add_detail("file", test_project["file"])
@@ -91,7 +92,7 @@ def test_get_symbols_error(test_project: Dict[str, Any], diagnostic: DiagnosticD
 
 
 @pytest.mark.diagnostic
-def test_get_dependencies_error(test_project: Dict[str, Any], diagnostic: DiagnosticData) -> None:
+def test_get_dependencies_error(test_project: dict[str, Any], diagnostic: DiagnosticData) -> None:
     """Test get_dependencies and diagnose unpacking errors."""
     diagnostic.add_detail("project", test_project["name"])
     diagnostic.add_detail("file", test_project["file"])
@@ -124,7 +125,7 @@ def test_get_dependencies_error(test_project: Dict[str, Any], diagnostic: Diagno
 
 
 @pytest.mark.diagnostic
-def test_analyze_complexity_error(test_project: Dict[str, Any], diagnostic: DiagnosticData) -> None:
+def test_analyze_complexity_error(test_project: dict[str, Any], diagnostic: DiagnosticData) -> None:
     """Test analyze_complexity and diagnose unpacking errors."""
     diagnostic.add_detail("project", test_project["name"])
     diagnostic.add_detail("file", test_project["file"])
@@ -158,7 +159,7 @@ def test_analyze_complexity_error(test_project: Dict[str, Any], diagnostic: Diag
 
 
 @pytest.mark.diagnostic
-def test_run_query_error(test_project: Dict[str, Any], diagnostic: DiagnosticData) -> None:
+def test_run_query_error(test_project: dict[str, Any], diagnostic: DiagnosticData) -> None:
     """Test run_query and diagnose unpacking errors."""
     diagnostic.add_detail("project", test_project["name"])
     diagnostic.add_detail("file", test_project["file"])

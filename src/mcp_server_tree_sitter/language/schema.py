@@ -6,7 +6,7 @@ Loading validates via LanguageData. Scope kinds match ScopeKind in scope_node_ty
 """
 
 from abc import ABC
-from typing import ClassVar, Literal, Type
+from typing import ClassVar, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -24,7 +24,7 @@ class LanguageDataBase(ABC):
     Subclasses register themselves automatically via __init_subclass__.
     """
 
-    _registry: ClassVar[list[Type["LanguageDataBase"]]] = []
+    _registry: ClassVar[list[type["LanguageDataBase"]]] = []
 
     id: ClassVar[str]
     extensions: ClassVar[list[str]]
@@ -42,7 +42,7 @@ class LanguageDataBase(ABC):
             LanguageDataBase._registry.append(cls)
 
     @classmethod
-    def registered_subclasses(cls) -> list[Type["LanguageDataBase"]]:
+    def registered_subclasses(cls) -> list[type["LanguageDataBase"]]:
         """Return all registered subclasses (for use by the loader)."""
         return list(LanguageDataBase._registry)
 

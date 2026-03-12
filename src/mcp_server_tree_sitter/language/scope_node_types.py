@@ -9,7 +9,6 @@ Data is loaded from language/data/ per-language modules via the loader.
 """
 
 from enum import Enum
-from typing import List
 
 from .loader import get_scope_node_types
 
@@ -44,14 +43,14 @@ def get_scope_node_type(language: str, kind: ScopeKind) -> str | None:
 
 
 # Enclosure order: most specific first (function, class, module). Built from SCOPE_NODE_TYPES.
-_ENCLOSURE_ORDER: List[ScopeKind] = [
+_ENCLOSURE_ORDER: list[ScopeKind] = [
     ScopeKind.FUNCTION,
     ScopeKind.CLASS,
     ScopeKind.MODULE,
 ]
 
 
-def get_enclosure_node_types(language: str) -> List[str]:
+def get_enclosure_node_types(language: str) -> list[str]:
     """
     Return the ordered list of node types that count as enclosing scopes (most specific first).
 
@@ -65,7 +64,7 @@ def get_enclosure_node_types(language: str) -> List[str]:
     Returns:
         List of node type names in enclosure order. For unknown language, returns empty list.
     """
-    result: List[str] = []
+    result: list[str] = []
     for kind in _ENCLOSURE_ORDER:
         node_types = SCOPE_NODE_TYPES.get(kind.value, {}).get(language)
         if node_types:

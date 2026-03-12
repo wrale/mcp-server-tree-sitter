@@ -5,12 +5,13 @@ extra queries and add aliased/supplementary imports. Tools call get_*_enricher(l
 and invoke the callback if present.
 """
 
-from typing import Any, Callable, Dict
+from collections.abc import Callable
+from typing import Any
 
 from ..utils.tree_sitter_types import Node
 
 
-def node_location(node: Node) -> Dict[str, Dict[str, int]]:
+def node_location(node: Node) -> dict[str, dict[str, int]]:
     """Build a location dict from a tree-sitter node for use in enricher callbacks."""
     return {
         "start": {"row": node.start_point[0], "column": node.start_point[1]},
@@ -19,12 +20,12 @@ def node_location(node: Node) -> Dict[str, Dict[str, int]]:
 
 
 # Language id -> (symbols, safe_lang, tree, source_bytes) -> None
-_SymbolImportEnricher = Callable[[Dict[str, list], Any, Any, bytes], None]  # noqa: ANN401
+_SymbolImportEnricher = Callable[[dict[str, list], Any, Any, bytes], None]  # noqa: ANN401
 # Language id -> (module_imports, safe_lang, tree, source_bytes) -> None
 _DependencyModuleEnricher = Callable[[set[str], Any, Any, bytes], None]  # noqa: ANN401
 
-_symbol_enrichers: Dict[str, _SymbolImportEnricher] = {}
-_dependency_enrichers: Dict[str, _DependencyModuleEnricher] = {}
+_symbol_enrichers: dict[str, _SymbolImportEnricher] = {}
+_dependency_enrichers: dict[str, _DependencyModuleEnricher] = {}
 
 
 def register_symbol_import_enricher(language_id: str, fn: _SymbolImportEnricher) -> None:

@@ -5,7 +5,7 @@ import threading
 import time
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, cast
+from typing import Any, cast
 
 # Import global_context at runtime to avoid circular imports
 from ..utils.tree_sitter_types import (
@@ -30,10 +30,10 @@ class TreeCache:
         enabled: bool = True,
     ) -> None:
         """Initialize the tree cache with explicit size, TTL, and enabled settings."""
-        self.cache: Dict[str, tuple[Tree, bytes, float]] = {}  # (tree, source, timestamp)
+        self.cache: dict[str, tuple[Tree, bytes, float]] = {}  # (tree, source, timestamp)
         self.lock = threading.RLock()
         self.current_size_bytes = 0
-        self.modified_trees: Dict[str, bool] = {}
+        self.modified_trees: dict[str, bool] = {}
         self.max_size_mb = max_size_mb or 100
         self.ttl_seconds = ttl_seconds or 300
         self.enabled = enabled

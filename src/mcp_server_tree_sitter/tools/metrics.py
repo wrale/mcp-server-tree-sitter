@@ -1,6 +1,6 @@
 """Code metrics computation (lines, comments, cyclomatic complexity)."""
 
-from typing import Any, Dict, List
+from typing import Any
 
 from ..language.loader import get_language_data
 from ..utils.file_io import get_comment_prefix
@@ -8,7 +8,7 @@ from ..utils.tree_sitter_helpers import ensure_node
 from ..utils.tree_sitter_types import Node, Tree
 
 
-def count_lines_and_comments(lines: List[str], language: str) -> Dict[str, Any]:
+def count_lines_and_comments(lines: list[str], language: str) -> dict[str, Any]:
     """
     Count lines, empty lines, and comment lines for a file.
 
@@ -58,7 +58,7 @@ def compute_cyclomatic_complexity(tree: Tree, language: str) -> int:
     if not decision_types:
         return complexity
 
-    def count_nodes(node: Node, types: List[str]) -> int:
+    def count_nodes(node: Node, types: list[str]) -> int:
         safe_node = ensure_node(node)
         count = 0
         if safe_node.type in types:

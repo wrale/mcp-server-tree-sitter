@@ -1,8 +1,9 @@
 """Tests for Rust compatibility in the Tree-sitter server."""
 
 import time
+from collections.abc import Generator
 from pathlib import Path
-from typing import Any, Dict, Generator
+from typing import Any
 
 import pytest
 
@@ -16,7 +17,7 @@ from tests.test_helpers import (
 
 
 @pytest.fixture
-def rust_project(request: pytest.FixtureRequest, tmp_path: Path) -> Generator[Dict[str, Any], None, None]:
+def rust_project(request: pytest.FixtureRequest, tmp_path: Path) -> Generator[dict[str, Any], None, None]:
     """Create a test project with Rust files."""
     project_path = tmp_path
 
@@ -137,7 +138,7 @@ pub fn list_files(dir: &str) -> Result<Vec<String>, io::Error> {
     }
 
 
-def test_rust_ast_parsing(rust_project: Dict[str, Any]) -> None:
+def test_rust_ast_parsing(rust_project: dict[str, Any]) -> None:
     """Test that Rust code can be parsed into an AST correctly."""
     # Get AST for main.rs
     ast_result = get_ast(
@@ -206,7 +207,7 @@ def test_rust_ast_parsing(rust_project: Dict[str, Any]) -> None:
     assert len(impl_blocks_found) > 0, "Should find impl blocks"
 
 
-def test_rust_symbol_extraction(rust_project: Dict[str, Any]) -> None:
+def test_rust_symbol_extraction(rust_project: dict[str, Any]) -> None:
     """Test that symbols can be extracted from Rust code."""
     # Get symbols for main.rs
     symbols = get_symbols(project=rust_project["name"], file_path="main.rs")
@@ -242,7 +243,7 @@ def test_rust_symbol_extraction(rust_project: Dict[str, Any]) -> None:
     assert calc_found, "Should find calculate_ages function"
 
 
-def test_rust_dependency_analysis(rust_project: Dict[str, Any]) -> None:
+def test_rust_dependency_analysis(rust_project: dict[str, Any]) -> None:
     """Test that dependencies can be identified in Rust code."""
     # Get dependencies for main.rs
     dependencies = get_dependencies(project=rust_project["name"], file_path="main.rs")
@@ -256,7 +257,7 @@ def test_rust_dependency_analysis(rust_project: Dict[str, Any]) -> None:
     assert "std::collections::HashMap" in all_deps, "Should find HashMap dependency"
 
 
-def test_rust_specific_queries(rust_project: Dict[str, Any]) -> None:
+def test_rust_specific_queries(rust_project: dict[str, Any]) -> None:
     """Test that Rust-specific queries can be executed on the AST."""
     # Define a query to find struct definitions
     struct_query = """
@@ -318,7 +319,7 @@ def test_rust_specific_queries(rust_project: Dict[str, Any]) -> None:
     assert person_impl_found, "Should find Person impl in query results"
 
 
-def test_rust_trait_and_macro_handling(rust_project: Dict[str, Any]) -> None:
+def test_rust_trait_and_macro_handling(rust_project: dict[str, Any]) -> None:
     """Test handling of Rust-specific constructs like traits and macros."""
     # Create a file with traits and macros
     trait_file = Path(rust_project["path"]) / "traits.rs"

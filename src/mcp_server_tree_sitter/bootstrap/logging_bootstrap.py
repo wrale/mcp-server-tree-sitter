@@ -10,10 +10,9 @@ modify how logging is configured, make changes here and nowhere else.
 
 import logging
 import os
-from typing import Dict
 
 # Numeric values corresponding to log level names
-LOG_LEVEL_MAP: Dict[str, int] = {
+LOG_LEVEL_MAP: dict[str, int] = {
     "DEBUG": logging.DEBUG,
     "INFO": logging.INFO,
     "WARNING": logging.WARNING,

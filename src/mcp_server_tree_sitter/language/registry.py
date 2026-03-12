@@ -2,7 +2,7 @@
 
 import logging
 import threading
-from typing import Any, Dict, List, cast
+from typing import Any, cast
 
 from tree_sitter_language_pack import get_language, get_parser
 
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 # Fallback extension -> language id for extensions not in per-language data (e.g. ruby, json).
 # Loader provides map from language/data/; this covers tree-sitter-language-pack languages
 # we don't yet have as data files.
-_EXTENSION_FALLBACK: Dict[str, str] = {
+_EXTENSION_FALLBACK: dict[str, str] = {
     "rb": "ruby",
     "php": "php",
     "scala": "scala",
@@ -49,11 +49,11 @@ class LanguageRegistry:
 
     def __init__(
         self,
-        preferred_languages: List[str] | None = None,
+        preferred_languages: list[str] | None = None,
     ) -> None:
         """Initialize the registry. Extension map comes from loader (language/data/); fallback for others."""
         self._lock = threading.RLock()
-        self.languages: Dict[str, Language] = {}
+        self.languages: dict[str, Language] = {}
         from .loader import get_extension_map
 
         self._language_map = dict(get_extension_map())
@@ -91,7 +91,7 @@ class LanguageRegistry:
         ext = file_path.split(".")[-1].lower() if "." in file_path else ""
         return self._language_map.get(ext)
 
-    def list_available_languages(self) -> List[str]:
+    def list_available_languages(self) -> list[str]:
         """
         List languages that are available via tree-sitter-language-pack.
 
@@ -135,7 +135,7 @@ class LanguageRegistry:
         # Return as a sorted list
         return sorted(available)
 
-    def list_installable_languages(self) -> List[tuple[str, str]]:
+    def list_installable_languages(self) -> list[tuple[str, str]]:
         """
         List languages that can be installed.
         With tree-sitter-language-pack, no additional installation is needed.

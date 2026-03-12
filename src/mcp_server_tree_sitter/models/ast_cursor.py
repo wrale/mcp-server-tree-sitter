@@ -1,6 +1,6 @@
 """AST representation models using cursor-based traversal."""
 
-from typing import Any, Dict
+from typing import Any
 
 from ..utils.tree_sitter_helpers import (
     get_node_text,
@@ -15,7 +15,7 @@ def node_to_dict_cursor(
     include_children: bool = True,
     include_text: bool = True,
     max_depth: int = 5,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Convert a tree-sitter node to a dictionary using cursor-based traversal.
 
@@ -35,7 +35,7 @@ def node_to_dict_cursor(
     safe_node = ensure_node(node)
 
     # Create a map to track node IDs
-    node_map: Dict[int, Dict[str, Any]] = {}
+    node_map: dict[int, dict[str, Any]] = {}
 
     # Function to generate unique ID for a node
     def get_node_id(node: Node) -> int:
@@ -43,7 +43,7 @@ def node_to_dict_cursor(
 
     # Initialize the root node data
     root_id = get_node_id(safe_node)
-    root_data: Dict[str, Any] = {
+    root_data: dict[str, Any] = {
         "id": root_id,
         "type": safe_node.type,
         "start_point": {
@@ -84,7 +84,7 @@ def node_to_dict_cursor(
     current_depth = 0
 
     # Process a node and add it to node_map
-    def process_node(current_node: Node, parent_data: Dict[str, Any], depth: int) -> Dict[str, Any]:
+    def process_node(current_node: Node, parent_data: dict[str, Any], depth: int) -> dict[str, Any]:
         node_id = get_node_id(current_node)
 
         # Return existing node data if already processed
@@ -92,7 +92,7 @@ def node_to_dict_cursor(
             return node_map[node_id]
 
         # Create node data
-        node_data: Dict[str, Any] = {
+        node_data: dict[str, Any] = {
             "id": node_id,
             "type": current_node.type,
             "start_point": {

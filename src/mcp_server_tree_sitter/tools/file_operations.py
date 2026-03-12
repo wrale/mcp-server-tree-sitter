@@ -2,7 +2,7 @@
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, cast
+from typing import Any, cast
 
 from ..exceptions import FileAccessError, ProjectError
 from ..models.project import Project
@@ -15,8 +15,8 @@ def list_project_files(
     project: Project,
     pattern: str | None = None,
     max_depth: int | None = None,
-    filter_extensions: List[str] | None = None,
-) -> List[str]:
+    filter_extensions: list[str] | None = None,
+) -> list[str]:
     """
     List files in a project, optionally filtered by pattern.
 
@@ -111,7 +111,7 @@ def get_file_content(
 
     try:
         need_slice = start_line > 0 or max_lines is not None
-        lines: List[str] | List[bytes]
+        lines: list[str] | list[bytes]
 
         if as_bytes:
             with open(file_path, "rb") as f:
@@ -130,8 +130,8 @@ def get_file_content(
         chunk = lines[start_idx:end_idx]
 
         if as_bytes:
-            return b"".join(cast(List[bytes], chunk))
-        return "".join(cast(List[str], chunk))
+            return b"".join(cast(list[bytes], chunk))
+        return "".join(cast(list[str], chunk))
 
     except FileNotFoundError as e:
         raise FileAccessError(f"File not found: {path}") from e
@@ -141,7 +141,7 @@ def get_file_content(
         raise FileAccessError(f"Error reading file: {e}") from e
 
 
-def get_file_info(project: Project, path: str) -> Dict[str, Any]:
+def get_file_info(project: Project, path: str) -> dict[str, Any]:
     """
     Get metadata about a file.
 

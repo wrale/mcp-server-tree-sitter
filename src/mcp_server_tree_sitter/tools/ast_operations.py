@@ -2,7 +2,7 @@
 
 import logging
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from ..cache.parser_cache import TreeCache
 from ..exceptions import FileAccessError, ParsingError
@@ -26,7 +26,7 @@ def get_file_ast(
     tree_cache: TreeCache,
     max_depth: int | None = None,
     include_text: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Get the AST for a file.
 
@@ -134,7 +134,7 @@ def get_enclosing_scope_for_path(
     language_registry: LanguageRegistry,
     tree_cache: TreeCache,
     max_lines: int = 0,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Resolve file, parse it (with cache), and return the enclosing scope at (row, column).
 

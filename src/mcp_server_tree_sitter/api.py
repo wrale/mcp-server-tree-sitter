@@ -1,7 +1,7 @@
 """API helpers for shared app state (project registry, config, cache, etc.)."""
 
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 from .app import get_app
 from .cache.parser_cache import TreeCache
@@ -37,11 +37,11 @@ def get_config_manager() -> ConfigurationManager:
     return get_app().config_manager
 
 
-def list_projects() -> List[Dict[str, Any]]:
+def list_projects() -> list[dict[str, Any]]:
     """List all registered projects."""
     projects_list = get_project_registry().list_projects()
     # Convert to explicitly typed list
-    result: List[Dict[str, Any]] = []
+    result: list[dict[str, Any]] = []
     for project in projects_list:
         result.append(
             {
@@ -55,13 +55,13 @@ def list_projects() -> List[Dict[str, Any]]:
     return result
 
 
-def remove_project(name: str) -> Dict[str, str]:
+def remove_project(name: str) -> dict[str, str]:
     """Remove a registered project."""
     get_project_registry().remove_project(name)
     return {"status": "success", "message": f"Project '{name}' removed"}
 
 
-def clear_cache(project: str | None = None, file_path: str | None = None) -> Dict[str, str]:
+def clear_cache(project: str | None = None, file_path: str | None = None) -> dict[str, str]:
     """Clear the parse tree cache."""
     tree_cache = get_tree_cache()
 

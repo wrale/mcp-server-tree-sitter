@@ -4,12 +4,12 @@ Precedence: environment variables > explicit updates > YAML file > defaults.
 Env format: MCP_TS_SECTION_SETTING (e.g. MCP_TS_CACHE_MAX_SIZE_MB) or MCP_TS_SETTING.
 """
 
-from typing import List, TypeAlias
+from typing import TypeAlias
 
 from pydantic import BaseModel, Field
 from typing_extensions import TypedDict
 
-ConfigValue: TypeAlias = int | float | bool | str | None | List[str]
+ConfigValue: TypeAlias = int | float | bool | str | None | list[str]
 
 
 class _CacheDict(TypedDict):
@@ -20,7 +20,7 @@ class _CacheDict(TypedDict):
 
 class _SecurityDict(TypedDict):
     max_file_size_mb: int
-    excluded_dirs: List[str]
+    excluded_dirs: list[str]
 
 
 class _LanguageDict(TypedDict):
@@ -48,15 +48,15 @@ class SecurityConfig(BaseModel):
     """Security settings."""
 
     max_file_size_mb: int = 5
-    excluded_dirs: List[str] = Field(default_factory=lambda: [".git", "node_modules", "__pycache__"])
-    allowed_extensions: List[str] | None = None
+    excluded_dirs: list[str] = Field(default_factory=lambda: [".git", "node_modules", "__pycache__"])
+    allowed_extensions: list[str] | None = None
 
 
 class LanguageConfig(BaseModel):
     """Language-specific configuration."""
 
     default_max_depth: int = 5
-    preferred_languages: List[str] = Field(default_factory=list)
+    preferred_languages: list[str] = Field(default_factory=list)
 
 
 class ServerConfig(BaseModel):

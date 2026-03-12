@@ -1,6 +1,7 @@
 """Symbol extraction from source files using tree-sitter queries."""
 
-from typing import Any, Dict, Generator, List
+from collections.abc import Generator
+from typing import Any
 
 from ..exceptions import SecurityError
 from ..language.import_enrichers import get_symbol_import_enricher
@@ -19,7 +20,7 @@ from ..utils.tree_sitter_helpers import (
 from ..utils.tree_sitter_types import Node, Tree
 
 
-def _node_location(node: Node) -> Dict[str, Any]:
+def _node_location(node: Node) -> dict[str, Any]:
     """Build location dict from a tree-sitter node."""
     return {
         "start": {"row": node.start_point[0], "column": node.start_point[1]},
@@ -31,9 +32,9 @@ def extract_symbols(
     project: Project,
     file_path: str,
     language_registry: LanguageRegistry,
-    symbol_types: List[str] | None = None,
+    symbol_types: list[str] | None = None,
     exclude_class_methods: bool = False,
-) -> Dict[str, List[Dict[str, Any]]]:
+) -> dict[str, list[dict[str, Any]]]:
     """
     Extract symbols (functions, classes, etc) from a file.
 
@@ -82,7 +83,7 @@ def extract_symbols(
         tree, source_bytes = parse_with_cached_tree(abs_path, language, safe_lang)
 
         # Execute queries
-        symbols: Dict[str, List[Dict[str, Any]]] = {}
+        symbols: dict[str, list[dict[str, Any]]] = {}
         # Track class ranges to identify methods
         class_ranges = []
 
@@ -140,12 +141,12 @@ def extract_symbols(
 
 
 def process_symbol_matches(
-    matches: Dict[str, List[Node]] | List[Any],
+    matches: dict[str, list[Node]] | list[Any],
     symbol_type: str,
-    symbols_dict: Dict[str, List[Dict[str, Any]]],
+    symbols_dict: dict[str, list[dict[str, Any]]],
     source_bytes: bytes,
     tree: Tree,
-    class_ranges: List[tuple[int, int]] | None = None,
+    class_ranges: list[tuple[int, int]] | None = None,
 ) -> None:
     """
     Process matches from a query and extract symbols.
@@ -169,7 +170,7 @@ def process_symbol_matches(
         return False
 
     # Track functions that should be filtered out (methods inside classes)
-    filtered_methods: List[int] = []
+    filtered_methods: list[int] = []
 
     def _to_str(x: str | bytes) -> str:
         return x.decode("utf-8") if isinstance(x, bytes) else x

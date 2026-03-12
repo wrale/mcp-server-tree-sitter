@@ -4,7 +4,7 @@ This module provides functions for converting tree-sitter AST nodes to dictionar
 finding nodes at specific positions, and other AST-related operations.
 """
 
-from typing import Any, Dict, List
+from typing import Any
 
 from ..language.scope_node_types import get_enclosure_node_types, node_type_to_kind
 from ..utils.tree_sitter_helpers import (
@@ -23,7 +23,7 @@ def node_to_dict(
     include_children: bool = True,
     include_text: bool = True,
     max_depth: int = 5,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Convert a tree-sitter node to a dictionary representation.
 
@@ -45,7 +45,7 @@ def node_to_dict(
     return node_to_dict_cursor(node, source_bytes, include_children, include_text, max_depth)
 
 
-def summarize_node(node: Node, source_bytes: bytes | None = None) -> Dict[str, Any]:
+def summarize_node(node: Node, source_bytes: bytes | None = None) -> dict[str, Any]:
     """
     Create a compact summary of a node without details or children.
 
@@ -166,7 +166,7 @@ def find_node_at_position(root_node: Node, row: int, column: int) -> Node | None
 def extract_node_path(
     root_node: Node,
     target_node: Node,
-) -> List[tuple[str, str | None]]:
+) -> list[tuple[str, str | None]]:
     """
     Extract the path from root to a specific node using safe node handling.
 
@@ -217,7 +217,7 @@ def find_enclosing_scope(
     label: str,
     language: str,
     max_lines: int = 0,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Find the enclosing scope (function, class, or module) for a position and return its block info.
 

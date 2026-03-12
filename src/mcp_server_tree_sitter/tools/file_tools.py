@@ -1,6 +1,6 @@
 """File listing and content tool handlers."""
 
-from typing import Any, Dict, List
+from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
@@ -16,8 +16,8 @@ def register_file_tools(mcp_server: FastMCP) -> None:
         project: str,
         pattern: str | None = None,
         max_depth: int | None = None,
-        extensions: List[str] | None = None,
-    ) -> List[str]:
+        extensions: list[str] | None = None,
+    ) -> list[str]:
         """List files in a registered project.
 
         Use this to discover which files exist before reading them with get_file.
@@ -76,7 +76,7 @@ def register_file_tools(mcp_server: FastMCP) -> None:
         return content
 
     @mcp_server.tool()
-    def get_file_metadata(project: str, path: str) -> Dict[str, Any]:
+    def get_file_metadata(project: str, path: str) -> dict[str, Any]:
         """Get metadata for a file or directory in a registered project.
 
         Use this to check size, line count, or whether a path is a file/directory

@@ -1,13 +1,13 @@
 """Shared scope assertion helpers for enclosing_scope tests."""
 
-from typing import Any, Dict
+from typing import Any
 
 SCOPE_KEYS = {"kind", "text", "start_line", "end_line"}
 # Optional key returned when scope text is truncated
 SCOPE_KEYS_OPTIONAL = SCOPE_KEYS | {"truncated"}
 
 
-def assert_scope_has_keys(scope: Dict[str, Any]) -> None:
+def assert_scope_has_keys(scope: dict[str, Any]) -> None:
     """Assert the scope dict has the required keys and no unexpected keys."""
     keys = set(scope.keys())
     assert SCOPE_KEYS <= keys <= SCOPE_KEYS_OPTIONAL, (
@@ -15,7 +15,7 @@ def assert_scope_has_keys(scope: Dict[str, Any]) -> None:
     )
 
 
-def assert_scope_is_module(scope: Dict[str, Any], *text_contains: str) -> None:
+def assert_scope_is_module(scope: dict[str, Any], *text_contains: str) -> None:
     """Assert scope is module and optional text snippets are present."""
     assert_scope_has_keys(scope)
     assert scope["kind"] == "module", f"Expected kind 'module', got {scope.get('kind')}"
@@ -24,7 +24,7 @@ def assert_scope_is_module(scope: Dict[str, Any], *text_contains: str) -> None:
 
 
 def assert_scope_is_function(
-    scope: Dict[str, Any],
+    scope: dict[str, Any],
     *text_contains: str,
     row: int | None = None,
 ) -> None:
@@ -40,7 +40,7 @@ def assert_scope_is_function(
 
 
 def assert_scope_is_function_or_method(
-    scope: Dict[str, Any],
+    scope: dict[str, Any],
     *text_contains: str,
     row: int | None = None,
 ) -> None:
@@ -53,7 +53,7 @@ def assert_scope_is_function_or_method(
         assert scope["start_line"] <= row <= scope["end_line"]
 
 
-def assert_scope_is_class(scope: Dict[str, Any], *text_contains: str, row: int | None = None) -> None:
+def assert_scope_is_class(scope: dict[str, Any], *text_contains: str, row: int | None = None) -> None:
     """Assert scope is class and optional text snippets are present."""
     assert_scope_has_keys(scope)
     assert scope["kind"] == "class", f"Expected kind 'class', got {scope.get('kind')}"
@@ -63,6 +63,6 @@ def assert_scope_is_class(scope: Dict[str, Any], *text_contains: str, row: int |
         assert scope["start_line"] <= row <= scope["end_line"]
 
 
-def assert_scope_empty(scope: Dict[str, Any]) -> None:
+def assert_scope_empty(scope: dict[str, Any]) -> None:
     """Assert scope is empty (e.g. position outside file)."""
     assert scope == {}, f"Expected empty dict, got {scope}"

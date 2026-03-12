@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Generator, Protocol, TypeVar
+from typing import Protocol, TypeVar
 
 logger = logging.getLogger(__name__)
 

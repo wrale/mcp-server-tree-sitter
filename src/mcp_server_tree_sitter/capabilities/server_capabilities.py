@@ -1,7 +1,7 @@
 """Server capability declarations for MCP integration."""
 
 import logging
-from typing import Any, Dict, List, cast
+from typing import Any, cast
 
 from mcp.server import FastMCP
 
@@ -23,13 +23,13 @@ def register_capabilities(mcp_server: FastMCP) -> None:
 
     # FastMCP may not have capability method, so we'll skip this for now
     # @mcp_server.capability("prompts.listChanged")
-    def handle_prompts_list_changed() -> Dict[str, Any]:
+    def handle_prompts_list_changed() -> dict[str, Any]:
         """Handle prompt template management events."""
         logger.debug("Received prompts.listChanged event")
         return {"status": "success"}
 
     # @mcp_server.capability("resources.subscribe")
-    def handle_resources_subscribe(resource_uri: str) -> Dict[str, Any]:
+    def handle_resources_subscribe(resource_uri: str) -> dict[str, Any]:
         """
         Handle resource subscription requests.
 
@@ -43,19 +43,19 @@ def register_capabilities(mcp_server: FastMCP) -> None:
         return {"status": "success", "resource": resource_uri}
 
     # @mcp_server.capability("resources.listChanged")
-    def handle_resources_list_changed() -> Dict[str, Any]:
+    def handle_resources_list_changed() -> dict[str, Any]:
         """Handle resource discovery events."""
         logger.debug("Received resources.listChanged event")
         return {"status": "success"}
 
     # @mcp_server.capability("tools.listChanged")
-    def handle_tools_list_changed() -> Dict[str, Any]:
+    def handle_tools_list_changed() -> dict[str, Any]:
         """Handle tool discovery events."""
         logger.debug("Received tools.listChanged event")
         return {"status": "success"}
 
     # @mcp_server.capability("logging")
-    def handle_logging(level: str, message: str) -> Dict[str, Any]:
+    def handle_logging(level: str, message: str) -> dict[str, Any]:
         """
         Handle logging configuration.
 
@@ -79,7 +79,7 @@ def register_capabilities(mcp_server: FastMCP) -> None:
         return {"status": "success"}
 
     # @mcp_server.capability("completion")
-    def handle_completion(text: str, position: int) -> Dict[str, Any]:
+    def handle_completion(text: str, position: int) -> dict[str, Any]:
         """
         Handle argument completion suggestions.
 
@@ -91,7 +91,7 @@ def register_capabilities(mcp_server: FastMCP) -> None:
             Completion suggestions
         """
         # Simple completion for commonly used arguments
-        suggestions: List[Dict[str, str]] = []
+        suggestions: list[dict[str, str]] = []
 
         # Extract the current word being typed
         current_word = ""
@@ -151,6 +151,6 @@ def register_capabilities(mcp_server: FastMCP) -> None:
     # Ensure capabilities are accessible to tests
     caps = getattr(mcp_server, "capabilities", None)
     if caps is not None:
-        mutable_caps = cast(Dict[str, Any], caps)
+        mutable_caps = cast(dict[str, Any], caps)
         mutable_caps["logging"] = handle_logging
         mutable_caps["completion"] = handle_completion

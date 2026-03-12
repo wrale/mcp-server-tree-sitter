@@ -1,12 +1,12 @@
 """Project management tools for MCP server."""
 
-from typing import Any, Dict, List
+from typing import Any
 
 from ..api import get_language_registry, get_project_registry
 from ..exceptions import ProjectError
 
 
-def register_project(path: str, name: str | None = None, description: str | None = None) -> Dict[str, Any]:
+def register_project(path: str, name: str | None = None, description: str | None = None) -> dict[str, Any]:
     """
     Register a project for code analysis.
 
@@ -31,7 +31,7 @@ def register_project(path: str, name: str | None = None, description: str | None
 
         project_dict = project.to_dict()
         # Add type annotations for clarity
-        result: Dict[str, Any] = {
+        result: dict[str, Any] = {
             "name": project_dict["name"],
             "root_path": project_dict["root_path"],
             "description": project_dict["description"],
@@ -43,7 +43,7 @@ def register_project(path: str, name: str | None = None, description: str | None
         raise ProjectError(f"Failed to register project: {e}") from e
 
 
-def get_project(name: str) -> Dict[str, Any]:
+def get_project(name: str) -> dict[str, Any]:
     """
     Get project information.
 
@@ -60,7 +60,7 @@ def get_project(name: str) -> Dict[str, Any]:
         project = project_registry.get_project(name)
         project_dict = project.to_dict()
         # Add type annotations for clarity
-        result: Dict[str, Any] = {
+        result: dict[str, Any] = {
             "name": project_dict["name"],
             "root_path": project_dict["root_path"],
             "description": project_dict["description"],
@@ -72,7 +72,7 @@ def get_project(name: str) -> Dict[str, Any]:
         raise ProjectError(f"Failed to get project: {e}") from e
 
 
-def list_projects() -> List[Dict[str, Any]]:
+def list_projects() -> list[dict[str, Any]]:
     """
     List all registered projects.
 
@@ -84,7 +84,7 @@ def list_projects() -> List[Dict[str, Any]]:
 
     projects_list = project_registry.list_projects()
     # Explicitly create a typed list
-    result: List[Dict[str, Any]] = []
+    result: list[dict[str, Any]] = []
     for project in projects_list:
         result.append(
             {
@@ -98,7 +98,7 @@ def list_projects() -> List[Dict[str, Any]]:
     return result
 
 
-def remove_project(name: str) -> Dict[str, str]:
+def remove_project(name: str) -> dict[str, str]:
     """
     Remove a project.
 

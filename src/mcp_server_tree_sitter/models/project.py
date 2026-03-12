@@ -11,7 +11,7 @@ import os
 import threading
 import time
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from ..exceptions import ProjectError
 from ..language.registry import LanguageRegistry
@@ -27,11 +27,11 @@ class Project:
         self.name = name
         self.root_path = path
         self.description = description
-        self.languages: Dict[str, int] = {}  # Language -> file count
+        self.languages: dict[str, int] = {}  # Language -> file count
         self.last_scan_time = 0
         self.scan_lock = threading.Lock()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
         return {
             "name": self.name,
@@ -41,7 +41,7 @@ class Project:
             "last_scan_time": self.last_scan_time,
         }
 
-    def scan_files(self, language_registry: LanguageRegistry, force: bool = False) -> Dict[str, int]:
+    def scan_files(self, language_registry: LanguageRegistry, force: bool = False) -> dict[str, int]:
         """
         Scan project files and identify languages.
 
@@ -57,7 +57,7 @@ class Project:
             return self.languages
 
         with self.scan_lock:
-            languages: Dict[str, int] = {}
+            languages: dict[str, int] = {}
             scanned: set[str] = set()
 
             for root, _, files in os.walk(self.root_path):
@@ -133,7 +133,7 @@ class ProjectRegistry:
     def __init__(self) -> None:
         """Ensure _projects exists (main initialization is in __new__)."""
         if not hasattr(self, "_projects"):
-            self._projects: Dict[str, Project] = {}
+            self._projects: dict[str, Project] = {}
 
     def register_project(self, name: str, path: str, description: str | None = None) -> Project:
         """
@@ -191,7 +191,7 @@ class ProjectRegistry:
             project = self._projects[name]
             return project
 
-    def list_projects(self) -> List[Dict[str, Any]]:
+    def list_projects(self) -> list[dict[str, Any]]:
         """
         List all registered projects.
 

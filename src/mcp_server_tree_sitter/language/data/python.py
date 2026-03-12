@@ -1,6 +1,6 @@
 """Python language data."""
 
-from typing import Any, Dict
+from typing import Any
 
 from ...utils.tree_sitter_helpers import get_node_text, run_query_captures
 from ..import_enrichers import (
@@ -12,7 +12,7 @@ from ..schema import LanguageDataBase
 
 
 def _enrich_symbol_imports(
-    symbols: Dict[str, list],
+    symbols: dict[str, list],
     safe_lang: Any,  # noqa: ANN401 (tree-sitter Language)
     tree: Any,  # noqa: ANN401 (tree-sitter Tree)
     source_bytes: bytes,

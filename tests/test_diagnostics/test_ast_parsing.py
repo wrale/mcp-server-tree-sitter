@@ -1,8 +1,9 @@
 """Pytest-based diagnostic tests for AST parsing functionality."""
 
 import time
+from collections.abc import Generator
 from pathlib import Path
-from typing import Any, Dict, Generator
+from typing import Any
 
 import pytest
 
@@ -13,7 +14,7 @@ from tests.test_helpers import get_ast, register_project_tool
 
 
 @pytest.fixture
-def test_project(tmp_path: Path) -> Generator[Dict[str, Any], None, None]:
+def test_project(tmp_path: Path) -> Generator[dict[str, Any], None, None]:
     """Create a temporary test project with a sample file."""
     project_path = tmp_path
 
@@ -58,7 +59,7 @@ def parse_file(file_path: Path, language: str) -> tuple[Any, bytes]:
 
 
 @pytest.mark.diagnostic
-def test_get_ast_functionality(test_project: Dict[str, Any], diagnostic: DiagnosticData) -> None:
+def test_get_ast_functionality(test_project: dict[str, Any], diagnostic: DiagnosticData) -> None:
     """Test the get_ast MCP tool functionality."""
     # Add test details to diagnostic data
     diagnostic.add_detail("project", test_project["name"])
@@ -104,7 +105,7 @@ def test_get_ast_functionality(test_project: Dict[str, Any], diagnostic: Diagnos
 
 
 @pytest.mark.diagnostic
-def test_direct_parsing(test_project: Dict[str, Any], diagnostic: DiagnosticData) -> None:
+def test_direct_parsing(test_project: dict[str, Any], diagnostic: DiagnosticData) -> None:
     """Test lower-level parse_file function to isolate issues."""
     file_path = test_project["path"] / test_project["file"]
     diagnostic.add_detail("file_path", str(file_path))

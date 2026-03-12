@@ -4,8 +4,9 @@ Tests for tree-sitter query result handling.
 This module contains tests focused on ensuring query result handling is robust and correct.
 """
 
+from collections.abc import Generator
 from pathlib import Path
-from typing import Any, Dict, Generator, List
+from typing import Any
 
 import pytest
 
@@ -13,7 +14,7 @@ from tests.test_helpers import register_project_tool, run_query
 
 
 @pytest.fixture
-def test_project(request: pytest.FixtureRequest, tmp_path: Path) -> Generator[Dict[str, Any], None, None]:
+def test_project(request: pytest.FixtureRequest, tmp_path: Path) -> Generator[dict[str, Any], None, None]:
     """Create a test project with Python files containing known constructs."""
     project_path = tmp_path
 
@@ -22,7 +23,7 @@ def test_project(request: pytest.FixtureRequest, tmp_path: Path) -> Generator[Di
     test_file.write_text("""
 import os
 import sys
-from typing import List, Dict
+from datetime import date
 
 class Person:
     def __init__(self, name: str, age: int):
@@ -32,7 +33,7 @@ class Person:
     def greet(self) -> str:
         return f"Hello, my name is {self.name} and I'm {self.age} years old."
 
-def process_data(items: List[str]) -> Dict[str, int]:
+def process_data(items: list[str]) -> dict[str, int]:
     result = {}
     for item in items:
         result[item] = len(item)
@@ -64,7 +65,7 @@ if __name__ == "__main__":
     yield {"name": project_name, "path": str(project_path), "file": "test.py"}
 
 
-def test_query_capture_processing(test_project: Dict[str, Any]) -> None:
+def test_query_capture_processing(test_project: dict[str, Any]) -> None:
     """Test query capture processing to verify correct results."""
     # Simple query to find function definitions
     query = "(function_definition name: (identifier) @function.name) @function.def"
@@ -114,7 +115,7 @@ def test_query_capture_processing(test_project: Dict[str, Any]) -> None:
     ],
 )
 def test_query_result_capture_types(
-    test_project: Dict[str, Any], query_string: str, expected_capture_count: int
+    test_project: dict[str, Any], query_string: str, expected_capture_count: int
 ) -> None:
     """Test different types of query captures to verify result handling."""
     # Run the query
@@ -239,7 +240,7 @@ def test_query_result_structure_transformation() -> None:
     # This helps verify result transformation is correct
 
     # Create a function to transform mock tree-sitter query results to expected MCP format
-    def transform_query_results(ts_results: object) -> List[Dict[str, object]]:
+    def transform_query_results(ts_results: object) -> list[dict[str, object]]:
         """Transform tree-sitter query results to MCP format."""
         # Implement a simplified version of what the actual transformation might be
         mcp_results = []

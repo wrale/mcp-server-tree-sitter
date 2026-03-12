@@ -1,7 +1,8 @@
 """Pytest-based diagnostic tests for cursor-based AST functionality."""
 
+from collections.abc import Generator
 from pathlib import Path
-from typing import Any, Dict, Generator
+from typing import Any
 
 import pytest
 
@@ -28,7 +29,7 @@ def parse_file(file_path: Path, language: str) -> tuple[Any, bytes]:
 
 
 @pytest.fixture
-def test_project(tmp_path: Path) -> Generator[Dict[str, Any], None, None]:
+def test_project(tmp_path: Path) -> Generator[dict[str, Any], None, None]:
     """Create a temporary test project with a sample file."""
     project_path = tmp_path
 
@@ -53,7 +54,7 @@ def test_project(tmp_path: Path) -> Generator[Dict[str, Any], None, None]:
 
 
 @pytest.mark.diagnostic
-def test_cursor_ast_implementation(test_project: Dict[str, Any], diagnostic: DiagnosticData) -> None:
+def test_cursor_ast_implementation(test_project: dict[str, Any], diagnostic: DiagnosticData) -> None:
     """Test the cursor-based AST implementation."""
     # Add test details to diagnostic data
     diagnostic.add_detail("project", test_project["name"])
@@ -126,7 +127,7 @@ def test_cursor_ast_implementation(test_project: Dict[str, Any], diagnostic: Dia
 
 
 @pytest.mark.diagnostic
-def test_large_ast_handling(test_project: Dict[str, Any], diagnostic: DiagnosticData) -> None:
+def test_large_ast_handling(test_project: dict[str, Any], diagnostic: DiagnosticData) -> None:
     """Test handling of a slightly larger AST to ensure cursor-based approach works."""
     # Add test details to diagnostic data
     diagnostic.add_detail("project", test_project["name"])
@@ -140,7 +141,6 @@ def test_large_ast_handling(test_project: Dict[str, Any], diagnostic: Diagnostic
 # Test file with multiple classes and functions
 import os
 import sys
-from typing import List, Dict
 
 class Person:
     def __init__(self, name: str, age: int):
@@ -162,7 +162,7 @@ class Employee(Person):
     def greet(self) -> str:
         return f"{super().greet()} I work here and my ID is {self.employee_id}."
 
-def process_people(people: List[Person]) -> Dict[str, int]:
+def process_people(people: list[Person]) -> dict[str, int]:
     result = {}
     for person in people:
         result[person.name] = person.age

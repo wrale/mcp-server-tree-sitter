@@ -5,7 +5,7 @@ and provide a cleaner interface for interacting with the application's
 components while supporting dependency injection.
 """
 
-from typing import Any, Dict, List
+from typing import Any
 
 from .app import get_app
 
@@ -48,7 +48,7 @@ class ServerContext:
     # Project management methods
     def register_project(
         self, path: str, name: str | None = None, description: str | None = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Register a project for code analysis."""
         try:
             # Register project
@@ -64,17 +64,17 @@ class ServerContext:
             logger.exception("Unexpected error registering project: %s", e)
             raise ProjectError(f"Failed to register project: {e}") from e
 
-    def list_projects(self) -> List[Dict[str, Any]]:
+    def list_projects(self) -> list[dict[str, Any]]:
         """List all registered projects."""
         return self.project_registry.list_projects()
 
-    def remove_project(self, name: str) -> Dict[str, str]:
+    def remove_project(self, name: str) -> dict[str, str]:
         """Remove a registered project."""
         self.project_registry.remove_project(name)
         return {"status": "success", "message": f"Project '{name}' removed"}
 
     # Cache management methods
-    def clear_cache(self, project: str | None = None, file_path: str | None = None) -> Dict[str, str]:
+    def clear_cache(self, project: str | None = None, file_path: str | None = None) -> dict[str, str]:
         """Clear the parse tree cache."""
         if project and file_path:
             # Get file path
