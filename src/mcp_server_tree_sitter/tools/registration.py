@@ -46,12 +46,12 @@ def _register_prompts(mcp_server: FastMCP) -> None:
         try:
             symbols = extract_symbols(project_obj, file_path, app.language_registry)
 
-            if "functions" in symbols and symbols["functions"]:
+            if symbols.get("functions"):
                 structure += "\nFunctions:\n"
                 for func in symbols["functions"]:
                     structure += f"- {func['name']}\n"
 
-            if "classes" in symbols and symbols["classes"]:
+            if symbols.get("classes"):
                 structure += "\nClasses:\n"
                 for cls in symbols["classes"]:
                     structure += f"- {cls['name']}\n"

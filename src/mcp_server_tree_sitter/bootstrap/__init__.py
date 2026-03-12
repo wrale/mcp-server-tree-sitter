@@ -10,4 +10,4 @@ from . import logging_bootstrap
 # Export key functions for convenience
 from .logging_bootstrap import get_log_level_from_env, get_logger, update_log_levels
 
-__all__ = ["get_logger", "update_log_levels", "get_log_level_from_env", "logging_bootstrap"]
+__all__ = ["get_log_level_from_env", "get_logger", "logging_bootstrap", "update_log_levels"]

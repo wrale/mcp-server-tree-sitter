@@ -87,9 +87,8 @@ def test_fallback_extension_overwritten_by_language_data_warns(caplog: pytest.Lo
     with patch(
         "mcp_server_tree_sitter.language.loader.get_extension_map",
         MagicMock(return_value=loader_extension_map),
-    ):
-        with caplog.at_level("WARNING"):
-            LanguageRegistry()
+    ), caplog.at_level("WARNING"):
+        LanguageRegistry()
 
     # When an extension from fallback is already set by language data, we skip it and warn
     fallback_overwrite_warnings = [

@@ -55,8 +55,7 @@ def list_project_files(
             pattern = f"{parts[0]}{'*/' * max_depth}{parts[1]}"
 
     # Ensure pattern doesn't start with / to avoid NotImplementedError
-    if pattern.startswith("/"):
-        pattern = pattern[1:]
+    pattern = pattern.removeprefix("/")
 
     # Convert extensions to lowercase for case-insensitive matching
     if filter_extensions:

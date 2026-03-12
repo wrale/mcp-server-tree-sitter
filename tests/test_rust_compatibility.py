@@ -385,11 +385,10 @@ fn main() {
                     for child in node["children"]:
                         if child.get("type") == "type_identifier":
                             traits_found.append(child.get("text", ""))
-            elif node["type"] == "macro_definition":
-                if "children" in node:
-                    for child in node["children"]:
-                        if child.get("type") == "identifier":
-                            macros_found.append(child.get("text", ""))
+            elif node["type"] == "macro_definition" and "children" in node:
+                for child in node["children"]:
+                    if child.get("type") == "identifier":
+                        macros_found.append(child.get("text", ""))
 
             if "children" in node:
                 for child in node["children"]:

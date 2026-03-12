@@ -507,7 +507,7 @@ def test_query_based_symbol_extraction(test_project: _SymbolProjectFixturePayloa
                                 "end": node.end_point,
                             }
                 except Exception as e:
-                    print(f"Error processing captures: {str(e)}")
+                    print(f"Error processing captures: {e!s}")
 
         # Process each type of capture
         process_capture(function_captures, "function.name", functions)
@@ -559,7 +559,7 @@ def test_query_based_symbol_extraction(test_project: _SymbolProjectFixturePayloa
                                 "end": node.end_point,
                             }
                 except Exception as e:
-                    print(f"Error processing import captures: {str(e)}")
+                    print(f"Error processing import captures: {e!s}")
 
         # Call the import capture processing function
         process_import_capture(import_captures)
@@ -589,8 +589,8 @@ def test_query_based_symbol_extraction(test_project: _SymbolProjectFixturePayloa
             print("ISSUE: Import count mismatch")
 
     except Exception as e:
-        print(f"Error in direct query execution: {str(e)}")
-        pytest.fail(f"Direct query execution failed: {str(e)}")
+        print(f"Error in direct query execution: {e!s}")
+        pytest.fail(f"Direct query execution failed: {e!s}")
 
 
 def test_debug_file_saving(test_project: _SymbolProjectFixturePayload) -> None:

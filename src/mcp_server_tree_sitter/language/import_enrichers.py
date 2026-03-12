@@ -20,9 +20,9 @@ def node_location(node: Node) -> dict[str, dict[str, int]]:
 
 
 # Language id -> (symbols, safe_lang, tree, source_bytes) -> None
-_SymbolImportEnricher = Callable[[dict[str, list], Any, Any, bytes], None]  # noqa: ANN401
+_SymbolImportEnricher = Callable[[dict[str, list], Any, Any, bytes], None]
 # Language id -> (module_imports, safe_lang, tree, source_bytes) -> None
-_DependencyModuleEnricher = Callable[[set[str], Any, Any, bytes], None]  # noqa: ANN401
+_DependencyModuleEnricher = Callable[[set[str], Any, Any, bytes], None]
 
 _symbol_enrichers: dict[str, _SymbolImportEnricher] = {}
 _dependency_enrichers: dict[str, _DependencyModuleEnricher] = {}

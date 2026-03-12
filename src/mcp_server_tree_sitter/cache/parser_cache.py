@@ -40,7 +40,7 @@ class TreeCache:
 
     def _get_cache_key(self, file_path: Path, language: str) -> str:
         """Generate cache key from file path and language."""
-        return f"{language}:{str(file_path)}:{file_path.stat().st_mtime}"
+        return f"{language}:{file_path!s}:{file_path.stat().st_mtime}"
 
     def set_enabled(self, enabled: bool) -> None:
         """Set whether caching is enabled."""

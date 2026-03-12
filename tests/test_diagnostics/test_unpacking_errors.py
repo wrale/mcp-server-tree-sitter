@@ -1,5 +1,6 @@
 """Pytest-based diagnostic tests for the unpacking errors in analysis functions."""
 
+import contextlib
 from collections.abc import Generator
 from pathlib import Path
 from typing import Any
@@ -49,10 +50,8 @@ if __name__ == "__main__":
     finally:
         # Clean up
         project_registry = get_project_registry()
-        try:
+        with contextlib.suppress(Exception):
             project_registry.remove_project(project_name)
-        except Exception:
-            pass
 
 
 

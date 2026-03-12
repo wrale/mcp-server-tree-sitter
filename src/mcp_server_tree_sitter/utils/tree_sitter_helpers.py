@@ -318,11 +318,10 @@ def cursor_walk_tree(
                             field_name = name
                             break
 
-            if visit_fn(cursor.node, field_name, depth):
+            if visit_fn(cursor.node, field_name, depth) and cursor.goto_first_child():
                 # Visit children
-                if cursor.goto_first_child():
-                    depth += 1
-                    continue
+                depth += 1
+                continue
 
             # No children or children skipped, try siblings
             if cursor.goto_next_sibling():
@@ -708,9 +707,7 @@ def is_node_inside(pos_or_node: Node | tuple[int, int], container_node: Node) ->
             return False
         if row_int == start_row and col_int < start_col:
             return False
-        if row_int == end_row and col_int > end_col:
-            return False
-        return True
+        return not (row_int == end_row and col_int > end_col)
 
     # Handle node case
     node = pos_or_node

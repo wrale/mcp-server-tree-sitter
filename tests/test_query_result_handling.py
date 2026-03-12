@@ -138,10 +138,7 @@ def test_query_result_capture_types(
         capture = r.get("capture")
         if capture is not None and isinstance(capture, str):
             # Handle both formats: with dot (e.g., "function.name") and without (e.g., "function")
-            if "." in capture:
-                part = capture.split(".")[-1]
-            else:
-                part = capture
+            part = capture.split(".")[-1] if "." in capture else capture
 
             if part in query_string:
                 capture_count += 1
@@ -218,20 +215,19 @@ def test_direct_query_with_language_pack() -> None:
                     if text == "hello":
                         hello_found = True
                         break
-        elif isinstance(captures, dict):
+        elif isinstance(captures, dict) and "name" in captures:
             # Dictionary mapping capture names to nodes
-            if "name" in captures:
-                for node in captures["name"]:
-                    if node is not None and hasattr(node, "text") and node.text is not None:
-                        text = node.text.decode("utf-8") if hasattr(node.text, "decode") else str(node.text)
-                        if text == "hello":
-                            hello_found = True
-                            break
+            for node in captures["name"]:
+                if node is not None and hasattr(node, "text") and node.text is not None:
+                    text = node.text.decode("utf-8") if hasattr(node.text, "decode") else str(node.text)
+                    if text == "hello":
+                        hello_found = True
+                        break
 
         assert hello_found, "Query should find 'hello' function name"
 
     except ImportError as e:
-        pytest.skip(f"Skipping test due to import error: {str(e)}")
+        pytest.skip(f"Skipping test due to import error: {e!s}")
 
 
 def test_query_result_structure_transformation() -> None:

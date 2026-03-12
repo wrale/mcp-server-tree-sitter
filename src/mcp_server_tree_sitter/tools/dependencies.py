@@ -65,10 +65,7 @@ def find_dependencies(
                 safe_node = ensure_node(node)
                 text = get_node_text(safe_node, source_bytes)
 
-                if capture_name.startswith("import."):
-                    category = capture_name.split(".", 1)[1]
-                else:
-                    category = "import"
+                category = capture_name.split(".", 1)[1] if capture_name.startswith("import.") else "import"
 
                 text_str = text.decode("utf-8") if isinstance(text, bytes) else text
                 imports[category].append(text_str)

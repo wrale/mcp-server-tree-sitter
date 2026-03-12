@@ -1,5 +1,6 @@
 """Pytest-based diagnostic tests for cursor-based AST functionality."""
 
+import contextlib
 from collections.abc import Generator
 from pathlib import Path
 from typing import Any
@@ -47,10 +48,8 @@ def test_project(tmp_path: Path) -> Generator[dict[str, Any], None, None]:
         yield {"name": project_name, "path": project_path, "file": "test.py"}
     finally:
         # Clean up
-        try:
+        with contextlib.suppress(Exception):
             project_registry.remove_project(project_name)
-        except Exception:
-            pass
 
 
 @pytest.mark.diagnostic

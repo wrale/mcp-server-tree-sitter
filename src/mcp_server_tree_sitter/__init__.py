@@ -6,7 +6,7 @@ intelligent access to codebases with appropriate context management.
 
 # Import bootstrap package first to ensure core services are set up
 # before any other modules are imported
-from . import bootstrap as bootstrap  # noqa: F401 - Import needed for initialization
+from . import bootstrap as bootstrap
 
 # Logging is now configured via the bootstrap.logging_bootstrap module
 # The bootstrap module automatically calls configure_root_logger() when imported

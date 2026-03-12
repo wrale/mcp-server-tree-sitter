@@ -4,6 +4,7 @@ Uses ThreadPoolExecutor to simulate concurrent calls; asserts no data
 corruption or deadlock.
 """
 
+import contextlib
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
@@ -30,10 +31,8 @@ def temp_projects(tmp_path: Path) -> list[tuple[str, Path]]:
     yield dirs
     registry = _project_registry()
     for name, _ in dirs:
-        try:
+        with contextlib.suppress(Exception):
             registry.remove_project(name)
-        except Exception:
-            pass
 
 
 def test_concurrent_project_register_get(temp_projects: list[tuple[str, Path]]) -> None:
@@ -62,10 +61,8 @@ def test_concurrent_project_register_get(temp_projects: list[tuple[str, Path]]) 
 def test_concurrent_cache_access(temp_projects: list[tuple[str, Path]]) -> None:
     """Concurrent get_ast (cache get/put) does not corrupt cache."""
     for name, root in temp_projects:
-        try:
+        with contextlib.suppress(Exception):
             register_project_tool(path=str(root), name=name)
-        except Exception:
-            pass
 
     cache = get_tree_cache()
     cache.invalidate()
@@ -91,10 +88,8 @@ def test_concurrent_cache_access(temp_projects: list[tuple[str, Path]]) -> None:
 def test_concurrent_search_and_query(temp_projects: list[tuple[str, Path]]) -> None:
     """Concurrent search_text and query_code do not deadlock or corrupt."""
     for name, root in temp_projects:
-        try:
+        with contextlib.suppress(Exception):
             register_project_tool(path=str(root), name=name)
-        except Exception:
-            pass
 
     def search(project_name: str) -> list:
         return find_text(project=project_name, pattern="x", max_results=10)
@@ -117,10 +112,8 @@ def test_concurrent_search_and_query(temp_projects: list[tuple[str, Path]]) -> N
 def test_concurrent_list_files(temp_projects: list[tuple[str, Path]]) -> None:
     """Concurrent list_files from multiple projects is safe."""
     for name, root in temp_projects:
-        try:
+        with contextlib.suppress(Exception):
             register_project_tool(path=str(root), name=name)
-        except Exception:
-            pass
 
     with ThreadPoolExecutor(max_workers=6) as ex:
         futures = [ex.submit(list_files, name) for name, _ in temp_projects for _ in range(3)]

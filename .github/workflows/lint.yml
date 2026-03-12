@@ -22,13 +22,8 @@ jobs:
           curl -LsSf https://astral.sh/uv/install.sh | sh
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
-      - name: Create venv and install dependencies
-        run: |
-          uv venv
-          source .venv/bin/activate
-          uv pip install -e ".[dev]"
+      - name: Sync dependencies from lockfile
+        run: uv sync --extra dev
 
       - name: Run ruff check (lint)
-        run: |
-          source .venv/bin/activate
-          uv run ruff check .
+        run: uv run ruff check .

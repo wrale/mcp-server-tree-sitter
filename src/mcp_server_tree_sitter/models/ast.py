@@ -117,9 +117,8 @@ def find_node_at_position(root_node: Node, row: int, column: int) -> Node | None
         # handled correctly, and use < for end_point (exclusive upper bound).
         if node.type == "function_definition":
             for child in node.children:
-                if child.type in ["identifier", "name"]:
-                    if child.start_point <= point < child.end_point:
-                        return child
+                if child.type in ["identifier", "name"] and child.start_point <= point < child.end_point:
+                    return child
         return None
 
     # First check if we have a specific node like a function name

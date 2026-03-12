@@ -63,10 +63,10 @@ class ComplexityResult(TypedDict):
 __all__ = [
     "ComplexityResult",
     "ProjectStructureResult",
-    "extract_symbols",
-    "analyze_project_structure",
-    "find_dependencies",
     "analyze_code_complexity",
+    "analyze_project_structure",
+    "extract_symbols",
+    "find_dependencies",
 ]
 
 

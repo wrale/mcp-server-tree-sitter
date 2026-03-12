@@ -164,10 +164,7 @@ def process_symbol_matches(
     def is_inside_class(node_row: int) -> bool:
         if not class_ranges:
             return False
-        for start_row, end_row in class_ranges:
-            if start_row <= node_row <= end_row:
-                return True
-        return False
+        return any(start_row <= node_row <= end_row for start_row, end_row in class_ranges)
 
     # Track functions that should be filtered out (methods inside classes)
     filtered_methods: list[int] = []
@@ -221,7 +218,7 @@ def process_symbol_matches(
                     else:
                         text = _to_str(alias_text)
             # For other symbol types
-            elif not capture_name.endswith(".name") and not capture_name == symbol_type:
+            elif not capture_name.endswith(".name") and capture_name != symbol_type:
                 return
 
             text = _to_str(get_node_text(safe_node, source_bytes, decode=True))

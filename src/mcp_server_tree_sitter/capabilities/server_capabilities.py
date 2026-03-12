@@ -96,7 +96,7 @@ def register_capabilities(mcp_server: FastMCP) -> None:
         # Extract the current word being typed
         current_word = ""
         i = position - 1
-        while i >= 0 and text[i].isalnum() or text[i] == "_":
+        while (i >= 0 and text[i].isalnum()) or text[i] == "_":
             current_word = text[i] + current_word
             i -= 1
 

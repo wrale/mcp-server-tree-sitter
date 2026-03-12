@@ -1,5 +1,6 @@
 """Pytest-based diagnostic tests for AST parsing functionality."""
 
+import contextlib
 import time
 from collections.abc import Generator
 from pathlib import Path
@@ -37,10 +38,8 @@ def test_project(tmp_path: Path) -> Generator[dict[str, Any], None, None]:
         yield {"name": project_name, "path": project_path, "file": "test.py"}
     finally:
         # Clean up
-        try:
+        with contextlib.suppress(Exception):
             project_registry.remove_project(project_name)
-        except Exception:
-            pass
 
 
 def parse_file(file_path: Path, language: str) -> tuple[Any, bytes]:

@@ -4,6 +4,7 @@ Covers: happy path, missing project, invalid language, parse error.
 Uses existing test helpers; get_app() is used as-is (real app).
 """
 
+import contextlib
 from pathlib import Path
 
 import pytest
@@ -29,10 +30,8 @@ def project_with_python(tmp_path: Path) -> tuple[str, Path]:
     try:
         yield name, root
     finally:
-        try:
+        with contextlib.suppress(Exception):
             remove_project_tool(name)
-        except Exception:
-            pass
 
 
 def test_tools_happy_path_get_ast(project_with_python: tuple[str, Path]) -> None:

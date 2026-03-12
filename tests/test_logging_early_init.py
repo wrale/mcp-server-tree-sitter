@@ -94,18 +94,19 @@ def test_handlers_synchronized_at_init() -> None:
         root_logger.handlers = [mock_handler]
 
         # Set environment variable
-        with patch.dict(os.environ, {"MCP_TS_LOG_LEVEL": "DEBUG"}):
-            # Mock the get_log_level_from_env function to control return value
-            with patch("mcp_server_tree_sitter.bootstrap.logging_bootstrap.get_log_level_from_env") as mock_get_level:
-                mock_get_level.return_value = logging.DEBUG
+        with (
+            patch.dict(os.environ, {"MCP_TS_LOG_LEVEL": "DEBUG"}),
+            patch("mcp_server_tree_sitter.bootstrap.logging_bootstrap.get_log_level_from_env") as mock_get_level,
+        ):
+            mock_get_level.return_value = logging.DEBUG
 
-                # Force reload to trigger initialization
-                import mcp_server_tree_sitter.bootstrap.logging_bootstrap
+            # Force reload to trigger initialization
+            import mcp_server_tree_sitter.bootstrap.logging_bootstrap
 
-                importlib.reload(mcp_server_tree_sitter.bootstrap.logging_bootstrap)
+            importlib.reload(mcp_server_tree_sitter.bootstrap.logging_bootstrap)
 
-                # Verify handler level was set
-                mock_handler.setLevel.assert_called_with(logging.DEBUG)
+            # Verify handler level was set
+            mock_handler.setLevel.assert_called_with(logging.DEBUG)
     finally:
         # Restore original handlers
         root_logger.handlers = original_handlers

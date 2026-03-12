@@ -1,5 +1,6 @@
 """Example of using pytest with diagnostic plugin for testing."""
 
+import contextlib
 from collections.abc import Generator
 from pathlib import Path
 from typing import Any
@@ -34,10 +35,8 @@ def test_project(tmp_path: Path) -> Generator[dict[str, Any], None, None]:
     finally:
         # Clean up
         project_registry = get_project_registry()
-        try:
+        with contextlib.suppress(Exception):
             project_registry.remove_project(project_name)
-        except Exception:
-            pass
 
 
 @pytest.mark.diagnostic

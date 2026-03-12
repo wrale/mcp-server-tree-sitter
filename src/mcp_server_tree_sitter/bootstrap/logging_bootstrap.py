@@ -74,10 +74,7 @@ def update_log_levels(level_name: str | int) -> None:
         level_name: Log level name (DEBUG, INFO, etc.) or numeric value
     """
     # Convert string level name to numeric value if needed
-    if isinstance(level_name, str):
-        level_value = LOG_LEVEL_MAP.get(level_name.upper(), logging.INFO)
-    else:
-        level_value = level_name
+    level_value = LOG_LEVEL_MAP.get(level_name.upper(), logging.INFO) if isinstance(level_name, str) else level_name
 
     # Update ONLY the root package logger level
     pkg_logger = logging.getLogger("mcp_server_tree_sitter")
