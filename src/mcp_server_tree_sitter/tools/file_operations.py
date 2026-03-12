@@ -2,7 +2,7 @@
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, cast
 
 from ..exceptions import FileAccessError, ProjectError
 from ..models.project import Project
@@ -81,7 +81,7 @@ def get_file_content(
     as_bytes: bool = False,
     max_lines: Optional[int] = None,
     start_line: int = 0,
-) -> Union[str, bytes]:
+) -> str | bytes:
     """
     Get content of a file in a project.
 
@@ -111,6 +111,7 @@ def get_file_content(
 
     try:
         need_slice = start_line > 0 or max_lines is not None
+        lines: List[str] | List[bytes]
 
         if as_bytes:
             with open(file_path, "rb") as f:

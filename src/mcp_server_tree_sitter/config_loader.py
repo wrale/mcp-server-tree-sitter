@@ -11,7 +11,7 @@ import logging
 import os
 from collections.abc import Callable
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 
 import yaml
 from pydantic import ValidationError
@@ -126,7 +126,7 @@ class ConfigurationManager:
         """Return the current configuration."""
         return self._config
 
-    def load_from_file(self, path: Union[str, Path]) -> ServerConfig:
+    def load_from_file(self, path: str | Path) -> ServerConfig:
         """Load configuration from a YAML file and apply env overrides."""
         config_path = Path(path)
         if not config_path.exists():

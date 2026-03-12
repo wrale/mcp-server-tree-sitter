@@ -2,10 +2,9 @@
 
 import os
 from pathlib import Path
-from typing import Union
 
 
-def normalize_path(path: Union[str, Path], ensure_absolute: bool = False) -> Path:
+def normalize_path(path: str | Path, ensure_absolute: bool = False) -> Path:
     """
     Normalize a path for cross-platform compatibility.
 
@@ -24,7 +23,7 @@ def normalize_path(path: Union[str, Path], ensure_absolute: bool = False) -> Pat
     return path_obj
 
 
-def safe_relative_path(path: Union[str, Path], base: Union[str, Path]) -> Path:
+def safe_relative_path(path: str | Path, base: str | Path) -> Path:
     """
     Safely get a relative path that prevents directory traversal attacks.
 
@@ -52,7 +51,7 @@ def safe_relative_path(path: Union[str, Path], base: Union[str, Path]) -> Path:
         raise ValueError(f"Path {path} is not within base directory {base}") from e
 
 
-def get_project_root(path: Union[str, Path]) -> Path:
+def get_project_root(path: str | Path) -> Path:
     """
     Attempt to determine project root from a file path by looking for common markers.
 

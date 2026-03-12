@@ -10,7 +10,7 @@ modify how logging is configured, make changes here and nowhere else.
 
 import logging
 import os
-from typing import Dict, Union
+from typing import Dict
 
 # Numeric values corresponding to log level names
 LOG_LEVEL_MAP: Dict[str, int] = {
@@ -63,7 +63,7 @@ def configure_root_logger() -> None:
                 handler.setLevel(logger.getEffectiveLevel())
 
 
-def update_log_levels(level_name: Union[str, int]) -> None:
+def update_log_levels(level_name: str | int) -> None:
     """
     Update the root package logger level and synchronize handler levels.
 

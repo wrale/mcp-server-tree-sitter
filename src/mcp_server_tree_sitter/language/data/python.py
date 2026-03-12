@@ -38,12 +38,14 @@ def _enrich_symbol_imports(
         for node in nodes:
             if capture_name != "alias":
                 continue
-            alias_text = get_node_text(node, source_bytes)
+            _raw = get_node_text(node, source_bytes)
+            alias_text = _raw.decode("utf-8") if isinstance(_raw, bytes) else _raw
             module_name = ""
             if node.parent and node.parent.parent:
                 for child in node.parent.parent.children:
                     if getattr(child, "type", None) == "dotted_name":
-                        module_name = get_node_text(child, source_bytes)
+                        _mod = get_node_text(child, source_bytes)
+                        module_name = _mod.decode("utf-8") if isinstance(_mod, bytes) else _mod
                         break
             symbols["imports"].append({"name": alias_text, "type": "imports", "location": node_location(node)})
             if module_name:

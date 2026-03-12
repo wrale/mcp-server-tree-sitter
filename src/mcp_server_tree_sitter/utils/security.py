@@ -2,13 +2,12 @@
 
 import logging
 from pathlib import Path
-from typing import Union
 
 from ..api import get_config
 from ..exceptions import SecurityError
 
 
-def validate_file_access(file_path: Union[str, Path], project_root: Union[str, Path]) -> None:
+def validate_file_access(file_path: str | Path, project_root: str | Path) -> None:
     """
     Validate a file can be safely accessed.
 

@@ -1,6 +1,6 @@
 """Symbol extraction from source files using tree-sitter queries."""
 
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional
 
 from ..exceptions import SecurityError
 from ..language.import_enrichers import get_symbol_import_enricher
@@ -140,7 +140,7 @@ def extract_symbols(
 
 
 def process_symbol_matches(
-    matches: Union[Dict[str, List[Node]], List[Any]],
+    matches: Dict[str, List[Node]] | List[Any],
     symbol_type: str,
     symbols_dict: Dict[str, List[Dict[str, Any]]],
     source_bytes: bytes,
@@ -170,6 +170,9 @@ def process_symbol_matches(
 
     # Track functions that should be filtered out (methods inside classes)
     filtered_methods: List[int] = []
+
+    def _to_str(x: str | bytes) -> str:
+        return x.decode("utf-8") if isinstance(x, bytes) else x
 
     # Helper function to process a single node into a symbol
     def process_node(node: Node, capture_name: str) -> None:
@@ -209,21 +212,18 @@ def process_symbol_matches(
                                             item_name = get_node_text(item_child, source_bytes, decode=True)
                                             break
 
-                    def _s(x: str | bytes) -> str:
-                        return x.decode("utf-8") if isinstance(x, bytes) else x
-
                     alias_text = get_node_text(safe_node, source_bytes, decode=True)
                     if module_name and item_name:
-                        text = f"{_s(module_name)}.{_s(item_name)} as {_s(alias_text)}"
+                        text = f"{_to_str(module_name)}.{_to_str(item_name)} as {_to_str(alias_text)}"
                     elif module_name:
-                        text = f"{_s(module_name)} as {_s(alias_text)}"
+                        text = f"{_to_str(module_name)} as {_to_str(alias_text)}"
                     else:
-                        text = alias_text
+                        text = _to_str(alias_text)
             # For other symbol types
             elif not capture_name.endswith(".name") and not capture_name == symbol_type:
                 return
 
-            text = get_node_text(safe_node, source_bytes, decode=True)
+            text = _to_str(get_node_text(safe_node, source_bytes, decode=True))
 
             symbol = {
                 "name": text,

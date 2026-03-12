@@ -212,7 +212,7 @@ except ImportError:
         def root_node(self) -> DummyNode:
             return DummyNode()
 
-    # Export dummy types for type checking (conditional assignment; mypy sees two types)
+    # Export dummy types for type checking (conditional assignment)
     Language = DummyLanguage
     Parser = DummyParser
     Tree = DummyTree

@@ -4,12 +4,12 @@ Precedence: environment variables > explicit updates > YAML file > defaults.
 Env format: MCP_TS_SECTION_SETTING (e.g. MCP_TS_CACHE_MAX_SIZE_MB) or MCP_TS_SETTING.
 """
 
-from typing import List, Optional, TypeAlias, Union
+from typing import List, Optional, TypeAlias
 
 from pydantic import BaseModel, Field
 from typing_extensions import TypedDict
 
-ConfigValue: TypeAlias = Union[int, float, bool, str, None, List[str]]
+ConfigValue: TypeAlias = int | float | bool | str | None | List[str]
 
 
 class _CacheDict(TypedDict):
