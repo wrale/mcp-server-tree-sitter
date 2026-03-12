@@ -17,7 +17,7 @@ def read_text_file(path: str | Path) -> list[str]:
     Returns:
         List of lines from the file
     """
-    with open(str(path), "r", encoding="utf-8", errors="replace") as f:
+    with open(str(path), encoding="utf-8", errors="replace") as f:
         return f.readlines()
 
 
@@ -148,7 +148,7 @@ def read_file_lines(path: str | Path, start_line: int = 0, max_lines: int | None
     Returns:
         List of requested lines
     """
-    with open(str(path), "r", encoding="utf-8", errors="replace") as f:
+    with open(str(path), encoding="utf-8", errors="replace") as f:
         # Skip lines before start_line
         for _ in range(start_line):
             next(f, None)

@@ -39,7 +39,7 @@ def diagnose_yaml_config(config_path: str) -> dict[str, Any]:
 
     # Check if file is readable
     try:
-        with open(path_obj, "r") as f:
+        with open(path_obj) as f:
             content = f.read()
             result["readable"] = True
             result["file_content"] = content

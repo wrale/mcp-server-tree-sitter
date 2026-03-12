@@ -20,10 +20,10 @@ logger = get_logger(__name__)
 class App:
     """Process-wide shared state. One instance per process (__new__ singleton, thread-safe)."""
 
-    _instance: "App" | None = None
+    _instance: App | None = None
     _lock = threading.RLock()
 
-    def __new__(cls) -> "App":
+    def __new__(cls) -> App:
         with cls._lock:
             if cls._instance is None:
                 cls._instance = super().__new__(cls)

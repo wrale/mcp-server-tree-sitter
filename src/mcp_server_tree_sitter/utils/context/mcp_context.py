@@ -35,7 +35,7 @@ class MCPContextProtocol(Protocol):
 class ProgressScope:
     """Scope for tracking progress of an operation."""
 
-    def __init__(self, context: "MCPContext", total: int, description: str) -> None:
+    def __init__(self, context: MCPContext, total: int, description: str) -> None:
         """
         Initialize a progress scope.
 
@@ -75,7 +75,7 @@ class ProgressScope:
 class MCPContext:
     """Context for MCP operations with progress reporting."""
 
-    def __init__(self, ctx: "MCPContextProtocol" | None = None) -> None:
+    def __init__(self, ctx: MCPContextProtocol | None = None) -> None:
         """
         Initialize context with optional MCP context.
 
@@ -181,7 +181,7 @@ class MCPContext:
                 scope.set_progress(scope.total)  # Ensure we complete the progress
             self.info(f"Completed: {description}")
 
-    def with_mcp_context(self, ctx: "MCPContextProtocol") -> "MCPContext":
+    def with_mcp_context(self, ctx: MCPContextProtocol) -> MCPContext:
         """
         Create a new context with the given MCP context.
 
@@ -194,7 +194,7 @@ class MCPContext:
         return MCPContext(ctx)
 
     @staticmethod
-    def from_mcp_context(ctx: "MCPContextProtocol" | None) -> "MCPContext":
+    def from_mcp_context(ctx: MCPContextProtocol | None) -> MCPContext:
         """
         Create a context from an MCP context.
 
@@ -206,7 +206,7 @@ class MCPContext:
         """
         return MCPContext(ctx)
 
-    def try_get_mcp_context(self) -> "MCPContextProtocol" | None:
+    def try_get_mcp_context(self) -> MCPContextProtocol | None:
         """
         Get the wrapped MCP context if available.
 

@@ -119,7 +119,7 @@ def get_file_content(
                     return f.read()
                 lines = f.readlines()
         else:
-            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+            with open(file_path, encoding="utf-8", errors="replace") as f:
                 if not need_slice:
                     return f.read()
                 lines = f.readlines()
@@ -198,5 +198,5 @@ def count_lines(file_path: Path) -> int:
     try:
         with open(file_path, "rb") as f:
             return sum(1 for _ in f)
-    except (IOError, OSError):
+    except OSError:
         return 0

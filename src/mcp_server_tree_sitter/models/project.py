@@ -118,14 +118,14 @@ class ProjectRegistry:
     call ProjectRegistry() or use get_app().project_registry to get the instance.
     """
 
-    _instance: "ProjectRegistry" | None = None
+    _instance: ProjectRegistry | None = None
     _global_lock = threading.RLock()
 
-    def __new__(cls) -> "ProjectRegistry":
+    def __new__(cls) -> ProjectRegistry:
         """Return the single registry instance (thread-safe __new__ singleton)."""
         with cls._global_lock:
             if cls._instance is None:
-                instance = super(ProjectRegistry, cls).__new__(cls)
+                instance = super().__new__(cls)
                 instance._projects = {}
                 cls._instance = instance
             return cls._instance

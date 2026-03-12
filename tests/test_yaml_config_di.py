@@ -27,7 +27,7 @@ def test_server_config_from_file(temp_yaml_file: str) -> None:
     """Test the ServerConfig.from_file method directly."""
     # Print debug information
     print(f"Temporary YAML file created at: {temp_yaml_file}")
-    with open(temp_yaml_file, "r") as f:
+    with open(temp_yaml_file) as f:
         print(f"File contents:\n{f.read()}")
 
     # Call from_file directly

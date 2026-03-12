@@ -42,7 +42,7 @@ def load_config_from_file(path: str) -> ServerConfig:
         return ServerConfig()
 
     try:
-        with open(config_path, "r") as f:
+        with open(config_path) as f:
             file_content = f.read()
             logger.debug(f"YAML File content:\n{file_content}")
         config_data = yaml.safe_load(file_content)

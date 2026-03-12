@@ -10,7 +10,7 @@ def test_makefile_target_syntax() -> None:
     """Test that critical Makefile targets are correctly formed."""
     # Get the Makefile content
     makefile_path = Path(__file__).parent.parent / "Makefile"
-    with open(makefile_path, "r") as f:
+    with open(makefile_path) as f:
         makefile_content = f.read()
 
     # Test mcp targets - they should use uv run mcp directly

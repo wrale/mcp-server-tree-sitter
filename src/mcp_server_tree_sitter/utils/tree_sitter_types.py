@@ -33,23 +33,23 @@ class ParserProtocol(Protocol):
 
     def set_language(self, language: LanguageProtocol) -> None: ...
     def language(self, language: LanguageProtocol) -> None: ...  # Alternative name for set_language
-    def parse(self, bytes_input: bytes) -> "TreeProtocol": ...
+    def parse(self, bytes_input: bytes) -> TreeProtocol: ...
 
 
 class TreeProtocol(Protocol):
     """Protocol for Tree-sitter Tree class."""
 
     @property
-    def root_node(self) -> "NodeProtocol": ...
+    def root_node(self) -> NodeProtocol: ...
 
 
 class NodeProtocol(Protocol):
     """Protocol for Tree-sitter Node class."""
 
     @property
-    def children(self) -> list["NodeProtocol"]: ...
+    def children(self) -> list[NodeProtocol]: ...
     @property
-    def named_children(self) -> list["NodeProtocol"]: ...
+    def named_children(self) -> list[NodeProtocol]: ...
     @property
     def child_count(self) -> int: ...
     @property
@@ -67,18 +67,18 @@ class NodeProtocol(Protocol):
     @property
     def is_named(self) -> bool: ...
     @property
-    def parent(self) -> "NodeProtocol" | None: ...
+    def parent(self) -> NodeProtocol | None: ...
     @property
-    def children_by_field_name(self) -> dict[str, list["NodeProtocol"]]: ...
+    def children_by_field_name(self) -> dict[str, list[NodeProtocol]]: ...
 
-    def walk(self) -> "CursorProtocol": ...
+    def walk(self) -> CursorProtocol: ...
 
 
 class CursorProtocol(Protocol):
     """Protocol for Tree-sitter Cursor class (TreeCursor)."""
 
     @property
-    def node(self) -> "NodeProtocol": ...
+    def node(self) -> NodeProtocol: ...
 
     def goto_first_child(self) -> bool: ...
     def goto_next_sibling(self) -> bool: ...
@@ -133,7 +133,7 @@ except ImportError:
             """Dummy language method (alternative to set_language)."""
             pass
 
-        def parse(self, bytes_input: bytes) -> "DummyTree":
+        def parse(self, bytes_input: bytes) -> DummyTree:
             """Dummy parse method."""
             return DummyTree()
 
@@ -141,11 +141,11 @@ except ImportError:
         """Dummy implementation when tree-sitter is not available."""
 
         @property
-        def children(self) -> list["DummyNode"]:
+        def children(self) -> list[DummyNode]:
             return []
 
         @property
-        def named_children(self) -> list["DummyNode"]:
+        def named_children(self) -> list[DummyNode]:
             return []
 
         @property
@@ -181,14 +181,14 @@ except ImportError:
             return False
 
         @property
-        def parent(self) -> "DummyNode" | None:
+        def parent(self) -> DummyNode | None:
             return None
 
         @property
-        def children_by_field_name(self) -> dict[str, list["DummyNode"]]:
+        def children_by_field_name(self) -> dict[str, list[DummyNode]]:
             return {}
 
-        def walk(self) -> "DummyTreeCursor":
+        def walk(self) -> DummyTreeCursor:
             return DummyTreeCursor()
 
     class DummyTreeCursor:
@@ -223,35 +223,35 @@ except ImportError:
 
 
 # Helper functions: take object and narrow via isinstance (no Any; inputs are from our API or C).
-def ensure_language(obj: object) -> "Language":
+def ensure_language(obj: object) -> Language:
     """Safely cast to Language type."""
     if not isinstance(obj, Language):
         raise TypeError(f"Expected Language type, got {type(obj).__name__}")
     return obj
 
 
-def ensure_parser(obj: object) -> "Parser":
+def ensure_parser(obj: object) -> Parser:
     """Safely cast to Parser type."""
     if not isinstance(obj, Parser):
         raise TypeError(f"Expected Parser type, got {type(obj).__name__}")
     return obj
 
 
-def ensure_tree(obj: object) -> "Tree":
+def ensure_tree(obj: object) -> Tree:
     """Safely cast to Tree type."""
     if not isinstance(obj, Tree):
         raise TypeError(f"Expected Tree type, got {type(obj).__name__}")
     return obj
 
 
-def ensure_node(obj: object) -> "Node":
+def ensure_node(obj: object) -> Node:
     """Safely cast to Node type."""
     if not isinstance(obj, Node):
         raise TypeError(f"Expected Node type, got {type(obj).__name__}")
     return obj
 
 
-def ensure_cursor(obj: object) -> "TreeCursor":
+def ensure_cursor(obj: object) -> TreeCursor:
     """Safely cast to TreeCursor type."""
     if not isinstance(obj, TreeCursor):
         raise TypeError(f"Expected TreeCursor type, got {type(obj).__name__}")

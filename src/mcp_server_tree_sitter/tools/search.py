@@ -94,7 +94,7 @@ def search_text(
         try:
             validate_file_access(file_path, root)
 
-            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+            with open(file_path, encoding="utf-8", errors="replace") as f:
                 lines = f.readlines()
 
             for i, line in enumerate(lines, 1):
