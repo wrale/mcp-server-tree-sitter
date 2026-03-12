@@ -23,13 +23,17 @@ def register_ast_tools(mcp_server: FastMCP) -> None:
         """Get abstract syntax tree for a file.
 
         Args:
-            project: Project name
-            path: File path relative to project root
-            max_depth: Maximum depth of the tree (default: 5)
-            include_text: Whether to include node text
+            project: Name of the registered project.
+            path: File path relative to project root.
+            max_depth: Maximum tree depth. Defaults to None (use server config, typically 5).
+            include_text: Whether to include node text. Defaults to True.
 
         Returns:
-            AST as a nested dictionary
+            Nested dict with type, text, children, range (up to max_depth).
+
+        Raises:
+            ProjectError: If project is not registered.
+            ValueError: If language cannot be detected for path.
         """
         app = get_app()
         config = app.config_manager.get_config()
@@ -45,16 +49,20 @@ def register_ast_tools(mcp_server: FastMCP) -> None:
 
     @mcp_server.tool()
     def get_node_at_position(project: str, path: str, row: int, column: int) -> dict[str, Any] | None:
-        """Find the AST node at a specific position.
+        """Get the AST node at a given position. Row and column are 0-based.
 
         Args:
-            project: Project name
-            path: File path relative to project root
-            row: Line number (0-based)
-            column: Column number (0-based)
+            project: Name of the registered project.
+            path: File path relative to project root.
+            row: Line number (0-based).
+            column: Column number (0-based).
 
         Returns:
-            Node information or None if not found
+            Dict with node type, text, range (and children to depth 2), or None if no node at position.
+
+        Raises:
+            ProjectError: If project is not registered.
+            ValueError: If language cannot be detected for path.
         """
         app = get_app()
         project_obj = app.project_registry.get_project(project)

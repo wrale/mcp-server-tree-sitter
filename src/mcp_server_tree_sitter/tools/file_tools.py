@@ -18,51 +18,40 @@ def register_file_tools(mcp_server: FastMCP) -> None:
         max_depth: int | None = None,
         extensions: list[str] | None = None,
     ) -> list[str]:
-        """List files in a registered project.
-
-        Use this to discover which files exist before reading them with get_file.
-        The project must already be registered (e.g. via register_project_tool).
+        """List file paths in a registered project (relative to project root).
 
         Args:
             project: Name of the registered project.
-            pattern: Optional glob pattern relative to project root. Examples:
-                "**/*.py" (all Python files), "src/**/*" (all under src/).
-                If omitted, defaults to "**/*" (all files).
-            max_depth: Optional maximum directory depth to traverse. Omit for no limit.
-            extensions: Optional list of extensions to include, without the dot.
-                Example: ["py", "js", "ts"]. If omitted, all extensions are included.
+            pattern: Glob pattern (e.g. '**/*.py'). Defaults to '**/*' (all files).
+            max_depth: Maximum directory depth. Defaults to None (no limit).
+            extensions: File extensions to include, without dot (e.g. ['py', 'js']). Defaults to None (all).
 
         Returns:
-            List of file paths relative to the project root (e.g. ["src/main.py", "README.md"]).
+            List of relative path strings (e.g. ['src/main.py']).
+
+        Raises:
+            ProjectError: If project is not registered.
         """
         project_registry = get_app().project_registry
         return list_project_files(project_registry.get_project(project), pattern, max_depth, extensions)
 
     @mcp_server.tool()
     def get_file(project: str, path: str, max_lines: int | None = None, start_line: int = 0) -> str:
-        """Read file content from a registered project, optionally a line range.
-
-        Use this to read whole files or a slice of lines. The project must already
-        be registered. Path is relative to the project root (e.g. "src/main.py").
-
-        Line range: Lines are 0-based. First line is 0. You can request a slice by
-        start_line and optionally cap the number of lines with max_lines.
-        - Omit both: returns the entire file.
-        - start_line only: returns from that line to the end of the file.
-        - max_lines only (start_line=0): returns the first max_lines lines.
-        - Both: returns up to max_lines lines starting at start_line.
-        Out-of-bounds: start_line past end of file returns empty string; max_lines
-        beyond the end of the file returns from start_line to end of file (no error).
+        """Read file content. Path relative to project root; line numbers are 0-based.
 
         Args:
             project: Name of the registered project.
-            path: File path relative to project root. Use forward slashes (e.g. "src/main.py").
-            max_lines: Optional. Maximum number of lines to return. Omit to return all lines
-                from start_line to end of file.
-            start_line: First line to include (0-based). Default 0.
+            path: File path relative to project root (e.g. 'src/main.py').
+            max_lines: Maximum number of lines to return. Defaults to None (to end of file).
+            start_line: First line to include (0-based). Defaults to 0.
+                Out-of-range start_line returns empty string.
 
         Returns:
-            File content as a string: either the full file or the requested line range.
+            File content as string (full file or requested line range).
+
+        Raises:
+            ProjectError: If project is not registered.
+            FileAccessError: If path is outside project or access is denied.
         """
         project_registry = get_app().project_registry
         content = get_file_content(
@@ -77,18 +66,17 @@ def register_file_tools(mcp_server: FastMCP) -> None:
 
     @mcp_server.tool()
     def get_file_metadata(project: str, path: str) -> dict[str, Any]:
-        """Get metadata for a file or directory in a registered project.
-
-        Use this to check size, line count, or whether a path is a file/directory
-        before reading. The project must already be registered.
+        """Get metadata for a file or directory in the project.
 
         Args:
             project: Name of the registered project.
-            path: File or directory path relative to project root (e.g. "src/main.py").
+            path: File or directory path relative to project root.
 
         Returns:
-            Dictionary with: path (relative), size (bytes), last_modified (Unix timestamp),
-            created (Unix timestamp), is_directory (bool), extension (e.g. "py" or None),
-            line_count (number of lines for files, None for directories).
+            Dict with path, size, last_modified, created, is_directory, extension, line_count.
+
+        Raises:
+            ProjectError: If project is not registered.
+            FileAccessError: If path is invalid or access is denied.
         """
         return get_file_info(get_app().project_registry.get_project(project), path)

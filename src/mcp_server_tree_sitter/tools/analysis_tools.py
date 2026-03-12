@@ -26,15 +26,18 @@ def register_analysis_tools(mcp_server: FastMCP) -> None:
         file_path: str,
         symbol_types: list[str] | None = None,
     ) -> dict[str, list[dict[str, object]]]:
-        """Extract symbols from a file.
+        """Extract symbols (functions, classes, imports, etc.) from a file.
 
         Args:
-            project: Project name
-            file_path: Path to the file
-            symbol_types: Types of symbols to extract (functions, classes, imports, etc.)
+            project: Name of the registered project.
+            file_path: Path to the file relative to project root.
+            symbol_types: Optional filter (e.g. ['functions', 'classes']). Defaults to None (all types).
 
         Returns:
-            Dictionary of symbols by type
+            Dict mapping symbol type to list of symbol dicts (name, range, etc.).
+
+        Raises:
+            ProjectError: If project is not registered.
         """
         app = get_app()
         return extract_symbols(
@@ -50,15 +53,18 @@ def register_analysis_tools(mcp_server: FastMCP) -> None:
         scan_depth: int = 3,
         ctx: Context | None = None,
     ) -> ProjectStructureResult:
-        """Analyze overall project structure.
+        """Analyze project structure (languages, entry points, build files).
 
         Args:
-            project: Project name
-            scan_depth: Depth of detailed analysis (higher is slower)
-            ctx: Optional MCP context for progress reporting
+            project: Name of the registered project.
+            scan_depth: Depth of detailed analysis (higher is slower). Defaults to 3.
+            ctx: Optional MCP context for progress reporting. Defaults to None. Omit when calling from LLM.
 
         Returns:
-            Project analysis
+            ProjectStructureResult with languages, entry_points, build_files, etc.
+
+        Raises:
+            ProjectError: If project is not registered.
         """
         app = get_app()
         return analyze_project_structure(
@@ -70,14 +76,17 @@ def register_analysis_tools(mcp_server: FastMCP) -> None:
 
     @mcp_server.tool()
     def get_dependencies(project: str, file_path: str) -> dict[str, list[str]]:
-        """Find dependencies of a file.
+        """Get imports/includes for a file (parsed from AST).
 
         Args:
-            project: Project name
-            file_path: Path to the file
+            project: Name of the registered project.
+            file_path: Path to the file relative to project root.
 
         Returns:
-            Dictionary of imports/includes
+            Dict mapping category (e.g. 'imports') to list of dependency strings.
+
+        Raises:
+            ProjectError: If project is not registered.
         """
         app = get_app()
         return find_dependencies(
@@ -88,14 +97,17 @@ def register_analysis_tools(mcp_server: FastMCP) -> None:
 
     @mcp_server.tool()
     def analyze_complexity(project: str, file_path: str) -> ComplexityResult:
-        """Analyze code complexity.
+        """Compute code complexity metrics for a file.
 
         Args:
-            project: Project name
-            file_path: Path to the file
+            project: Name of the registered project.
+            file_path: Path to the file relative to project root.
 
         Returns:
-            Complexity metrics
+            ComplexityResult with line_count, function_count, class_count, cyclomatic_complexity, etc.
+
+        Raises:
+            ProjectError: If project is not registered.
         """
         app = get_app()
         return analyze_code_complexity(
@@ -112,17 +124,20 @@ def register_analysis_tools(mcp_server: FastMCP) -> None:
         threshold: float = 0.8,
         max_results: int = 10,
     ) -> list[TextMatchResult]:
-        """Find similar code to a snippet.
+        """Find text-similar code to a snippet (substring search).
 
         Args:
-            project: Project name
-            snippet: Code snippet to find
-            language: Language of the snippet
-            threshold: Similarity threshold (0.0-1.0)
-            max_results: Maximum number of results
+            project: Name of the registered project.
+            snippet: Code snippet to find.
+            language: Optional language to restrict by extension. Defaults to None (all files).
+            threshold: Unused (reserved). Defaults to 0.8.
+            max_results: Maximum number of matches. Defaults to 10.
 
         Returns:
-            List of similar code locations
+            List of text match objects (path, line_number, line_text, etc.).
+
+        Raises:
+            ProjectError: If project is not registered.
         """
         app = get_app()
         clean_snippet = snippet.strip()
@@ -161,16 +176,21 @@ def register_analysis_tools(mcp_server: FastMCP) -> None:
         file_path: str | None = None,
         language: str | None = None,
     ) -> list[QueryMatchResult]:
-        """Find usage of a symbol.
+        """Find references to a symbol (identifier) in the project.
 
         Args:
-            project: Project name
-            symbol: Symbol name to find
-            file_path: Optional file to look in (for local symbols)
-            language: Language to search in
+            project: Name of the registered project.
+            symbol: Symbol name (identifier) to find.
+            file_path: Optional single file to search (e.g. for local symbols). Defaults to None.
+            language: Language when searching multiple files. Defaults to None.
+                Either file_path or language must be provided.
 
         Returns:
-            List of usage locations
+            List of query match objects (path, captures, range).
+
+        Raises:
+            ProjectError: If project is not registered.
+            ValueError: If neither file_path nor language is provided.
         """
         app = get_app()
         language_registry = app.language_registry

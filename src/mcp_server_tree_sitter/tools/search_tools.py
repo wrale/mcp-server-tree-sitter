@@ -24,17 +24,20 @@ def register_search_tools(mcp_server: FastMCP) -> None:
         """Search for text pattern in project files.
 
         Args:
-            project: Project name
-            pattern: Text pattern to search for
-            file_pattern: Optional glob pattern (e.g., "**/*.py")
-            max_results: Maximum number of results
-            case_sensitive: Whether to do case-sensitive matching
-            whole_word: Whether to match whole words only
-            use_regex: Whether to treat pattern as a regular expression
-            context_lines: Number of context lines to include
+            project: Name of the registered project.
+            pattern: Text pattern to search for.
+            file_pattern: Glob to restrict files (e.g. '**/*.py'). Defaults to None (all files).
+            max_results: Maximum number of results. Defaults to 100 (or config max_results_default).
+            case_sensitive: Case-sensitive matching. Defaults to False.
+            whole_word: Match whole words only. Defaults to False.
+            use_regex: Treat pattern as regex. Defaults to False.
+            context_lines: Context lines per match. Defaults to 2.
 
         Returns:
-            List of matches with file, line number, and text
+            List of match objects (path, line_number, line_text, matches, etc.).
+
+        Raises:
+            ProjectError: If project is not registered.
         """
         app = get_app()
         config = app.config_manager.get_config()
@@ -58,20 +61,23 @@ def register_search_tools(mcp_server: FastMCP) -> None:
         label: str | None = None,
         max_lines: int = 0,
     ) -> dict[str, object]:
-        """Find the enclosing scope (function, class, or module) for a position.
+        """Find enclosing scope (function, class, or module) at position. Row and column are 0-based.
 
         Args:
-            project: Project name
-            file_path: Path to the file
-            row: Line number (0-based)
-            column: Column number (0-based)
-            label: Optional text label at the position (e.g., variable name)
-            max_lines: Maximum number of lines to return (0 = no limit). When exceeded,
-                      returns a centered window around the target row with truncation markers.
+            project: Name of the registered project.
+            file_path: Path to the file relative to project root.
+            row: Line number (0-based).
+            column: Column number (0-based).
+            label: Optional label at position (e.g. variable name). Defaults to None.
+            max_lines: Max lines for snippet; 0 means no limit. Defaults to 0.
+                If scope is larger, returns truncated snippet when max_lines > 0.
 
         Returns:
-            Information about the enclosing scope, including type, name, and range
-            Empty if no scope found (e.g., point outside valid code)
+            Dict with type, name, range (and optional snippet). Empty dict if no scope at position.
+
+        Raises:
+            ProjectError: If project is not registered.
+            ValueError: If language cannot be detected for file.
         """
         app = get_app()
         project_obj = app.project_registry.get_project(project)
@@ -94,17 +100,22 @@ def register_search_tools(mcp_server: FastMCP) -> None:
         language: str | None = None,
         max_results: int = 100,
     ) -> list[QueryMatchResult]:
-        """Run a tree-sitter query on project files.
+        """Run a tree-sitter query on project files. Provide file_path (single file) or language (all matching files).
 
         Args:
-            project: Project name
-            query: Tree-sitter query string
-            file_path: Optional specific file to query
-            language: Language to use (required if file_path not provided)
-            max_results: Maximum number of results
+            project: Name of the registered project.
+            query: Tree-sitter query string.
+            file_path: Optional single file to query. Defaults to None.
+            language: Language when querying multiple files. Defaults to None.
+                Either file_path or language must be set when not querying a single file.
+            max_results: Maximum number of results. Defaults to 100 (or config max_results_default).
 
         Returns:
-            List of query matches
+            List of query match objects (captures, path, range).
+
+        Raises:
+            ProjectError: If project is not registered.
+            ValueError: If neither file_path nor language provided when required.
         """
         app = get_app()
         config = app.config_manager.get_config()
@@ -120,14 +131,17 @@ def register_search_tools(mcp_server: FastMCP) -> None:
 
     @mcp_server.tool()
     def get_query_template_tool(language: str, template_name: str) -> dict[str, str]:
-        """Get a predefined tree-sitter query template.
+        """Get a predefined tree-sitter query template for a language.
 
         Args:
-            language: Language name
-            template_name: Template name (e.g., "functions", "classes")
+            language: Language identifier (e.g. 'python', 'javascript').
+            template_name: Template name (e.g. 'functions', 'classes').
 
         Returns:
-            Query template information
+            Dict with language, name, query (the query string).
+
+        Raises:
+            ValueError: If template_name or language is not found.
         """
         from ..language.query_templates import get_query_template
 
@@ -143,13 +157,13 @@ def register_search_tools(mcp_server: FastMCP) -> None:
 
     @mcp_server.tool()
     def list_query_templates_tool(language: str | None = None) -> dict[str, object]:
-        """List available query templates.
+        """List available query template names.
 
         Args:
-            language: Optional language to filter by
+            language: Optional language to filter by. Defaults to None (all languages).
 
         Returns:
-            Available templates
+            Dict mapping language (or 'all') to list of template names.
         """
         from ..language.query_templates import list_query_templates
 
@@ -157,15 +171,15 @@ def register_search_tools(mcp_server: FastMCP) -> None:
 
     @mcp_server.tool()
     def build_query(language: str, patterns: list[str], combine: str = "or") -> dict[str, str]:
-        """Build a tree-sitter query from templates or patterns.
+        """Build a tree-sitter query from template or pattern names.
 
         Args:
-            language: Language name
-            patterns: List of template names or custom patterns
-            combine: How to combine patterns ("or" or "and")
+            language: Language identifier.
+            patterns: List of template names or custom patterns.
+            combine: How to combine patterns. Defaults to 'or'. Use 'and' for conjunction.
 
         Returns:
-            Combined query
+            Dict with language and query (the combined query string).
         """
         from .query_builder import build_compound_query
 
@@ -177,15 +191,15 @@ def register_search_tools(mcp_server: FastMCP) -> None:
 
     @mcp_server.tool()
     def adapt_query(query: str, from_language: str, to_language: str) -> dict[str, str]:
-        """Adapt a query from one language to another.
+        """Adapt a tree-sitter query from one language grammar to another.
 
         Args:
-            query: Original query string
-            from_language: Source language
-            to_language: Target language
+            query: Original query string.
+            from_language: Source language identifier.
+            to_language: Target language identifier.
 
         Returns:
-            Adapted query
+            Dict with original_language, target_language, original_query, adapted_query.
         """
         from .query_builder import adapt_query_for_language
 
@@ -199,13 +213,13 @@ def register_search_tools(mcp_server: FastMCP) -> None:
 
     @mcp_server.tool()
     def get_node_types(language: str) -> dict[str, str]:
-        """Get descriptions of common node types for a language.
+        """Get node type names and short descriptions for a language.
 
         Args:
-            language: Language name
+            language: Language identifier (e.g. 'python', 'javascript').
 
         Returns:
-            Dictionary of node types and descriptions
+            Dict mapping node type name to description string.
         """
         from .query_builder import describe_node_types
 

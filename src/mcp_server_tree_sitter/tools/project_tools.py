@@ -23,16 +23,19 @@ def register_project_tools(mcp_server: FastMCP) -> None:
         max_file_size_mb: int | None = None,
         log_level: str | None = None,
     ) -> ConfigDict:
-        """Configure the server.
+        """Set server options. Only provided args are applied; others keep current value.
 
         Args:
-            config_path: Path to YAML config file
-            cache_enabled: Whether to enable parse tree caching
-            max_file_size_mb: Maximum file size in MB
-            log_level: Logging level (DEBUG, INFO, WARNING, ERROR)
+            config_path: Path to YAML config file. Defaults to None (no change).
+            cache_enabled: Enable/disable parse tree cache. Defaults to None (no change).
+            max_file_size_mb: Max file size in MB. Defaults to None (no change).
+            log_level: Log level (DEBUG, INFO, WARNING, ERROR). Defaults to None (no change).
 
         Returns:
-            Current configuration
+            Dict with cache, security, language, log_level (current config after apply).
+
+        Note:
+            Invalid config_path is logged; file load errors may leave config unchanged.
         """
         app = get_app()
         config_manager = app.config_manager
@@ -75,15 +78,18 @@ def register_project_tools(mcp_server: FastMCP) -> None:
     def register_project_tool(
         path: str, name: str | None = None, description: str | None = None
     ) -> dict[str, Any]:
-        """Register a project directory for code exploration.
+        """Register a project root for code exploration.
 
         Args:
-            path: Path to the project directory
-            name: Optional name for the project (defaults to directory name)
-            description: Optional description of the project
+            path: Path to the project directory.
+            name: Project name. Defaults to path (directory name).
+            description: Optional project description. Defaults to None.
 
         Returns:
-            Project information
+            Dict with name, path, description, file_count (and related keys).
+
+        Raises:
+            ProjectError: If path is invalid or registration fails.
         """
         app = get_app()
         project_registry = app.project_registry
@@ -100,19 +106,23 @@ def register_project_tools(mcp_server: FastMCP) -> None:
         """List all registered projects.
 
         Returns:
-            List of project information
+            List of dicts with name, path, description, file_count (and related keys).
+            Empty list if no projects registered.
         """
         return get_app().project_registry.list_projects()
 
     @mcp_server.tool()
     def remove_project_tool(name: str) -> dict[str, str]:
-        """Remove a registered project.
+        """Remove a registered project by name.
 
         Args:
-            name: Project name
+            name: Project name to remove.
 
         Returns:
-            Success message
+            Dict with status ('success') and message.
+
+        Raises:
+            ProjectError: If project not found or removal fails.
         """
         try:
             get_app().project_registry.remove_project(name)
@@ -122,10 +132,10 @@ def register_project_tools(mcp_server: FastMCP) -> None:
 
     @mcp_server.tool()
     def list_languages() -> dict[str, Any]:
-        """List available languages.
+        """List tree-sitter languages available for parsing.
 
         Returns:
-            Information about available languages
+            Dict with 'available' (list of language ids) and 'installable' (list).
         """
         available = get_app().language_registry.list_available_languages()
         return {
@@ -135,13 +145,14 @@ def register_project_tools(mcp_server: FastMCP) -> None:
 
     @mcp_server.tool()
     def check_language_available(language: str) -> dict[str, str]:
-        """Check if a tree-sitter language parser is available.
+        """Check if a tree-sitter parser exists for the given language.
 
         Args:
-            language: Language to check
+            language: Language identifier to check (e.g. 'python', 'javascript').
 
         Returns:
-            Success message
+            Dict with status ('success' or 'error') and message.
+            Unavailable languages return status 'error', not an exception.
         """
         language_registry = get_app().language_registry
         if language_registry.is_language_available(language):
@@ -156,14 +167,19 @@ def register_project_tools(mcp_server: FastMCP) -> None:
 
     @mcp_server.tool()
     def clear_cache(project: str | None = None, file_path: str | None = None) -> dict[str, str]:
-        """Clear the parse tree cache.
+        """Clear parse tree cache.
 
         Args:
-            project: Optional project to clear cache for
-            file_path: Optional specific file to clear cache for
+            project: Project name to clear. Defaults to None (clear all projects).
+            file_path: Path within project to clear. Defaults to None.
+                If project is set and file_path is set, only that file is cleared.
+                If project is set and file_path is None, entire project cache cleared.
 
         Returns:
-            Status message
+            Dict with status ('success') and message.
+
+        Raises:
+            ProjectError: If project is unknown when project or file_path is provided.
         """
         app = get_app()
         project_registry = app.project_registry
@@ -184,13 +200,14 @@ def register_project_tools(mcp_server: FastMCP) -> None:
 
     @mcp_server.tool()
     def diagnose_config(config_path: str) -> dict[str, Any]:
-        """Diagnose issues with YAML configuration loading.
+        """Run diagnostics on a YAML config file.
 
         Args:
-            config_path: Path to YAML config file
+            config_path: Path to the YAML config file.
 
         Returns:
-            Diagnostic information
+            Dict with load result, errors (if any), and effective config values.
+            Missing or invalid file is reported in the diagnostic, not via exception.
         """
         from .debug import diagnose_yaml_config
 
