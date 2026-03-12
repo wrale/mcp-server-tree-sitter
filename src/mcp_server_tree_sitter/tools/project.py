@@ -1,12 +1,12 @@
 """Project management tools for MCP server."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from ..api import get_language_registry, get_project_registry
 from ..exceptions import ProjectError
 
 
-def register_project(path: str, name: Optional[str] = None, description: Optional[str] = None) -> Dict[str, Any]:
+def register_project(path: str, name: str | None = None, description: str | None = None) -> Dict[str, Any]:
     """
     Register a project for code analysis.
 

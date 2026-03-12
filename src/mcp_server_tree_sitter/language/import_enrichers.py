@@ -5,7 +5,7 @@ extra queries and add aliased/supplementary imports. Tools call get_*_enricher(l
 and invoke the callback if present.
 """
 
-from typing import Any, Callable, Dict, Optional, Set
+from typing import Any, Callable, Dict, Set
 
 from ..utils.tree_sitter_types import Node
 
@@ -32,7 +32,7 @@ def register_symbol_import_enricher(language_id: str, fn: _SymbolImportEnricher)
     _symbol_enrichers[language_id] = fn
 
 
-def get_symbol_import_enricher(language_id: str) -> Optional[_SymbolImportEnricher]:
+def get_symbol_import_enricher(language_id: str) -> _SymbolImportEnricher | None:
     """Return the symbol import enricher for the language, or None."""
     return _symbol_enrichers.get(language_id)
 
@@ -42,6 +42,6 @@ def register_dependency_module_enricher(language_id: str, fn: _DependencyModuleE
     _dependency_enrichers[language_id] = fn
 
 
-def get_dependency_module_enricher(language_id: str) -> Optional[_DependencyModuleEnricher]:
+def get_dependency_module_enricher(language_id: str) -> _DependencyModuleEnricher | None:
     """Return the dependency module enricher for the language, or None."""
     return _dependency_enrichers.get(language_id)

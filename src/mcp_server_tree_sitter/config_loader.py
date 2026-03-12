@@ -11,7 +11,6 @@ import logging
 import os
 from collections.abc import Callable
 from pathlib import Path
-from typing import Optional
 
 import yaml
 from pydantic import ValidationError
@@ -22,7 +21,7 @@ from .config_schema import ConfigDict, ConfigValue, ServerConfig
 logger = logging.getLogger(__name__)
 
 
-def get_default_config_path() -> Optional[Path]:
+def get_default_config_path() -> Path | None:
     """Return the default configuration file path based on the platform."""
     import platform
 
@@ -86,7 +85,7 @@ def update_config_from_new(original: ServerConfig, new: ServerConfig) -> None:
             logger.exception("Fallback config update also failed: %s", e2)
 
 
-def load_config(config_path: Optional[str] = None) -> ServerConfig:
+def load_config(config_path: str | None = None) -> ServerConfig:
     """Load and initialize configuration from file and environment.
 
     Precedence: env vars > explicit path > MCP_TS_CONFIG_PATH > default path.
@@ -112,10 +111,10 @@ def load_config(config_path: Optional[str] = None) -> ServerConfig:
 class ConfigurationManager:
     """Manages server configuration without relying on global variables."""
 
-    def __init__(self, initial_config: Optional[ServerConfig] = None) -> None:
+    def __init__(self, initial_config: ServerConfig | None = None) -> None:
         self._config = initial_config or ServerConfig()
         self._logger = logging.getLogger(__name__)
-        self._on_config_loaded: Optional[Callable[[ServerConfig], None]] = None
+        self._on_config_loaded: Callable[[ServerConfig], None] | None = None
         update_config_from_env(self._config)
 
     def set_on_config_loaded(self, callback: Callable[[ServerConfig], None]) -> None:

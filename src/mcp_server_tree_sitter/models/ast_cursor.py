@@ -1,6 +1,6 @@
 """AST representation models using cursor-based traversal."""
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from ..utils.tree_sitter_helpers import (
     get_node_text,
@@ -11,7 +11,7 @@ from ..utils.tree_sitter_types import Node, ensure_node
 
 def node_to_dict_cursor(
     node: Node,
-    source_bytes: Optional[bytes] = None,
+    source_bytes: bytes | None = None,
     include_children: bool = True,
     include_text: bool = True,
     max_depth: int = 5,

@@ -4,7 +4,7 @@ Precedence: environment variables > explicit updates > YAML file > defaults.
 Env format: MCP_TS_SECTION_SETTING (e.g. MCP_TS_CACHE_MAX_SIZE_MB) or MCP_TS_SETTING.
 """
 
-from typing import List, Optional, TypeAlias
+from typing import List, TypeAlias
 
 from pydantic import BaseModel, Field
 from typing_extensions import TypedDict
@@ -49,7 +49,7 @@ class SecurityConfig(BaseModel):
 
     max_file_size_mb: int = 5
     excluded_dirs: List[str] = Field(default_factory=lambda: [".git", "node_modules", "__pycache__"])
-    allowed_extensions: Optional[List[str]] = None
+    allowed_extensions: List[str] | None = None
 
 
 class LanguageConfig(BaseModel):

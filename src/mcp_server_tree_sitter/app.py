@@ -4,8 +4,9 @@ Single place that holds config, project registry, language registry, and tree ca
 Uses __new__-based singletons; call get_app() to get the one instance.
 """
 
+from __future__ import annotations
+
 import threading
-from typing import Optional
 
 from .bootstrap import get_logger
 from .cache.parser_cache import TreeCache
@@ -19,7 +20,7 @@ logger = get_logger(__name__)
 class App:
     """Process-wide shared state. One instance per process (__new__ singleton, thread-safe)."""
 
-    _instance: Optional["App"] = None
+    _instance: "App" | None = None
     _lock = threading.RLock()
 
     def __new__(cls) -> "App":

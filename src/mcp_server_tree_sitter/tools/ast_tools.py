@@ -1,6 +1,6 @@
 """AST and node-at-position tool handlers."""
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from mcp.server.fastmcp import FastMCP
 
@@ -17,7 +17,7 @@ def register_ast_tools(mcp_server: FastMCP) -> None:
     def get_ast(
         project: str,
         path: str,
-        max_depth: Optional[int] = None,
+        max_depth: int | None = None,
         include_text: bool = True,
     ) -> Dict[str, Any]:
         """Get abstract syntax tree for a file.
@@ -44,7 +44,7 @@ def register_ast_tools(mcp_server: FastMCP) -> None:
         )
 
     @mcp_server.tool()
-    def get_node_at_position(project: str, path: str, row: int, column: int) -> Optional[Dict[str, Any]]:
+    def get_node_at_position(project: str, path: str, row: int, column: int) -> Dict[str, Any] | None:
         """Find the AST node at a specific position.
 
         Args:

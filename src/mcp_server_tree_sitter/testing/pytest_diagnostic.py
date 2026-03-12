@@ -10,7 +10,7 @@ import traceback
 import types
 from json import JSONEncoder
 from pathlib import Path
-from typing import Any, Dict, Generator, List, Optional, Protocol
+from typing import Any, Dict, Generator, List, Protocol
 
 import pytest
 
@@ -27,13 +27,13 @@ class _ExceptionInfoLike(Protocol):
 
     type: type[BaseException]
     value: BaseException
-    tb: Optional[types.TracebackType]
+    tb: types.TracebackType | None
 
 
 class _CallInfoLike(Protocol):
     """Protocol for pytest's CallInfo (internal)."""
 
-    excinfo: Optional[_ExceptionInfoLike]
+    excinfo: _ExceptionInfoLike | None
 
 
 # Custom JSON Encoder that can handle binary data
@@ -81,13 +81,13 @@ class DiagnosticData:
         """Initialize with test ID."""
         self.test_id = test_id
         self.start_time = time.time()
-        self.end_time: Optional[float] = None
+        self.end_time: float | None = None
         self.status = "pending"
         self.details: Dict[str, Any] = {}
         self.errors: List[Dict[str, Any]] = []
         self.artifacts: Dict[str, Any] = {}
 
-    def add_error(self, error_type: str, message: str, tb: Optional[str] = None) -> None:
+    def add_error(self, error_type: str, message: str, tb: str | None = None) -> None:
         """Add an error to the diagnostic data."""
         error_info = {
             "type": error_type,
@@ -148,7 +148,7 @@ def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line("markers", "diagnostic: mark test as producing diagnostic information")
 
 
-def pytest_runtest_protocol(item: pytest.Item, nextitem: Optional[pytest.Item]) -> Optional[bool]:
+def pytest_runtest_protocol(item: pytest.Item, nextitem: pytest.Item | None) -> bool | None:
     """Custom test protocol that captures detailed diagnostics."""
     # Use the standard protocol
     return None

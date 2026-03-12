@@ -1,7 +1,6 @@
 """MCP server implementation for Tree-sitter."""
 
 import os
-from typing import Optional
 
 from mcp.server.fastmcp import FastMCP
 
@@ -18,10 +17,10 @@ logger = get_logger(__name__)
 
 def configure_with_context(
     app: App,
-    config_path: Optional[str] = None,
-    cache_enabled: Optional[bool] = None,
-    max_file_size_mb: Optional[int] = None,
-    log_level: Optional[str] = None,
+    config_path: str | None = None,
+    cache_enabled: bool | None = None,
+    max_file_size_mb: int | None = None,
+    log_level: str | None = None,
 ) -> tuple[ConfigDict, ServerConfig]:
     """Configure the server with explicit app state.
 

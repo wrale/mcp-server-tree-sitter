@@ -1,7 +1,7 @@
 """API helpers for shared app state (project registry, config, cache, etc.)."""
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from .app import get_app
 from .cache.parser_cache import TreeCache
@@ -61,7 +61,7 @@ def remove_project(name: str) -> Dict[str, str]:
     return {"status": "success", "message": f"Project '{name}' removed"}
 
 
-def clear_cache(project: Optional[str] = None, file_path: Optional[str] = None) -> Dict[str, str]:
+def clear_cache(project: str | None = None, file_path: str | None = None) -> Dict[str, str]:
     """Clear the parse tree cache."""
     tree_cache = get_tree_cache()
 

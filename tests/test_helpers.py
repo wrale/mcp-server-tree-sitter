@@ -3,7 +3,7 @@
 import logging
 from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from mcp_server_tree_sitter.api import (
     clear_cache as api_clear_cache,
@@ -129,7 +129,7 @@ def temp_config(**kwargs: object) -> Generator[None, None, None]:
 
 
 # Project Management Tools
-def register_project_tool(path: str, name: Optional[str] = None, description: Optional[str] = None) -> Dict[str, Any]:
+def register_project_tool(path: str, name: str | None = None, description: str | None = None) -> Dict[str, Any]:
     """Register a project directory for code exploration."""
     return api_register_project(path, name, description)
 
@@ -173,16 +173,16 @@ def check_language_available(language: str) -> Dict[str, str]:
 # File Operations
 def list_files(
     project: str,
-    pattern: Optional[str] = None,
-    max_depth: Optional[int] = None,
-    extensions: Optional[List[str]] = None,
+    pattern: str | None = None,
+    max_depth: int | None = None,
+    extensions: List[str] | None = None,
 ) -> List[str]:
     """List files in a project."""
     project_registry = get_project_registry()
     return list_project_files(project_registry.get_project(project), pattern, max_depth, extensions)
 
 
-def get_file(project: str, path: str, max_lines: Optional[int] = None, start_line: int = 0) -> str:
+def get_file(project: str, path: str, max_lines: int | None = None, start_line: int = 0) -> str:
     """Get content of a file."""
     project_registry = get_project_registry()
     return get_file_content(project_registry.get_project(project), path, max_lines=max_lines, start_line=start_line)
@@ -195,7 +195,7 @@ def get_file_metadata(project: str, path: str) -> Dict[str, Any]:
 
 
 # AST Analysis
-def get_ast(project: str, path: str, max_depth: Optional[int] = None, include_text: bool = True) -> Dict[str, Any]:
+def get_ast(project: str, path: str, max_depth: int | None = None, include_text: bool = True) -> Dict[str, Any]:
     """Get abstract syntax tree for a file."""
     project_registry = get_project_registry()
     language_registry = get_language_registry()
@@ -214,7 +214,7 @@ def get_ast(project: str, path: str, max_depth: Optional[int] = None, include_te
     )
 
 
-def get_node_at_position(project: str, path: str, row: int, column: int) -> Optional[Dict[str, Any]]:
+def get_node_at_position(project: str, path: str, row: int, column: int) -> Dict[str, Any] | None:
     """Find the AST node at a specific position."""
     from mcp_server_tree_sitter.models.ast import node_to_dict
 
@@ -242,7 +242,7 @@ def get_node_at_position(project: str, path: str, row: int, column: int) -> Opti
 def find_text(
     project: str,
     pattern: str,
-    file_pattern: Optional[str] = None,
+    file_pattern: str | None = None,
     max_results: int = 100,
     case_sensitive: bool = False,
     whole_word: bool = False,
@@ -266,8 +266,8 @@ def find_text(
 def run_query(
     project: str,
     query: str,
-    file_path: Optional[str] = None,
-    language: Optional[str] = None,
+    file_path: str | None = None,
+    language: str | None = None,
     max_results: int = 100,
 ) -> List[Dict[str, Any]]:
     """Run a tree-sitter query on project files."""
@@ -299,7 +299,7 @@ def get_query_template_tool(language: str, template_name: str) -> Dict[str, Any]
     }
 
 
-def list_query_templates_tool(language: Optional[str] = None) -> Dict[str, Any]:
+def list_query_templates_tool(language: str | None = None) -> Dict[str, Any]:
     """List available query templates."""
     return list_query_templates(language)
 
@@ -340,7 +340,7 @@ def get_node_types(language: str) -> Dict[str, str]:
 
 # Code Analysis Tools
 def get_symbols(
-    project: str, file_path: str, symbol_types: Optional[List[str]] = None
+    project: str, file_path: str, symbol_types: List[str] | None = None
 ) -> Dict[str, List[Dict[str, Any]]]:
     """Extract symbols from a file."""
     project_registry = get_project_registry()
@@ -349,7 +349,7 @@ def get_symbols(
     return extract_symbols(project_registry.get_project(project), file_path, language_registry, symbol_types)
 
 
-def analyze_project(project: str, scan_depth: int = 3, ctx: Optional[MCPContextProtocol] = None) -> Dict[str, object]:
+def analyze_project(project: str, scan_depth: int = 3, ctx: MCPContextProtocol | None = None) -> Dict[str, object]:
     """Analyze overall project structure."""
     project_registry = get_project_registry()
     language_registry = get_language_registry()
@@ -384,7 +384,7 @@ def analyze_complexity(project: str, file_path: str) -> Dict[str, Any]:
 def find_similar_code(
     project: str,
     snippet: str,
-    language: Optional[str] = None,
+    language: str | None = None,
     threshold: float = 0.8,
     max_results: int = 10,
 ) -> List[Dict[str, Any]]:
@@ -422,8 +422,8 @@ def find_similar_code(
 def find_usage(
     project: str,
     symbol: str,
-    file_path: Optional[str] = None,
-    language: Optional[str] = None,
+    file_path: str | None = None,
+    language: str | None = None,
 ) -> List[Dict[str, Any]]:
     """Find usage of a symbol."""
     project_registry = get_project_registry()
@@ -449,17 +449,17 @@ def find_usage(
 
 
 # Cache Management
-def clear_cache(project: Optional[str] = None, file_path: Optional[str] = None) -> Dict[str, str]:
+def clear_cache(project: str | None = None, file_path: str | None = None) -> Dict[str, str]:
     """Clear the parse tree cache."""
     return api_clear_cache(project, file_path)
 
 
 # Server configuration
 def configure(
-    config_path: Optional[str] = None,
-    cache_enabled: Optional[bool] = None,
-    max_file_size_mb: Optional[int] = None,
-    log_level: Optional[str] = None,
+    config_path: str | None = None,
+    cache_enabled: bool | None = None,
+    max_file_size_mb: int | None = None,
+    log_level: str | None = None,
 ) -> Dict[str, Any]:
     """Configure the server using shared app state."""
     app = get_app()
@@ -498,10 +498,10 @@ def configure(
 
 def configure_with_context(
     context: object,
-    config_path: Optional[str] = None,
-    cache_enabled: Optional[bool] = None,
-    max_file_size_mb: Optional[int] = None,
-    log_level: Optional[str] = None,
+    config_path: str | None = None,
+    cache_enabled: bool | None = None,
+    max_file_size_mb: int | None = None,
+    log_level: str | None = None,
 ) -> tuple[Dict[str, object], object]:
     """
     Configure with explicit context - compatibility function.

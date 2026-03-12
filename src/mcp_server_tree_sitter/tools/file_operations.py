@@ -2,7 +2,7 @@
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, cast
 
 from ..exceptions import FileAccessError, ProjectError
 from ..models.project import Project
@@ -13,9 +13,9 @@ logger = logging.getLogger(__name__)
 
 def list_project_files(
     project: Project,
-    pattern: Optional[str] = None,
-    max_depth: Optional[int] = None,
-    filter_extensions: Optional[List[str]] = None,
+    pattern: str | None = None,
+    max_depth: int | None = None,
+    filter_extensions: List[str] | None = None,
 ) -> List[str]:
     """
     List files in a project, optionally filtered by pattern.
@@ -79,7 +79,7 @@ def get_file_content(
     project: Project,
     path: str,
     as_bytes: bool = False,
-    max_lines: Optional[int] = None,
+    max_lines: int | None = None,
     start_line: int = 0,
 ) -> str | bytes:
     """

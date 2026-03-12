@@ -5,7 +5,7 @@ import threading
 import time
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, Optional, cast
+from typing import Any, Dict, cast
 
 # Import global_context at runtime to avoid circular imports
 from ..utils.tree_sitter_types import (
@@ -25,8 +25,8 @@ class TreeCache:
 
     def __init__(
         self,
-        max_size_mb: Optional[int] = None,
-        ttl_seconds: Optional[int] = None,
+        max_size_mb: int | None = None,
+        ttl_seconds: int | None = None,
         enabled: bool = True,
     ) -> None:
         """Initialize the tree cache with explicit size, TTL, and enabled settings."""
@@ -68,7 +68,7 @@ class TreeCache:
             logger.debug("Cache disabled: self.enabled=False")
         return self.enabled
 
-    def get(self, file_path: Path, language: str) -> Optional[tuple[Tree, bytes]]:
+    def get(self, file_path: Path, language: str) -> tuple[Tree, bytes] | None:
         """
         Get cached tree if available and not expired.
 
@@ -300,7 +300,7 @@ class TreeCache:
         else:
             logger.info(log_msg)
 
-    def invalidate(self, file_path: Optional[Path] = None) -> None:
+    def invalidate(self, file_path: Path | None = None) -> None:
         """
         Invalidate cache entries.
 

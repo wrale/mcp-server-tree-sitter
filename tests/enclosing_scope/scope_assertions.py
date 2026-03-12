@@ -1,6 +1,6 @@
 """Shared scope assertion helpers for enclosing_scope tests."""
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 SCOPE_KEYS = {"kind", "text", "start_line", "end_line"}
 # Optional key returned when scope text is truncated
@@ -26,7 +26,7 @@ def assert_scope_is_module(scope: Dict[str, Any], *text_contains: str) -> None:
 def assert_scope_is_function(
     scope: Dict[str, Any],
     *text_contains: str,
-    row: Optional[int] = None,
+    row: int | None = None,
 ) -> None:
     """Assert scope is function and optional text snippets are present; optionally check row in range."""
     assert_scope_has_keys(scope)
@@ -42,7 +42,7 @@ def assert_scope_is_function(
 def assert_scope_is_function_or_method(
     scope: Dict[str, Any],
     *text_contains: str,
-    row: Optional[int] = None,
+    row: int | None = None,
 ) -> None:
     """Assert scope is function or method and optional text snippets are present."""
     assert_scope_has_keys(scope)
@@ -53,7 +53,7 @@ def assert_scope_is_function_or_method(
         assert scope["start_line"] <= row <= scope["end_line"]
 
 
-def assert_scope_is_class(scope: Dict[str, Any], *text_contains: str, row: Optional[int] = None) -> None:
+def assert_scope_is_class(scope: Dict[str, Any], *text_contains: str, row: int | None = None) -> None:
     """Assert scope is class and optional text snippets are present."""
     assert_scope_has_keys(scope)
     assert scope["kind"] == "class", f"Expected kind 'class', got {scope.get('kind')}"

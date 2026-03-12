@@ -9,7 +9,9 @@ Where tree-sitter's C binding would force untyped APIs (e.g. Query),
 we use minimal Protocols (e.g. QueryProtocol) so call sites stay typed.
 """
 
-from typing import Optional, Protocol, TypeVar
+from __future__ import annotations
+
+from typing import Protocol, TypeVar
 
 # Define protocols for tree-sitter types (order: Query, Language, Tree, Node, Cursor for refs)
 
@@ -65,7 +67,7 @@ class NodeProtocol(Protocol):
     @property
     def is_named(self) -> bool: ...
     @property
-    def parent(self) -> Optional["NodeProtocol"]: ...
+    def parent(self) -> "NodeProtocol" | None: ...
     @property
     def children_by_field_name(self) -> dict[str, list["NodeProtocol"]]: ...
 
@@ -179,7 +181,7 @@ except ImportError:
             return False
 
         @property
-        def parent(self) -> Optional["DummyNode"]:
+        def parent(self) -> "DummyNode" | None:
             return None
 
         @property

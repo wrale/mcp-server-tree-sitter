@@ -5,7 +5,7 @@ and provide a cleaner interface for interacting with the application's
 components while supporting dependency injection.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from .app import get_app
 
@@ -25,10 +25,10 @@ class ServerContext:
 
     def __init__(
         self,
-        config_manager: Optional[ConfigurationManager] = None,
-        project_registry: Optional[ProjectRegistry] = None,
-        language_registry: Optional[LanguageRegistry] = None,
-        tree_cache: Optional[TreeCache] = None,
+        config_manager: ConfigurationManager | None = None,
+        project_registry: ProjectRegistry | None = None,
+        language_registry: LanguageRegistry | None = None,
+        tree_cache: TreeCache | None = None,
     ) -> None:
         """
         Initialize with optional components.
@@ -47,7 +47,7 @@ class ServerContext:
 
     # Project management methods
     def register_project(
-        self, path: str, name: Optional[str] = None, description: Optional[str] = None
+        self, path: str, name: str | None = None, description: str | None = None
     ) -> Dict[str, Any]:
         """Register a project for code analysis."""
         try:
@@ -74,7 +74,7 @@ class ServerContext:
         return {"status": "success", "message": f"Project '{name}' removed"}
 
     # Cache management methods
-    def clear_cache(self, project: Optional[str] = None, file_path: Optional[str] = None) -> Dict[str, str]:
+    def clear_cache(self, project: str | None = None, file_path: str | None = None) -> Dict[str, str]:
         """Clear the parse tree cache."""
         if project and file_path:
             # Get file path
@@ -92,10 +92,10 @@ class ServerContext:
     # Configuration management methods
     def configure(
         self,
-        config_path: Optional[str] = None,
-        cache_enabled: Optional[bool] = None,
-        max_file_size_mb: Optional[int] = None,
-        log_level: Optional[str] = None,
+        config_path: str | None = None,
+        cache_enabled: bool | None = None,
+        max_file_size_mb: int | None = None,
+        log_level: str | None = None,
     ) -> ConfigDict:
         """Configure the server."""
         # Load config if path provided

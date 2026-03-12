@@ -4,7 +4,7 @@ This module provides functions for converting tree-sitter AST nodes to dictionar
 finding nodes at specific positions, and other AST-related operations.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from ..language.scope_node_types import get_enclosure_node_types, node_type_to_kind
 from ..utils.tree_sitter_helpers import (
@@ -19,7 +19,7 @@ from .ast_cursor import node_to_dict_cursor
 
 def node_to_dict(
     node: Node,
-    source_bytes: Optional[bytes] = None,
+    source_bytes: bytes | None = None,
     include_children: bool = True,
     include_text: bool = True,
     max_depth: int = 5,
@@ -45,7 +45,7 @@ def node_to_dict(
     return node_to_dict_cursor(node, source_bytes, include_children, include_text, max_depth)
 
 
-def summarize_node(node: Node, source_bytes: Optional[bytes] = None) -> Dict[str, Any]:
+def summarize_node(node: Node, source_bytes: bytes | None = None) -> Dict[str, Any]:
     """
     Create a compact summary of a node without details or children.
 
@@ -86,7 +86,7 @@ def summarize_node(node: Node, source_bytes: Optional[bytes] = None) -> Dict[str
     return result
 
 
-def find_node_at_position(root_node: Node, row: int, column: int) -> Optional[Node]:
+def find_node_at_position(root_node: Node, row: int, column: int) -> Node | None:
     """
     Find the most specific node at a given position using cursor-based traversal.
 
@@ -111,7 +111,7 @@ def find_node_at_position(root_node: Node, row: int, column: int) -> Optional[No
     current_best = cursor.node
 
     # Special handling for function definitions and identifiers
-    def check_for_specific_nodes(node: Node) -> Optional[Node]:
+    def check_for_specific_nodes(node: Node) -> Node | None:
         # For function definitions, check if position is over the function name.
         # Use tuple comparison (same as the main traversal) so multi-line names are
         # handled correctly, and use < for end_point (exclusive upper bound).
@@ -166,7 +166,7 @@ def find_node_at_position(root_node: Node, row: int, column: int) -> Optional[No
 def extract_node_path(
     root_node: Node,
     target_node: Node,
-) -> List[tuple[str, Optional[str]]]:
+) -> List[tuple[str, str | None]]:
     """
     Extract the path from root to a specific node using safe node handling.
 

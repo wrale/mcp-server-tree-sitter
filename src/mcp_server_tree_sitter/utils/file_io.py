@@ -5,7 +5,7 @@ and consistent interfaces for both text and binary operations.
 """
 
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 
 def read_text_file(path: str | Path) -> List[str]:
@@ -79,7 +79,7 @@ def count_comment_lines(lines: List[str], comment_prefix: str) -> int:
     return sum(1 for line in lines if is_line_comment(line, comment_prefix))
 
 
-def get_comment_prefix(language: str) -> Optional[str]:
+def get_comment_prefix(language: str) -> str | None:
     """
     Get the comment prefix for a language.
 
@@ -137,7 +137,7 @@ def parse_file_with_encoding(path: str | Path, encoding: str = "utf-8") -> tuple
     return binary_content, lines
 
 
-def read_file_lines(path: str | Path, start_line: int = 0, max_lines: Optional[int] = None) -> List[str]:
+def read_file_lines(path: str | Path, start_line: int = 0, max_lines: int | None = None) -> List[str]:
     """
     Read specific lines from a file.
 

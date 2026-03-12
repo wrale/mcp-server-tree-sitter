@@ -140,7 +140,7 @@ def test_large_ast_handling(test_project: Dict[str, Any], diagnostic: Diagnostic
 # Test file with multiple classes and functions
 import os
 import sys
-from typing import List, Dict, Optional
+from typing import List, Dict
 
 class Person:
     def __init__(self, name: str, age: int):

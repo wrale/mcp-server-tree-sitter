@@ -5,7 +5,7 @@ This module contains tests focused on ensuring query result handling is robust a
 """
 
 from pathlib import Path
-from typing import Any, Dict, Generator, List, Optional
+from typing import Any, Dict, Generator, List
 
 import pytest
 
@@ -22,7 +22,7 @@ def test_project(request: pytest.FixtureRequest, tmp_path: Path) -> Generator[Di
     test_file.write_text("""
 import os
 import sys
-from typing import List, Dict, Optional
+from typing import List, Dict
 
 class Person:
     def __init__(self, name: str, age: int):
@@ -197,7 +197,7 @@ def test_direct_query_with_language_pack() -> None:
         if isinstance(captures, list):
             for capture in captures:
                 # Initialize variables with correct types
-                node: Optional[Any] = None
+                node: Any | None = None
                 capture_name: str = ""
 
                 # Try different formats

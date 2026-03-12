@@ -13,7 +13,7 @@ import importlib
 import logging
 import pkgutil
 from types import ModuleType
-from typing import ClassVar, Dict, Optional
+from typing import ClassVar, Dict
 
 from .schema import DEFAULT_SYMBOL_TYPES, LanguageData, LanguageDataBase
 
@@ -104,7 +104,7 @@ class LanguageDataLoader:
         return result
 
     @classmethod
-    def get_language_data(cls, language_id: str) -> Optional[LanguageData]:
+    def get_language_data(cls, language_id: str) -> LanguageData | None:
         """Return LanguageData for the given language id, or None if not found (cached at load time)."""
         return cls._get_loaded().get(language_id)
 
@@ -171,7 +171,7 @@ def get_all_language_data() -> Dict[str, LanguageData]:
     return LanguageDataLoader.get_all_language_data()
 
 
-def get_language_data(language_id: str) -> Optional[LanguageData]:
+def get_language_data(language_id: str) -> LanguageData | None:
     """Return LanguageData for the given language id, or None if not found. See LanguageDataLoader.get_language_data."""
     return LanguageDataLoader.get_language_data(language_id)
 

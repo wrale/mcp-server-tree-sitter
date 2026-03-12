@@ -3,12 +3,12 @@
 Templates are loaded from per-language data (language/data/) via the loader.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from .loader import get_query_templates
 
 
-def get_query_template(language: str, template_name: str) -> Optional[str]:
+def get_query_template(language: str, template_name: str) -> str | None:
     """
     Get a query template for a language.
 
@@ -26,7 +26,7 @@ def get_query_template(language: str, template_name: str) -> Optional[str]:
     return None
 
 
-def list_query_templates(language: Optional[str] = None) -> Dict[str, Any]:
+def list_query_templates(language: str | None = None) -> Dict[str, Any]:
     """
     List available query templates.
 

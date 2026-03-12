@@ -2,7 +2,7 @@
 
 import logging
 import threading
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, cast
 
 from tree_sitter_language_pack import get_language, get_parser
 
@@ -49,7 +49,7 @@ class LanguageRegistry:
 
     def __init__(
         self,
-        preferred_languages: Optional[List[str]] = None,
+        preferred_languages: List[str] | None = None,
     ) -> None:
         """Initialize the registry. Extension map comes from loader (language/data/); fallback for others."""
         self._lock = threading.RLock()
@@ -76,7 +76,7 @@ class LanguageRegistry:
                 except Exception as e:
                     logger.warning(f"Failed to pre-load language {lang}: {e}")
 
-    def language_for_file(self, file_path: str) -> Optional[str]:
+    def language_for_file(self, file_path: str) -> str | None:
         """
         Detect language from file extension.
 

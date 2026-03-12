@@ -9,7 +9,7 @@ Data is loaded from language/data/ per-language modules via the loader.
 """
 
 from enum import Enum
-from typing import List, Optional
+from typing import List
 
 from .loader import get_scope_node_types
 
@@ -24,7 +24,7 @@ class ScopeKind(str, Enum):
     MODULE = "module"
 
 
-def get_scope_node_type(language: str, kind: ScopeKind) -> Optional[str]:
+def get_scope_node_type(language: str, kind: ScopeKind) -> str | None:
     """
     Return the tree-sitter node type name for a canonical scope kind in a language.
     When a language maps to a list of node types (e.g. function_declaration + method_definition),

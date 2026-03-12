@@ -2,7 +2,7 @@
 
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from mcp.server.fastmcp import FastMCP
 
@@ -18,10 +18,10 @@ def register_project_tools(mcp_server: FastMCP) -> None:
 
     @mcp_server.tool()
     def configure(
-        config_path: Optional[str] = None,
-        cache_enabled: Optional[bool] = None,
-        max_file_size_mb: Optional[int] = None,
-        log_level: Optional[str] = None,
+        config_path: str | None = None,
+        cache_enabled: bool | None = None,
+        max_file_size_mb: int | None = None,
+        log_level: str | None = None,
     ) -> ConfigDict:
         """Configure the server.
 
@@ -73,7 +73,7 @@ def register_project_tools(mcp_server: FastMCP) -> None:
 
     @mcp_server.tool()
     def register_project_tool(
-        path: str, name: Optional[str] = None, description: Optional[str] = None
+        path: str, name: str | None = None, description: str | None = None
     ) -> Dict[str, Any]:
         """Register a project directory for code exploration.
 
@@ -155,7 +155,7 @@ def register_project_tools(mcp_server: FastMCP) -> None:
         }
 
     @mcp_server.tool()
-    def clear_cache(project: Optional[str] = None, file_path: Optional[str] = None) -> Dict[str, str]:
+    def clear_cache(project: str | None = None, file_path: str | None = None) -> Dict[str, str]:
         """Clear the parse tree cache.
 
         Args:

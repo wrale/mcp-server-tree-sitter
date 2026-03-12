@@ -2,7 +2,7 @@
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from ..cache.parser_cache import TreeCache
 from ..exceptions import FileAccessError, ParsingError
@@ -24,7 +24,7 @@ def get_file_ast(
     path: str,
     language_registry: LanguageRegistry,
     tree_cache: TreeCache,
-    max_depth: Optional[int] = None,
+    max_depth: int | None = None,
     include_text: bool = True,
 ) -> Dict[str, Any]:
     """
@@ -168,7 +168,7 @@ def get_enclosing_scope_for_path(
     return find_enclosing_scope(tree.root_node, source_bytes, row, column, label, language, max_lines)
 
 
-def find_node_at_position(root_node: Node, row: int, column: int) -> Optional[Node]:
+def find_node_at_position(root_node: Node, row: int, column: int) -> Node | None:
     """
     Find the most specific node at a given position.
 

@@ -4,12 +4,14 @@ Singleton pattern: ProjectRegistry uses the __new__-based singleton pattern.
 This is the single mechanism used for process-wide singletons in this codebase.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import threading
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Set
 
 from ..exceptions import ProjectError
 from ..language.registry import LanguageRegistry
@@ -21,7 +23,7 @@ logger = logging.getLogger(__name__)
 class Project:
     """Represents a project for code analysis."""
 
-    def __init__(self, name: str, path: Path, description: Optional[str] = None) -> None:
+    def __init__(self, name: str, path: Path, description: str | None = None) -> None:
         self.name = name
         self.root_path = path
         self.description = description
@@ -116,7 +118,7 @@ class ProjectRegistry:
     call ProjectRegistry() or use get_app().project_registry to get the instance.
     """
 
-    _instance: Optional["ProjectRegistry"] = None
+    _instance: "ProjectRegistry" | None = None
     _global_lock = threading.RLock()
 
     def __new__(cls) -> "ProjectRegistry":
@@ -133,7 +135,7 @@ class ProjectRegistry:
         if not hasattr(self, "_projects"):
             self._projects: Dict[str, Project] = {}
 
-    def register_project(self, name: str, path: str, description: Optional[str] = None) -> Project:
+    def register_project(self, name: str, path: str, description: str | None = None) -> Project:
         """
         Register a new project.
 

@@ -40,7 +40,7 @@ def test_project(
     test_file.write_text("""
 import os
 import sys
-from typing import List, Dict, Optional
+from typing import List, Dict
 from datetime import datetime as dt
 
 class Person:

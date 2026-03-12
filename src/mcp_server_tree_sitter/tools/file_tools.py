@@ -1,6 +1,6 @@
 """File listing and content tool handlers."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from mcp.server.fastmcp import FastMCP
 
@@ -14,9 +14,9 @@ def register_file_tools(mcp_server: FastMCP) -> None:
     @mcp_server.tool()
     def list_files(
         project: str,
-        pattern: Optional[str] = None,
-        max_depth: Optional[int] = None,
-        extensions: Optional[List[str]] = None,
+        pattern: str | None = None,
+        max_depth: int | None = None,
+        extensions: List[str] | None = None,
     ) -> List[str]:
         """List files in a registered project.
 
@@ -39,7 +39,7 @@ def register_file_tools(mcp_server: FastMCP) -> None:
         return list_project_files(project_registry.get_project(project), pattern, max_depth, extensions)
 
     @mcp_server.tool()
-    def get_file(project: str, path: str, max_lines: Optional[int] = None, start_line: int = 0) -> str:
+    def get_file(project: str, path: str, max_lines: int | None = None, start_line: int = 0) -> str:
         """Read file content from a registered project, optionally a line range.
 
         Use this to read whole files or a slice of lines. The project must already
