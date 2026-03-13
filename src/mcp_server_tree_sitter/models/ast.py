@@ -107,60 +107,7 @@ def find_node_at_position(root_node: Node, row: int, column: int) -> Node | None
     if not (safe_node.start_point <= point < safe_node.end_point):
         return None
 
-    # Find the smallest node that contains the point
-    cursor = walk_tree(safe_node)
-    current_best = cursor.node
-
-    # Special handling for function definitions and identifiers
-    def check_for_specific_nodes(node: Node) -> Node | None:
-        # For function definitions, check if position is over the function name.
-        # Use tuple comparison (same as the main traversal) so multi-line names are
-        # handled correctly, and use < for end_point (exclusive upper bound).
-        if node.type == "function_definition":
-            for child in node.children:
-                if child.type in ["identifier", "name"] and child.start_point <= point < child.end_point:
-                    return child
-        return None
-
-    # First check if we have a specific node like a function name
-    specific_node = check_for_specific_nodes(safe_node)
-    if specific_node:
-        return specific_node
-
-    while cursor.goto_first_child():
-        # If current node contains the point, it's better than the parent
-        if cursor.node is not None and cursor.node.start_point <= point < cursor.node.end_point:
-            current_best = cursor.node
-
-            # Check for specific nodes like identifiers
-            specific_node = check_for_specific_nodes(cursor.node)
-            if specific_node:
-                return specific_node
-
-            continue  # Continue to first child
-
-        # Try siblings
-        found_in_sibling = False
-        while cursor.goto_next_sibling():
-            if cursor.node is not None and cursor.node.start_point <= point < cursor.node.end_point:
-                current_best = cursor.node
-
-                # Check for specific nodes
-                specific_node = check_for_specific_nodes(cursor.node)
-                if specific_node:
-                    return specific_node
-
-                found_in_sibling = True
-                break
-
-        # If a sibling contains the point, continue to its children
-        if found_in_sibling:
-            continue
-        else:
-            # No child or sibling contains the point, we're done
-            break
-
-    return current_best
+    return safe_node.descendant_for_point_range(point, point)
 
 
 def extract_node_path(
