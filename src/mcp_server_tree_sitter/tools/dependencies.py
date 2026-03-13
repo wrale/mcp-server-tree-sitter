@@ -1,5 +1,6 @@
 """Dependency discovery (imports/includes) from source files."""
 
+import logging
 from collections import defaultdict
 
 from ..exceptions import SecurityError
@@ -16,6 +17,8 @@ from ..utils.tree_sitter_helpers import (
     run_query_captures,
 )
 from ..utils.tree_sitter_types import Node
+
+logger = logging.getLogger(__name__)
 
 
 def find_dependencies(
@@ -95,8 +98,8 @@ def find_dependencies(
                     elif parts and parts[0] == "import":
                         for module in " ".join(parts[1:]).split(","):
                             module_imports.add(module.strip().split(" as ")[0].strip())
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Could not parse import text for dependency: %s", e)
 
         if isinstance(matches, dict):
             for capture_name, nodes in matches.items():

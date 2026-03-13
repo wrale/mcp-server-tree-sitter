@@ -4,7 +4,7 @@ from typing import cast
 
 from mcp.server.fastmcp import Context, FastMCP
 
-from ..app import get_app
+from ..api import get_language_registry, get_project_registry, get_tree_cache
 from ..utils.context import MCPContextProtocol
 from .analysis import (
     ComplexityResult,
@@ -39,11 +39,10 @@ def register_analysis_tools(mcp_server: FastMCP) -> None:
         Raises:
             ProjectError: If project is not registered.
         """
-        app = get_app()
         return extract_symbols(
-            app.project_registry.get_project(project),
+            get_project_registry().get_project(project),
             file_path,
-            app.language_registry,
+            get_language_registry(),
             symbol_types,
         )
 
@@ -66,10 +65,9 @@ def register_analysis_tools(mcp_server: FastMCP) -> None:
         Raises:
             ProjectError: If project is not registered.
         """
-        app = get_app()
         return analyze_project_structure(
-            app.project_registry.get_project(project),
-            app.language_registry,
+            get_project_registry().get_project(project),
+            get_language_registry(),
             scan_depth,
             cast(MCPContextProtocol | None, ctx),
         )
@@ -88,11 +86,10 @@ def register_analysis_tools(mcp_server: FastMCP) -> None:
         Raises:
             ProjectError: If project is not registered.
         """
-        app = get_app()
         return find_dependencies(
-            app.project_registry.get_project(project),
+            get_project_registry().get_project(project),
             file_path,
-            app.language_registry,
+            get_language_registry(),
         )
 
     @mcp_server.tool()
@@ -109,11 +106,10 @@ def register_analysis_tools(mcp_server: FastMCP) -> None:
         Raises:
             ProjectError: If project is not registered.
         """
-        app = get_app()
         return analyze_code_complexity(
-            app.project_registry.get_project(project),
+            get_project_registry().get_project(project),
             file_path,
-            app.language_registry,
+            get_language_registry(),
         )
 
     @mcp_server.tool()
@@ -139,7 +135,6 @@ def register_analysis_tools(mcp_server: FastMCP) -> None:
         Raises:
             ProjectError: If project is not registered.
         """
-        app = get_app()
         clean_snippet = snippet.strip()
 
         extension_map = {
@@ -160,7 +155,7 @@ def register_analysis_tools(mcp_server: FastMCP) -> None:
         file_pattern = f"**/*.{extension}" if extension else None
 
         return search_text(
-            app.project_registry.get_project(project),
+            get_project_registry().get_project(project),
             clean_snippet,
             file_pattern=file_pattern,
             max_results=max_results,
@@ -192,8 +187,7 @@ def register_analysis_tools(mcp_server: FastMCP) -> None:
             ProjectError: If project is not registered.
             ValueError: If neither file_path nor language is provided.
         """
-        app = get_app()
-        language_registry = app.language_registry
+        language_registry = get_language_registry()
         if not language and file_path:
             language = language_registry.language_for_file(file_path)
 
@@ -208,10 +202,10 @@ def register_analysis_tools(mcp_server: FastMCP) -> None:
         """
 
         return query_code(
-            app.project_registry.get_project(project),
+            get_project_registry().get_project(project),
             query,
             language_registry,
-            app.tree_cache,
+            get_tree_cache(),
             file_path,
             language,
         )

@@ -4,6 +4,7 @@ Orchestrates project structure analysis, dependency discovery, and complexity
 metrics. Symbol extraction in symbol_extraction; metrics in metrics; dependencies in dependencies.
 """
 
+import logging
 import os
 from collections import Counter
 from typing import TypedDict
@@ -18,6 +19,8 @@ from ..utils.tree_sitter_helpers import ensure_language, parse_with_cached_tree
 from .dependencies import find_dependencies
 from .metrics import compute_cyclomatic_complexity, count_lines_and_comments
 from .symbol_extraction import extract_symbols
+
+logger = logging.getLogger(__name__)
 
 
 class _EntryPoint(TypedDict):
@@ -217,8 +220,8 @@ def analyze_project_structure(
                         language_analysis.append(
                             _KeyFileSymbolCounts(file=file_path, symbols=symbol_counts)
                         )
-                    except Exception:
-                        # Skip problematic files
+                    except Exception as e:
+                        logger.debug("Skipping file for key-files analysis: %s: %s", file_path, e)
                         continue
 
                 if language_analysis:

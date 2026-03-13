@@ -4,7 +4,7 @@ from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
-from ..app import get_app
+from ..api import get_config, get_language_registry, get_project_registry, get_tree_cache
 from ..models.ast import node_to_dict
 from .ast_operations import find_node_at_position, get_file_ast
 from .ast_operations import parse_file as parse_file_helper
@@ -35,14 +35,13 @@ def register_ast_tools(mcp_server: FastMCP) -> None:
             ProjectError: If project is not registered.
             ValueError: If language cannot be detected for path.
         """
-        app = get_app()
-        config = app.config_manager.get_config()
+        config = get_config()
         depth = max_depth or config.language.default_max_depth
         return get_file_ast(
-            app.project_registry.get_project(project),
+            get_project_registry().get_project(project),
             path,
-            app.language_registry,
-            app.tree_cache,
+            get_language_registry(),
+            get_tree_cache(),
             max_depth=depth,
             include_text=include_text,
         )
@@ -64,11 +63,10 @@ def register_ast_tools(mcp_server: FastMCP) -> None:
             ProjectError: If project is not registered.
             ValueError: If language cannot be detected for path.
         """
-        app = get_app()
-        project_obj = app.project_registry.get_project(project)
+        project_obj = get_project_registry().get_project(project)
         file_path = project_obj.get_file_path(path)
-        language_registry = app.language_registry
-        tree_cache = app.tree_cache
+        language_registry = get_language_registry()
+        tree_cache = get_tree_cache()
 
         language = language_registry.language_for_file(path)
         if not language:

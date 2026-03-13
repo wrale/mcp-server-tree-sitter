@@ -4,7 +4,7 @@ from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
-from ..app import get_app
+from ..api import get_project_registry
 from .file_operations import get_file_content, get_file_info, list_project_files
 
 
@@ -32,8 +32,7 @@ def register_file_tools(mcp_server: FastMCP) -> None:
         Raises:
             ProjectError: If project is not registered.
         """
-        project_registry = get_app().project_registry
-        return list_project_files(project_registry.get_project(project), pattern, max_depth, extensions)
+        return list_project_files(get_project_registry().get_project(project), pattern, max_depth, extensions)
 
     @mcp_server.tool()
     def get_file(project: str, path: str, max_lines: int | None = None, start_line: int = 0) -> str:
@@ -53,9 +52,8 @@ def register_file_tools(mcp_server: FastMCP) -> None:
             ProjectError: If project is not registered.
             FileAccessError: If path is outside project or access is denied.
         """
-        project_registry = get_app().project_registry
         content = get_file_content(
-            project_registry.get_project(project),
+            get_project_registry().get_project(project),
             path,
             as_bytes=False,
             max_lines=max_lines,
@@ -79,4 +77,4 @@ def register_file_tools(mcp_server: FastMCP) -> None:
             ProjectError: If project is not registered.
             FileAccessError: If path is invalid or access is denied.
         """
-        return get_file_info(get_app().project_registry.get_project(project), path)
+        return get_file_info(get_project_registry().get_project(project), path)

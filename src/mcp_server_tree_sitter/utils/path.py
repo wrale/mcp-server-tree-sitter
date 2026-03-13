@@ -1,6 +1,5 @@
 """Path utilities for mcp-server-tree-sitter."""
 
-import os
 from pathlib import Path
 
 
@@ -40,13 +39,9 @@ def safe_relative_path(path: str | Path, base: str | Path) -> Path:
     base_path = normalize_path(base)
     target_path = normalize_path(path)
 
-    # Ensure target is within base
+    # Ensure target is within base (relative_to raises if path escapes base)
     try:
-        relative = target_path.relative_to(base_path)
-        # Check for directory traversal
-        if ".." in str(relative).split(os.sep):
-            raise ValueError(f"Path contains forbidden directory traversal: {path}")
-        return relative
+        return target_path.relative_to(base_path)
     except ValueError as e:
         raise ValueError(f"Path {path} is not within base directory {base}") from e
 

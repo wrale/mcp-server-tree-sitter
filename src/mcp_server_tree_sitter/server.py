@@ -4,7 +4,8 @@ import os
 
 from mcp.server.fastmcp import FastMCP
 
-from .app import App, get_app
+from .api import get_config, get_config_manager, get_tree_cache
+from .app import App
 from .bootstrap import get_logger, update_log_levels
 from .config import ConfigDict, ServerConfig
 
@@ -133,17 +134,18 @@ def main() -> None:
         update_log_levels("DEBUG")
         logger.debug("Debug logging enabled")
 
-    app = get_app()
+    config_manager = get_config_manager()
+    tree_cache = get_tree_cache()
 
     # Configure with provided options
     if args.config:
         logger.info(f"Loading configuration from {args.config}")
-        app.config_manager.load_from_file(args.config)
+        config_manager.load_from_file(args.config)
 
     if args.disable_cache:
         logger.info("Disabling parse tree cache as requested")
-        app.config_manager.update_value("cache.enabled", False)
-        app.tree_cache.set_enabled(False)
+        config_manager.update_value("cache.enabled", False)
+        tree_cache.set_enabled(False)
 
     # Register capabilities and tools
     from .capabilities import register_capabilities
@@ -153,11 +155,11 @@ def main() -> None:
     register_tools(mcp)
 
     # Load configuration from environment
-    config = app.get_config()
+    config = get_config()
 
     # Update tree cache settings from config
-    app.tree_cache.set_max_size_mb(config.cache.max_size_mb)
-    app.tree_cache.set_enabled(config.cache.enabled)
+    tree_cache.set_max_size_mb(config.cache.max_size_mb)
+    tree_cache.set_enabled(config.cache.enabled)
 
     # Run the server
     logger.info("Starting MCP Tree-sitter Server")

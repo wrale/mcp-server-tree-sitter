@@ -8,8 +8,11 @@ from pathlib import Path
 
 import pytest
 
-from mcp_server_tree_sitter.config import ConfigurationManager, ServerConfig
-from mcp_server_tree_sitter.config_loader import load_config_from_file
+from mcp_server_tree_sitter.config import (
+    ConfigurationManager,
+    ServerConfig,
+    load_config_from_file,
+)
 
 
 def test_malformed_yaml_returns_defaults(tmp_path: Path) -> None:

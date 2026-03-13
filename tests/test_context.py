@@ -78,7 +78,7 @@ def test_server_context_initialization(mock_dependencies: _MockDependenciesPaylo
     assert context.tree_cache is mock_dependencies["tree_cache"]
 
 
-@patch("mcp_server_tree_sitter.context.get_app")
+@patch("mcp_server_tree_sitter.api.get_app")
 def test_server_context_initialization_with_app(
     mock_get_app: MagicMock, mock_dependencies: _MockDependenciesPayload
 ) -> None:

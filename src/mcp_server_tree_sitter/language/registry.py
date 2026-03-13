@@ -158,7 +158,8 @@ class LanguageRegistry:
         try:
             self.get_language(language_name)
             return True
-        except Exception:
+        except Exception as e:
+            logger.debug("Language %s not available: %s", language_name, e)
             return False
 
     def get_language(self, language_name: str) -> Language:
@@ -205,7 +206,7 @@ class LanguageRegistry:
             # Try to get a parser directly from the language pack (pack expects Literal language name)
             parser = get_parser(cast(Any, language_name))
             return parser
-        except Exception:
-            # Fall back to cached parser for this language
+        except Exception as e:
+            logger.debug("get_parser fallback to cached parser for %s: %s", language_name, e)
             language = self.get_language(language_name)
             return get_cached_parser(language)

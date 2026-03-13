@@ -7,7 +7,7 @@ components while supporting dependency injection.
 
 from typing import Any
 
-from .app import get_app
+from .api import get_config_manager, get_language_registry, get_project_registry, get_tree_cache
 
 # Import logging from bootstrap package
 from .bootstrap import get_logger, update_log_levels
@@ -35,11 +35,10 @@ class ServerContext:
 
         If components are not provided, they will be fetched from the global container.
         """
-        app = get_app()
-        self.config_manager = config_manager or app.config_manager
-        self.project_registry = project_registry or app.project_registry
-        self.language_registry = language_registry or app.language_registry
-        self.tree_cache = tree_cache or app.tree_cache
+        self.config_manager = config_manager or get_config_manager()
+        self.project_registry = project_registry or get_project_registry()
+        self.language_registry = language_registry or get_language_registry()
+        self.tree_cache = tree_cache or get_tree_cache()
 
     def get_config(self) -> ServerConfig:
         """Get the current configuration."""

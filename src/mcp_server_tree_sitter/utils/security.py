@@ -32,8 +32,8 @@ def validate_file_access(file_path: str | Path, project_root: str | Path) -> Non
     except (ValueError, OSError) as e:
         raise SecurityError(f"Invalid path: {e}") from e
 
-    # Check if path is inside project root
-    if not str(normalized_path).startswith(str(normalized_root)):
+    # Check if path is inside project root (is_relative_to avoids prefix confusion, e.g. /proj vs /project)
+    if not normalized_path.is_relative_to(normalized_root):
         raise SecurityError(f"Access denied: {file_path} is outside project root")
 
     # Check excluded directories

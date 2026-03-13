@@ -4,6 +4,7 @@ This module provides functions for converting tree-sitter AST nodes to dictionar
 finding nodes at specific positions, and other AST-related operations.
 """
 
+import logging
 from typing import Any
 
 from ..language.scope_node_types import get_enclosure_node_types, node_type_to_kind
@@ -12,9 +13,9 @@ from ..utils.tree_sitter_helpers import (
     walk_tree,
 )
 from ..utils.tree_sitter_types import Node, ensure_node
-
-# Import the cursor-based implementation
 from .ast_cursor import node_to_dict_cursor
+
+logger = logging.getLogger(__name__)
 
 
 def node_to_dict(
@@ -80,8 +81,8 @@ def summarize_node(node: Node, source_bytes: bytes | None = None) -> dict[str, A
                 if len(snippet) < len(lines[0]) or len(lines) > 1:
                     snippet += "..."
                 result["preview"] = snippet
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Could not build node preview: %s", e)
 
     return result
 

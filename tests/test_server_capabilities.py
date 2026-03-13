@@ -45,7 +45,7 @@ def mock_config() -> MagicMock:
     return config
 
 
-@patch("mcp_server_tree_sitter.app.get_app")
+@patch("mcp_server_tree_sitter.api.get_app")
 def test_register_capabilities(
     mock_get_app: MagicMock,
     mock_server: MockMCPServer,
@@ -66,7 +66,7 @@ def test_register_capabilities(
 
 
 @patch("mcp_server_tree_sitter.capabilities.server_capabilities.logger")
-@patch("mcp_server_tree_sitter.app.get_app")
+@patch("mcp_server_tree_sitter.api.get_app")
 def test_handle_logging(
     mock_get_app: MagicMock,
     mock_logger: MagicMock,
@@ -107,7 +107,7 @@ def test_handle_logging(
     mock_logger.log.assert_called_with(logging.ERROR, "MCP: Error message")
 
 
-@patch("mcp_server_tree_sitter.app.get_app")
+@patch("mcp_server_tree_sitter.api.get_app")
 def test_handle_completion_project_suggestions(
     mock_get_app: MagicMock,
     mock_server: MockMCPServer,
@@ -150,7 +150,7 @@ def test_handle_completion_project_suggestions(
     assert suggestions[1]["text"] == "project2"
 
 
-@patch("mcp_server_tree_sitter.app.get_app")
+@patch("mcp_server_tree_sitter.api.get_app")
 def test_handle_completion_language_suggestions(
     mock_get_app: MagicMock,
     mock_server: MockMCPServer,
@@ -189,7 +189,7 @@ def test_handle_completion_language_suggestions(
     assert suggestions[0]["text"] == "python"
 
 
-@patch("mcp_server_tree_sitter.app.get_app")
+@patch("mcp_server_tree_sitter.api.get_app")
 def test_handle_completion_config_suggestions(
     mock_get_app: MagicMock,
     mock_server: MockMCPServer,

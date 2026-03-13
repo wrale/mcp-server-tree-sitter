@@ -11,4 +11,13 @@ from . import bootstrap as bootstrap
 # Logging is now configured via the bootstrap.logging_bootstrap module
 # The bootstrap module automatically calls configure_root_logger() when imported
 
-__version__ = "0.1.0"
+def _get_version() -> str:
+    """Return package version from metadata (single source of truth: pyproject.toml)."""
+    try:
+        from importlib.metadata import version
+        return version("mcp-server-tree-sitter")
+    except Exception:
+        return "0.0.0+unknown"
+
+
+__version__ = _get_version()

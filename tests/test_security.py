@@ -32,6 +32,23 @@ def test_path_traversal_outside_root(project_root: Path) -> None:
         assert "outside project root" in str(exc_info.value)
 
 
+def test_path_prefix_confusion_rejected(project_root: Path) -> None:
+    """Path that only shares a string prefix with root is rejected (is_relative_to vs startswith)."""
+    # e.g. root /proj, path /project/file would wrongly pass startswith("/proj")
+    proj_dir = project_root / "proj"
+    proj_dir.mkdir()
+    other_dir = project_root / "project"
+    other_dir.mkdir()
+    (other_dir / "file.py").write_text("x")
+    with patch("mcp_server_tree_sitter.utils.security.get_config") as m:
+        m.return_value.security.excluded_dirs = []
+        m.return_value.security.allowed_extensions = None
+        m.return_value.security.max_file_size_mb = 10
+        with pytest.raises(SecurityError) as exc_info:
+            validate_file_access(other_dir / "file.py", proj_dir)
+        assert "outside project root" in str(exc_info.value)
+
+
 def test_path_traversal_relative_inside_root(project_root: Path) -> None:
     """A path that stays inside project root is allowed (no traversal)."""
     (project_root / "sub").mkdir(exist_ok=True)

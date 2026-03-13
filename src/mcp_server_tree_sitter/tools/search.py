@@ -1,6 +1,7 @@
 """Search tools for tree-sitter code analysis."""
 
 import concurrent.futures
+import logging
 import re
 from pathlib import Path
 from typing import TypedDict
@@ -11,6 +12,8 @@ from ..language.registry import LanguageRegistry
 from ..models.project import Project
 from ..utils.security import validate_file_access
 from ..utils.tree_sitter_helpers import run_query_captures
+
+logger = logging.getLogger(__name__)
 
 
 class _ContextLine(TypedDict):
@@ -138,9 +141,8 @@ def search_text(
 
                     if len(file_results) >= max_results:
                         break
-        except Exception:
-            # Skip files that can't be read
-            pass
+        except Exception as e:
+            logger.debug("Skipping file that could not be read: %s: %s", file_path, e)
 
         return file_results
 
@@ -244,7 +246,8 @@ def query_code(
                             from ..utils.tree_sitter_helpers import get_node_text
 
                             text = get_node_text(node, source_bytes, decode=True)
-                        except Exception:
+                        except Exception as e:
+                            logger.debug("Could not get node text (using placeholder): %s", e)
                             text = "<binary data>"
 
                         text_str = (
@@ -284,7 +287,8 @@ def query_code(
                         from ..utils.tree_sitter_helpers import get_node_text
 
                         text = get_node_text(node, source_bytes, decode=True)
-                    except Exception:
+                    except Exception as e:
+                        logger.debug("Could not get node text (using placeholder): %s", e)
                         text = "<binary data>"
 
                     text_str2 = (
@@ -327,8 +331,8 @@ def query_code(
                     include_snippets,
                 )
                 return file_results
-            except Exception:
-                # Skip files that can't be queried
+            except Exception as e:
+                logger.debug("Skipping file that could not be queried: %s: %s", rel_path, e)
                 return []
 
         # Collect files to process
@@ -346,8 +350,8 @@ def query_code(
 
                 if max_results is not None and len(results) >= max_results:
                     break
-            except Exception:
-                # Skip files that cause errors
+            except Exception as e:
+                logger.debug("Skipping file that caused error: %s: %s", file, e)
                 continue
 
     return results[:max_results] if max_results is not None else results

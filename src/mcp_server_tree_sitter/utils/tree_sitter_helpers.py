@@ -441,9 +441,9 @@ def parse_with_cached_tree(
         Tuple of (Tree, source_bytes)
     """
     if tree_cache is None:
-        from ..app import get_app
+        from ..api import get_tree_cache
 
-        tree_cache = get_app().tree_cache
+        tree_cache = get_tree_cache()
 
     # Check if we have a cached tree
     cached = tree_cache.get(file_path, language)
@@ -490,9 +490,9 @@ def update_cached_tree(
         Updated (tree, source_bytes) if successful, None otherwise
     """
     if tree_cache is None:
-        from ..app import get_app
+        from ..api import get_tree_cache
 
-        tree_cache = get_app().tree_cache
+        tree_cache = get_tree_cache()
 
     # Check if we have a cached tree
     cached = tree_cache.get(file_path, language)
