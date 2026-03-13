@@ -21,11 +21,15 @@ from mcp_server_tree_sitter.api import (
     remove_project as api_remove_project,
 )
 from mcp_server_tree_sitter.app import get_app
+from mcp_server_tree_sitter.language.loader import get_language_to_extension_map
 from mcp_server_tree_sitter.language.query_templates import (
     get_query_template,
     list_query_templates,
 )
+from mcp_server_tree_sitter.tools import prompt_handlers as _prompt_handlers
 from mcp_server_tree_sitter.tools.analysis import (
+    ComplexityResult,
+    ProjectStructureResult,
     analyze_code_complexity,
     analyze_project_structure,
     extract_symbols,
@@ -34,6 +38,7 @@ from mcp_server_tree_sitter.tools.analysis import (
 from mcp_server_tree_sitter.tools.ast_operations import find_node_at_position as ast_find_node_at_position
 from mcp_server_tree_sitter.tools.ast_operations import get_enclosing_scope_for_path
 from mcp_server_tree_sitter.tools.ast_operations import get_file_ast as ast_get_file_ast
+from mcp_server_tree_sitter.tools.debug import diagnose_yaml_config
 from mcp_server_tree_sitter.tools.file_operations import (
     get_file_content,
     get_file_info,
@@ -42,13 +47,21 @@ from mcp_server_tree_sitter.tools.file_operations import (
 from mcp_server_tree_sitter.tools.project import (
     register_project as api_register_project,
 )
+from mcp_server_tree_sitter.tools.project_tools import apply_configure
 from mcp_server_tree_sitter.tools.query_builder import (
     adapt_query_for_language,
     build_compound_query,
     describe_node_types,
 )
-from mcp_server_tree_sitter.tools.search import query_code, search_text
+from mcp_server_tree_sitter.tools.search import QueryMatchResult, TextMatchResult, query_code, search_text
 from mcp_server_tree_sitter.utils.context import MCPContextProtocol
+
+# Re-export prompt handlers under names used by tests.
+code_review_prompt = _prompt_handlers.code_review_prompt_body
+explain_code_prompt = _prompt_handlers.explain_code_prompt_body
+explain_tree_sitter_query_prompt = _prompt_handlers.explain_tree_sitter_query_prompt_body
+project_overview_prompt = _prompt_handlers.project_overview_prompt_body
+suggest_improvements_prompt = _prompt_handlers.suggest_improvements_prompt_body
 
 
 @contextmanager
@@ -200,9 +213,11 @@ def get_ast(project: str, path: str, max_depth: int | None = None, include_text:
     project_registry = get_project_registry()
     language_registry = get_language_registry()
     tree_cache = get_tree_cache()
-    config = get_config()
 
-    depth = max_depth or config.language.default_max_depth
+    if max_depth is not None and max_depth <= 0:
+        raise ValueError("max_depth must be greater than 0")
+
+    depth = max_depth or get_config().language.default_max_depth
 
     return ast_get_file_ast(
         project_registry.get_project(project),
@@ -248,7 +263,7 @@ def find_text(
     whole_word: bool = False,
     use_regex: bool = False,
     context_lines: int = 2,
-) -> list[dict[str, Any]]:
+) -> list[TextMatchResult]:
     """Search for text pattern in project files."""
     project_registry = get_project_registry()
     return search_text(
@@ -269,7 +284,7 @@ def run_query(
     file_path: str | None = None,
     language: str | None = None,
     max_results: int = 100,
-) -> list[dict[str, Any]]:
+) -> list[QueryMatchResult]:
     """Run a tree-sitter query on project files."""
     project_registry = get_project_registry()
     language_registry = get_language_registry()
@@ -349,7 +364,7 @@ def get_symbols(
     return extract_symbols(project_registry.get_project(project), file_path, language_registry, symbol_types)
 
 
-def analyze_project(project: str, scan_depth: int = 3, ctx: MCPContextProtocol | None = None) -> dict[str, object]:
+def analyze_project(project: str, scan_depth: int = 3, ctx: MCPContextProtocol | None = None) -> ProjectStructureResult:
     """Analyze overall project structure."""
     project_registry = get_project_registry()
     language_registry = get_language_registry()
@@ -369,7 +384,7 @@ def get_dependencies(project: str, file_path: str) -> dict[str, list[str]]:
     )
 
 
-def analyze_complexity(project: str, file_path: str) -> dict[str, Any]:
+def analyze_complexity(project: str, file_path: str) -> ComplexityResult:
     """Analyze code complexity."""
     project_registry = get_project_registry()
     language_registry = get_language_registry()
@@ -387,27 +402,10 @@ def find_similar_code(
     language: str | None = None,
     threshold: float = 0.8,
     max_results: int = 10,
-) -> list[dict[str, Any]]:
+) -> list[TextMatchResult]:
     """Find similar code to a snippet."""
-    # This is a simple implementation that uses text search
     project_registry = get_project_registry()
-
-    # Map language names to file extensions
-    extension_map = {
-        "python": "py",
-        "javascript": "js",
-        "typescript": "ts",
-        "rust": "rs",
-        "go": "go",
-        "java": "java",
-        "c": "c",
-        "cpp": "cpp",
-        "ruby": "rb",
-        "swift": "swift",
-        "kotlin": "kt",
-    }
-
-    # Get the appropriate file extension for the language
+    extension_map = get_language_to_extension_map()
     extension = extension_map.get(language, language) if language else None
     file_pattern = f"**/*.{extension}" if extension else None
 
@@ -424,7 +422,7 @@ def find_usage(
     symbol: str,
     file_path: str | None = None,
     language: str | None = None,
-) -> list[dict[str, Any]]:
+) -> list[QueryMatchResult]:
     """Find usage of a symbol."""
     project_registry = get_project_registry()
     language_registry = get_language_registry()
@@ -454,6 +452,11 @@ def clear_cache(project: str | None = None, file_path: str | None = None) -> dic
     return api_clear_cache(project, file_path)
 
 
+def diagnose_config(config_path: str) -> dict[str, Any]:
+    """Run diagnostics on a YAML config file (same as diagnose_config tool)."""
+    return diagnose_yaml_config(config_path)
+
+
 # Server configuration
 def configure(
     config_path: str | None = None,
@@ -461,39 +464,21 @@ def configure(
     max_file_size_mb: int | None = None,
     log_level: str | None = None,
 ) -> dict[str, Any]:
-    """Configure the server using shared app state."""
+    """Configure the server using shared app state. Delegates to apply_configure then syncs root logger."""
     app = get_app()
-    config_manager = app.config_manager
-
-    # Load config if path provided
-    if config_path:
-        logging.info(f"Configuring server with YAML config from: {config_path}")
-        config_manager.load_from_file(config_path)
-
-    # Update specific settings if provided
-    if cache_enabled is not None:
-        logging.info(f"Setting cache.enabled to {cache_enabled}")
-        config_manager.update_value("cache.enabled", cache_enabled)
-        app.tree_cache.set_enabled(cache_enabled)
-
-    if max_file_size_mb is not None:
-        logging.info(f"Setting security.max_file_size_mb to {max_file_size_mb}")
-        config_manager.update_value("security.max_file_size_mb", max_file_size_mb)
-
-    if log_level is not None:
-        logging.info(f"Setting log_level to {log_level}")
-        config_manager.update_value("log_level", log_level)
-
-        # Apply log level directly to loggers
-        log_level_value = getattr(logging, log_level, None)
-        if log_level_value is not None:
-            # Set the root logger for the package
-            root_logger = logging.getLogger("mcp_server_tree_sitter")
-            root_logger.setLevel(log_level_value)
-            logging.info(f"Applied log level {log_level} to mcp_server_tree_sitter loggers")
-
-    # Return current config as dict
-    return config_manager.to_dict()
+    result = apply_configure(
+        app.config_manager,
+        app.tree_cache,
+        config_path=config_path,
+        cache_enabled=cache_enabled,
+        max_file_size_mb=max_file_size_mb,
+        log_level=log_level,
+    )
+    root_logger = logging.getLogger("mcp_server_tree_sitter")
+    root_logger.setLevel(
+        getattr(logging, app.config_manager.get_config().log_level, logging.INFO)
+    )
+    return result
 
 
 def configure_with_context(

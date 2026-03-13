@@ -5,8 +5,9 @@ imports all modules in the data package (so classes are created), then builds
 LanguageData from the registry. Derived structures are built from the cached load.
 
 Public API (stable): load_all_language_data, get_all_language_data, get_language_data,
-get_default_symbol_types, get_scope_node_types, get_extension_map, get_query_templates,
-get_node_type_descriptions, get_query_adaptation_map.
+get_default_symbol_types, get_scope_node_types, get_extension_map,
+get_language_to_extension_map, get_query_templates, get_node_type_descriptions,
+get_query_adaptation_map.
 """
 
 import importlib
@@ -30,6 +31,7 @@ class LanguageDataLoader:
     _loaded: ClassVar[dict[str, LanguageData] | None] = None
     _scope_node_types: ClassVar[dict[str, dict[str, list[str]]] | None] = None
     _extension_map: ClassVar[dict[str, str] | None] = None
+    _language_to_extension: ClassVar[dict[str, str] | None] = None
     _query_templates: ClassVar[dict[str, dict[str, str]] | None] = None
     _node_type_descriptions: ClassVar[dict[str, dict[str, str]] | None] = None
     _query_adaptation: ClassVar[dict[tuple[str, str], dict[str, str]] | None] = None
@@ -52,10 +54,14 @@ class LanguageDataLoader:
         cls._scope_node_types = scope
 
         ext_map: dict[str, str] = {}
+        lang_to_ext: dict[str, str] = {}
         for data in loaded.values():
             for ext in data.extensions:
                 ext_map[ext] = data.id
+            if data.extensions and data.id not in lang_to_ext:
+                lang_to_ext[data.id] = data.extensions[0]
         cls._extension_map = ext_map
+        cls._language_to_extension = lang_to_ext
 
         cls._query_templates = {lang_id: dict(data.query_templates) for lang_id, data in loaded.items()}
         cls._node_type_descriptions = {lang_id: dict(data.node_type_descriptions) for lang_id, data in loaded.items()}
@@ -134,6 +140,13 @@ class LanguageDataLoader:
         return cls._extension_map
 
     @classmethod
+    def get_language_to_extension_map(cls) -> dict[str, str]:
+        """Return language id -> primary file extension (cached at load time)."""
+        cls._get_loaded()
+        assert cls._language_to_extension is not None
+        return cls._language_to_extension
+
+    @classmethod
     def get_query_templates(cls) -> dict[str, dict[str, str]]:
         """Return language id -> template name -> query string (cached at load time)."""
         cls._get_loaded()
@@ -189,6 +202,11 @@ def get_scope_node_types() -> dict[str, dict[str, list[str]]]:
 def get_extension_map() -> dict[str, str]:
     """Build extension -> language id map. See LanguageDataLoader.get_extension_map."""
     return LanguageDataLoader.get_extension_map()
+
+
+def get_language_to_extension_map() -> dict[str, str]:
+    """Language id -> primary file extension. See LanguageDataLoader.get_language_to_extension_map."""
+    return LanguageDataLoader.get_language_to_extension_map()
 
 
 def get_query_templates() -> dict[str, dict[str, str]]:

@@ -2,13 +2,16 @@
 
 from pathlib import Path
 
+import pytest
+
 from mcp_server_tree_sitter.language.registry import LanguageRegistry
 from mcp_server_tree_sitter.models.ast_cursor import node_to_dict_cursor
 from mcp_server_tree_sitter.utils.file_io import read_binary_file
 from mcp_server_tree_sitter.utils.tree_sitter_helpers import create_parser, parse_source
 
 
-def test_cursor_based_ast(tmp_path: Path) -> None:
+@pytest.mark.parametrize("include_text", [True, False])
+def test_cursor_based_ast(tmp_path: Path, include_text: bool) -> None:
     """Test that the cursor-based AST node_to_dict function works."""
     # Create a temporary test file
     file_path = tmp_path / "test.py"
@@ -26,7 +29,7 @@ def test_cursor_based_ast(tmp_path: Path) -> None:
     tree = parse_source(source_bytes, parser)
 
     # Get AST using cursor-based approach
-    cursor_ast = node_to_dict_cursor(tree.root_node, source_bytes, max_depth=3)
+    cursor_ast = node_to_dict_cursor(tree.root_node, source_bytes, max_depth=3, include_text=include_text)
 
     # Basic validation
     assert "id" in cursor_ast, "AST should include node ID"
@@ -48,9 +51,12 @@ def test_cursor_based_ast(tmp_path: Path) -> None:
         assert "identifier" in function_children_types, "Function should have identifier"
 
         # Verify text extraction works if available
-        if "text" in function_node:
+        if include_text:
+            assert "text" in function_node
             # Check for 'hello' in the text, handling both string and bytes
             if isinstance(function_node["text"], bytes):
                 assert b"hello" in function_node["text"], "Function text should contain 'hello'"
             else:
                 assert "hello" in function_node["text"], "Function text should contain 'hello'"
+        else:
+            assert "text" not in function_node

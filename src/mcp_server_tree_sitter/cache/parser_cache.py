@@ -38,7 +38,8 @@ class TreeCache:
         self.ttl_seconds = ttl_seconds or 300
         self.enabled = enabled
 
-    def _get_cache_key(self, file_path: Path, language: str) -> str:
+    @staticmethod
+    def _get_cache_key(file_path: Path, language: str) -> str:
         """Generate cache key from file path and language."""
         return f"{language}:{file_path!s}:{file_path.stat().st_mtime}"
 
@@ -62,7 +63,7 @@ class TreeCache:
         """Get current TTL setting (from instance, synced by app/config)."""
         return self.ttl_seconds
 
-    def _is_cache_enabled(self) -> bool:
+    def is_cache_enabled(self) -> bool:
         """Check if caching is enabled (from instance, synced by app/config)."""
         if not self.enabled:
             logger.debug("Cache disabled: self.enabled=False")
@@ -80,7 +81,7 @@ class TreeCache:
             Tuple of (tree, source_bytes) if cached, None otherwise
         """
         # Check if caching is enabled
-        if not self._is_cache_enabled():
+        if not self.is_cache_enabled():
             return None
 
         try:
@@ -122,7 +123,7 @@ class TreeCache:
             source: Source bytes
         """
         # Check if caching is enabled
-        is_enabled = self._is_cache_enabled()
+        is_enabled = self.is_cache_enabled()
         if not is_enabled:
             logger.debug(f"Skipping cache for {file_path}: caching is disabled")
             return

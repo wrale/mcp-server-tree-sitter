@@ -7,10 +7,97 @@ from typing import Any
 from mcp.server.fastmcp import FastMCP
 
 from ..api import get_config_manager, get_language_registry, get_project_registry, get_tree_cache
-from ..config import ConfigDict
+from ..cache.parser_cache import TreeCache
+from ..config import (
+    DEFAULT_LOG_LEVEL,
+    DEFAULT_MAX_FILE_SIZE_MB,
+    VALID_LOG_LEVELS,
+    ConfigDict,
+    ConfigurationManager,
+)
 from ..exceptions import ProjectError
 
 logger = logging.getLogger(__name__)
+
+
+def apply_configure(
+    config_manager: ConfigurationManager,
+    tree_cache: TreeCache,
+    *,
+    config_path: str | None = None,
+    cache_enabled: bool | None = None,
+    max_file_size_mb: int | None = None,
+    log_level: str | None = None,
+) -> ConfigDict:
+    """Apply configure options to config_manager and tree_cache. Single place for validation and keep-previous logic."""
+    initial_config = config_manager.get_config()
+    logger.info(
+        f"Initial configuration: "
+        f"cache.max_size_mb = {initial_config.cache.max_size_mb}, "
+        f"security.max_file_size_mb = {initial_config.security.max_file_size_mb}, "
+        f"language.default_max_depth = {initial_config.language.default_max_depth}"
+    )
+
+    if config_path:
+        logger.info(f"Configuring server with YAML config from: {config_path}")
+        abs_path = os.path.abspath(config_path)
+        logger.info(f"Absolute path: {abs_path}")
+
+        if not os.path.exists(abs_path):
+            logger.error(f"Config file does not exist: {abs_path}")
+
+        config_manager.load_from_file(abs_path)
+
+    if cache_enabled is not None:
+        logger.info(f"Setting cache.enabled to {cache_enabled}")
+        config_manager.update_value("cache.enabled", cache_enabled)
+        tree_cache.set_enabled(cache_enabled)
+
+    if max_file_size_mb is not None:
+        if max_file_size_mb >= 1:
+            logger.info(f"Setting security.max_file_size_mb to {max_file_size_mb}")
+            config_manager.update_value("security.max_file_size_mb", max_file_size_mb)
+        else:
+            current = config_manager.get_config().security.max_file_size_mb
+            if current >= 1:
+                logger.warning(
+                    "max_file_size_mb=%s invalid (must be >= 1), keeping current value %s",
+                    max_file_size_mb,
+                    current,
+                )
+            else:
+                logger.warning(
+                    "max_file_size_mb=%s invalid (must be >= 1), using default %s",
+                    max_file_size_mb,
+                    DEFAULT_MAX_FILE_SIZE_MB,
+                )
+                config_manager.update_value(
+                    "security.max_file_size_mb", DEFAULT_MAX_FILE_SIZE_MB
+                )
+
+    if log_level is not None:
+        if log_level in VALID_LOG_LEVELS:
+            logger.info(f"Setting log_level to {log_level}")
+            config_manager.update_value("log_level", log_level)
+        else:
+            current = config_manager.get_config().log_level
+            if current in VALID_LOG_LEVELS:
+                logger.warning(
+                    "log_level=%r invalid (must be one of %s), keeping current value %r",
+                    log_level,
+                    VALID_LOG_LEVELS,
+                    current,
+                )
+            else:
+                logger.warning(
+                    "log_level=%r invalid (must be one of %s), using default %r",
+                    log_level,
+                    VALID_LOG_LEVELS,
+                    DEFAULT_LOG_LEVEL,
+                )
+                config_manager.update_value("log_level", DEFAULT_LOG_LEVEL)
+
+    return config_manager.to_dict()
 
 
 def register_project_tools(mcp_server: FastMCP) -> None:
@@ -37,41 +124,14 @@ def register_project_tools(mcp_server: FastMCP) -> None:
         Note:
             Invalid config_path is logged; file load errors may leave config unchanged.
         """
-        config_manager = get_config_manager()
-        tree_cache = get_tree_cache()
-
-        initial_config = config_manager.get_config()
-        logger.info(
-            f"Initial configuration: "
-            f"cache.max_size_mb = {initial_config.cache.max_size_mb}, "
-            f"security.max_file_size_mb = {initial_config.security.max_file_size_mb}, "
-            f"language.default_max_depth = {initial_config.language.default_max_depth}"
+        return apply_configure(
+            get_config_manager(),
+            get_tree_cache(),
+            config_path=config_path,
+            cache_enabled=cache_enabled,
+            max_file_size_mb=max_file_size_mb,
+            log_level=log_level,
         )
-
-        if config_path:
-            logger.info(f"Configuring server with YAML config from: {config_path}")
-            abs_path = os.path.abspath(config_path)
-            logger.info(f"Absolute path: {abs_path}")
-
-            if not os.path.exists(abs_path):
-                logger.error(f"Config file does not exist: {abs_path}")
-
-            config_manager.load_from_file(abs_path)
-
-        if cache_enabled is not None:
-            logger.info(f"Setting cache.enabled to {cache_enabled}")
-            config_manager.update_value("cache.enabled", cache_enabled)
-            tree_cache.set_enabled(cache_enabled)
-
-        if max_file_size_mb is not None:
-            logger.info(f"Setting security.max_file_size_mb to {max_file_size_mb}")
-            config_manager.update_value("security.max_file_size_mb", max_file_size_mb)
-
-        if log_level is not None:
-            logger.info(f"Setting log_level to {log_level}")
-            config_manager.update_value("log_level", log_level)
-
-        return config_manager.to_dict()
 
     @mcp_server.tool()
     def register_project_tool(

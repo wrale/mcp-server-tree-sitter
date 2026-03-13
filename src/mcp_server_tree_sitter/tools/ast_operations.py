@@ -111,7 +111,7 @@ def parse_file(
         is_cache_enabled = False
         try:
             # Get cache enabled state from tree_cache
-            is_cache_enabled = tree_cache._is_cache_enabled()
+            is_cache_enabled = tree_cache.is_cache_enabled()
         except (AttributeError, TypeError) as e:
             logger.debug("Cache enabled check fallback: %s", e)
             is_cache_enabled = getattr(tree_cache, "enabled", False)

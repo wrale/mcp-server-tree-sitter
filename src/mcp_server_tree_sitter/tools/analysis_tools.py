@@ -5,6 +5,7 @@ from typing import cast
 from mcp.server.fastmcp import Context, FastMCP
 
 from ..api import get_language_registry, get_project_registry, get_tree_cache
+from ..language.loader import get_language_to_extension_map
 from ..utils.context import MCPContextProtocol
 from .analysis import (
     ComplexityResult,
@@ -136,21 +137,7 @@ def register_analysis_tools(mcp_server: FastMCP) -> None:
             ProjectError: If project is not registered.
         """
         clean_snippet = snippet.strip()
-
-        extension_map = {
-            "python": "py",
-            "javascript": "js",
-            "typescript": "ts",
-            "rust": "rs",
-            "go": "go",
-            "java": "java",
-            "c": "c",
-            "cpp": "cpp",
-            "ruby": "rb",
-            "swift": "swift",
-            "kotlin": "kt",
-        }
-
+        extension_map = get_language_to_extension_map()
         extension = extension_map.get(language, language) if language else None
         file_pattern = f"**/*.{extension}" if extension else None
 

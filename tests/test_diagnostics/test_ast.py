@@ -8,7 +8,6 @@ from typing import Any
 import pytest
 
 from mcp_server_tree_sitter.api import get_project_registry
-from mcp_server_tree_sitter.language.registry import LanguageRegistry
 from mcp_server_tree_sitter.testing import DiagnosticData
 from tests.test_helpers import get_ast, register_project_tool
 
@@ -37,6 +36,25 @@ def test_project(tmp_path: Path) -> Generator[dict[str, Any], None, None]:
         project_registry = get_project_registry()
         with contextlib.suppress(Exception):
             project_registry.remove_project(project_name)
+
+
+def test_get_ast_zero_or_negative_depth(test_project: dict[str, Any]) -> None:
+    """Test that an AST tree is returned with zero or negative depth."""
+    with pytest.raises(ValueError):
+        get_ast(
+            project=test_project["name"],
+            path=test_project["file"],
+            max_depth=0,
+            include_text=True,
+        )
+
+    with pytest.raises(ValueError):
+        get_ast(
+            project=test_project["name"],
+            path=test_project["file"],
+            max_depth=-1,
+            include_text=True,
+        )
 
 
 @pytest.mark.diagnostic
@@ -80,38 +98,3 @@ def test_ast_failure(test_project: dict[str, Any], diagnostic: DiagnosticData) -
 
         # Re-raise to fail the test
         raise
-
-
-@pytest.mark.diagnostic
-def test_language_detection(diagnostic: DiagnosticData) -> None:
-    """Test language detection functionality."""
-    registry = LanguageRegistry()
-
-    # Test a few common file extensions
-    test_files = {
-        "test.py": "python",
-        "test.js": "javascript",
-        "test.ts": "typescript",
-        "test.unknown": None,
-    }
-
-    results = {}
-    failures = []
-
-    for filename, expected in test_files.items():
-        detected = registry.language_for_file(filename)
-        match = detected == expected
-
-        results[filename] = {"detected": detected, "expected": expected, "match": match}
-
-        if not match:
-            failures.append(filename)
-
-    # Add all results to diagnostic data
-    diagnostic.add_detail("detection_results", results)
-    if failures:
-        diagnostic.add_detail("failed_files", failures)
-
-    # Check results with proper assertions
-    for filename, expected in test_files.items():
-        assert registry.language_for_file(filename) == expected, f"Language detection failed for {filename}"

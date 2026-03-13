@@ -20,6 +20,9 @@ from .config_loader import (
     update_config_from_new,
 )
 from .config_schema import (
+    DEFAULT_LOG_LEVEL,
+    DEFAULT_MAX_FILE_SIZE_MB,
+    VALID_LOG_LEVELS,
     CacheConfig,
     ConfigDict,
     ConfigValue,
@@ -32,10 +35,13 @@ __all__ = [
     "CacheConfig",
     "ConfigDict",
     "ConfigValue",
+    "DEFAULT_LOG_LEVEL",
+    "DEFAULT_MAX_FILE_SIZE_MB",
     "ConfigurationManager",
     "LanguageConfig",
     "SecurityConfig",
     "ServerConfig",
+    "VALID_LOG_LEVELS",
     "get_default_config_path",
     "load_config",
     "load_config_from_file",

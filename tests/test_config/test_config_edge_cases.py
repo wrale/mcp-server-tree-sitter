@@ -9,6 +9,8 @@ from pathlib import Path
 import pytest
 
 from mcp_server_tree_sitter.config import (
+    DEFAULT_LOG_LEVEL,
+    DEFAULT_MAX_FILE_SIZE_MB,
     ConfigurationManager,
     ServerConfig,
     load_config_from_file,
@@ -99,3 +101,79 @@ def test_precedence_yaml_over_defaults(tmp_path: Path) -> None:
     path.write_text("language:\n  default_max_depth: 8\n")
     config = load_config_from_file(str(path))
     assert config.language.default_max_depth == 8
+
+
+# ---- configure tool edge cases ----
+
+
+def test_configure_invalid_log_level_uses_default() -> None:
+    """Invalid log level (e.g. VERBOSE) is rejected; default log_level is used and logged."""
+    from tests.test_helpers import configure
+
+    result = configure(log_level="VERBOSE")
+    assert result["log_level"] == DEFAULT_LOG_LEVEL, "Invalid log level must fall back to default"
+
+
+def test_configure_max_file_size_mb_zero_or_negative_uses_default() -> None:
+    """max_file_size_mb=0 or negative is rejected; default value is used and logged."""
+    from mcp_server_tree_sitter.app import get_app
+    from tests.test_helpers import configure
+
+    # Ensure current value is invalid so the "use default" path is taken (not "keep current").
+    app = get_app()
+    app.config_manager.update_value("security.max_file_size_mb", 0)
+
+    result_zero = configure(max_file_size_mb=0)
+    assert result_zero["security"]["max_file_size_mb"] == DEFAULT_MAX_FILE_SIZE_MB, (
+        "Zero must fall back to default"
+    )
+    app.config_manager.update_value("security.max_file_size_mb", 0)
+    result_neg = configure(max_file_size_mb=-1)
+    assert result_neg["security"]["max_file_size_mb"] == DEFAULT_MAX_FILE_SIZE_MB, (
+        "Negative must fall back to default"
+    )
+
+
+def test_configure_invalid_log_level_after_valid_keeps_previous() -> None:
+    """If user had set a valid log_level, invalid value is ignored and previous value is kept."""
+    from tests.test_helpers import configure
+
+    configure(log_level="DEBUG")
+    result = configure(log_level="VERBOSE")
+    assert result["log_level"] == "DEBUG", (
+        "Invalid log level must be ignored; keep previous valid value"
+    )
+
+
+def test_configure_max_file_size_mb_invalid_after_valid_keeps_previous() -> None:
+    """If user had set a valid max_file_size_mb, 0 or negative is ignored and previous kept."""
+    from tests.test_helpers import configure
+
+    configure(max_file_size_mb=10)
+    result = configure(max_file_size_mb=0)
+    assert result["security"]["max_file_size_mb"] == 10, (
+        "Invalid must be ignored; keep previous valid value"
+    )
+
+
+def test_configure_config_path_nonexistent() -> None:
+    """config_path pointing to non-existent file does not crash; returns current config."""
+    from tests.test_helpers import configure
+
+    result = configure(config_path="/nonexistent/config_does_not_exist.yaml")
+    assert isinstance(result, dict)
+    assert "cache" in result or "security" in result
+
+
+def test_configure_config_path_invalid_yaml(tmp_path: Path) -> None:
+    """config_path pointing to invalid YAML does not crash; config unchanged or safe."""
+    from mcp_server_tree_sitter.app import get_app
+    from tests.test_helpers import configure
+
+    bad_yaml = tmp_path / "invalid.yaml"
+    bad_yaml.write_text("not: valid: yaml: [[[")
+    app = get_app()
+    before = app.get_config().cache.max_size_mb
+    result = configure(config_path=str(bad_yaml))
+    assert isinstance(result, dict)
+    assert app.get_config().cache.max_size_mb == before
