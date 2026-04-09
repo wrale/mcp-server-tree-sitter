@@ -146,14 +146,16 @@ def test_env_var_affects_logging(monkeypatch):
     # Set environment variable to DEBUG
     monkeypatch.setenv("MCP_TS_LOG_LEVEL", "DEBUG")
 
-    # Import the module again to trigger initialization with the new env var
+    # Import the module and explicitly call configure_root_logger
     with patch.dict(os.environ, {"MCP_TS_LOG_LEVEL": "DEBUG"}):
-        # Force reloading of the module
         import importlib
 
         import mcp_server_tree_sitter.bootstrap.logging_bootstrap
 
         importlib.reload(mcp_server_tree_sitter.bootstrap.logging_bootstrap)
+
+        # Explicitly call configure_root_logger (no longer auto-called on import)
+        mcp_server_tree_sitter.bootstrap.logging_bootstrap.configure_root_logger()
 
         # Get the root package logger to check its level was set from env var
         root_logger = logging.getLogger("mcp_server_tree_sitter")
@@ -186,12 +188,14 @@ def test_env_var_affects_logging(monkeypatch):
 
     # Import the module again with new env var
     with patch.dict(os.environ, {"MCP_TS_LOG_LEVEL": "INFO"}):
-        # Force reloading of the module
         import importlib
 
         import mcp_server_tree_sitter.bootstrap.logging_bootstrap
 
         importlib.reload(mcp_server_tree_sitter.bootstrap.logging_bootstrap)
+
+        # Explicitly call configure_root_logger (no longer auto-called on import)
+        mcp_server_tree_sitter.bootstrap.logging_bootstrap.configure_root_logger()
 
         # Get the root package logger to check its level was set from env var
         root_logger = logging.getLogger("mcp_server_tree_sitter")
