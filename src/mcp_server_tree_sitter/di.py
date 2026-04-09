@@ -32,6 +32,10 @@ class DependencyContainer:
             max_size_mb=self._config.cache.max_size_mb, ttl_seconds=self._config.cache.ttl_seconds
         )
 
+        # Pre-load preferred languages after all dependencies are created
+        # This avoids circular import issues during LanguageRegistry initialization
+        self.language_registry.preload_languages(self._config)
+
         # Storage for any additional dependencies
         self._additional: Dict[str, Any] = {}
 

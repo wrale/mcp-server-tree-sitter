@@ -6,6 +6,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from tree_sitter_language_pack import get_language, get_parser
 
+from ..config import ServerConfig
+
 # Import parser_cache functions inside methods to avoid circular imports
 # Import global_context inside methods to avoid circular imports
 from ..exceptions import LanguageNotFoundError
@@ -65,20 +67,21 @@ class LanguageRegistry:
             "exs": "elixir",
         }
 
-        # Pre-load preferred languages if configured
-        # Get dependencies within the method to avoid circular imports
-        try:
-            from ..di import get_container
+    def preload_languages(self, config: ServerConfig) -> None:
+        """
+        Pre-load preferred languages from configuration.
 
-            config = get_container().get_config()
-            for lang in config.language.preferred_languages:
-                try:
-                    self.get_language(lang)
-                except Exception as e:
-                    logger.warning(f"Failed to pre-load language {lang}: {e}")
-        except ImportError:
-            # If dependency container isn't available yet, just skip this step
-            logger.warning("Skipping pre-loading of languages due to missing dependencies")
+        This method should be called after the dependency container is fully
+        initialized to avoid circular import issues.
+
+        Args:
+            config: Server configuration containing language preferences
+        """
+        for lang in config.language.preferred_languages:
+            try:
+                self.get_language(lang)
+            except Exception as e:
+                logger.warning(f"Failed to pre-load language {lang}: {e}")
 
     def language_for_file(self, file_path: str) -> Optional[str]:
         """
