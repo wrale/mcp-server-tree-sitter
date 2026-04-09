@@ -25,6 +25,20 @@ from ..utils.tree_sitter_types import (
 T = TypeVar("T")
 
 
+def create_query(language: Any, query_string: str) -> Any:
+    """Create a tree-sitter Query using the non-deprecated API.
+
+    tree-sitter >= 0.25 deprecated Language.query() in favor of Query(language, query_string).
+    """
+    try:
+        from tree_sitter import Query
+
+        return Query(language, query_string)
+    except (ImportError, TypeError):
+        # Fall back to deprecated API for older tree-sitter versions
+        return language.query(query_string)
+
+
 def query_captures(query: Any, node: Any) -> Any:
     """Compat wrapper: works with both old (query.captures) and new (QueryCursor) API."""
     # New API (py-tree-sitter >= 0.24): Query has no .captures(), use QueryCursor

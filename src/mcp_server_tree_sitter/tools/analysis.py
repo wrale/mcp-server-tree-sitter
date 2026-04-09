@@ -10,6 +10,7 @@ from ..utils.context import MCPContext
 from ..utils.file_io import get_comment_prefix, read_text_file
 from ..utils.security import validate_file_access
 from ..utils.tree_sitter_helpers import (
+    create_query,
     ensure_language,
     ensure_node,
     get_node_text,
@@ -106,7 +107,7 @@ def extract_symbols(
             if "classes" not in symbols:
                 symbols["classes"] = []
 
-            class_query = safe_lang.query(queries["classes"])
+            class_query = create_query(safe_lang, queries["classes"])
             class_matches = query_captures(class_query, tree.root_node)
 
             # Process class locations to identify their boundaries
@@ -132,7 +133,7 @@ def extract_symbols(
             if symbol_type not in symbols:
                 symbols[symbol_type] = []
 
-            query = safe_lang.query(query_string)
+            query = create_query(safe_lang, query_string)
             matches = query_captures(query, tree.root_node)
 
             process_symbol_matches(
@@ -153,7 +154,7 @@ def extract_symbols(
                     name: (aliased_import)) @import
                 """
 
-                aliased_query = safe_lang.query(aliased_query_string)
+                aliased_query = create_query(safe_lang, aliased_query_string)
                 aliased_matches = query_captures(aliased_query, tree.root_node)
 
                 for match in aliased_matches:
@@ -192,7 +193,7 @@ def extract_symbols(
 
                 # Additionally, run a query to get all aliased imports directly
                 alias_query_string = "(aliased_import) @alias"
-                alias_query = safe_lang.query(alias_query_string)
+                alias_query = create_query(safe_lang, alias_query_string)
                 alias_matches = query_captures(alias_query, tree.root_node)
 
                 for match in alias_matches:
@@ -636,7 +637,7 @@ def find_dependencies(
         tree, source_bytes = parse_with_cached_tree(abs_path, language, safe_lang)
 
         # Execute query
-        query = safe_lang.query(query_string)
+        query = create_query(safe_lang, query_string)
         matches = query_captures(query, tree.root_node)
 
         # Organize imports by type
@@ -754,7 +755,7 @@ def find_dependencies(
         if language == "python":
             # Look for aliased imports directly
             aliased_query_string = "(aliased_import) @alias"
-            aliased_query = safe_lang.query(aliased_query_string)
+            aliased_query = create_query(safe_lang, aliased_query_string)
             aliased_matches = query_captures(aliased_query, tree.root_node)
 
             # Process aliased imports
