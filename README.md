@@ -1,12 +1,6 @@
-[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/wrale-mcp-server-tree-sitter-badge.png)](https://mseep.ai/app/wrale-mcp-server-tree-sitter)
-
 # MCP Tree-sitter Server
 
 A Model Context Protocol (MCP) server that provides code analysis capabilities using tree-sitter, designed to give AI assistants intelligent access to codebases with appropriate context management. Claude Desktop is the reference implementation target.
-
-<a href="https://glama.ai/mcp/servers/@wrale/mcp-server-tree-sitter">
-  <img width="380" height="200" src="https://glama.ai/mcp/servers/@wrale/mcp-server-tree-sitter/badge" alt="mcp-server-tree-sitter MCP server" />
-</a>
 
 ## Features
 
