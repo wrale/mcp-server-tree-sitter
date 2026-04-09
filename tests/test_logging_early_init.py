@@ -34,17 +34,19 @@ def test_early_init_in_package():
     )
 
 
-def test_configure_is_called_at_import():
-    """Test that the configure_root_logger is called when bootstrap is imported."""
-    # Mock the root logger configuration function
+def test_configure_is_not_called_at_import():
+    """Test that configure_root_logger is NOT auto-called when bootstrap is imported.
+
+    Libraries should not reconfigure the root logger on import, as this
+    silences debug output for all namespaces in importing applications.
+    """
     with patch("logging.basicConfig") as mock_basic_config:
-        # Force reload of the module to trigger initialization
         import mcp_server_tree_sitter.bootstrap.logging_bootstrap
 
         importlib.reload(mcp_server_tree_sitter.bootstrap.logging_bootstrap)
 
-        # Verify logging.basicConfig was called
-        mock_basic_config.assert_called_once()
+        # Verify logging.basicConfig was NOT called on import
+        mock_basic_config.assert_not_called()
 
 
 def test_environment_vars_processed_early():
@@ -82,30 +84,24 @@ def test_environment_vars_processed_early():
             os.environ["MCP_TS_LOG_LEVEL"] = original_env
 
 
-def test_handlers_synchronized_at_init():
-    """Test that handler levels are synchronized at initialization."""
-    # Mock handlers on the root logger
+def test_handlers_not_synchronized_at_init():
+    """Test that handler levels are NOT modified at import time.
+
+    Libraries should not touch the root logger's handlers on import.
+    """
     mock_handler = MagicMock()
     root_logger = logging.getLogger()
     original_handlers = root_logger.handlers
 
     try:
-        # Add mock handler and capture original handlers
         root_logger.handlers = [mock_handler]
 
-        # Set environment variable
         with patch.dict(os.environ, {"MCP_TS_LOG_LEVEL": "DEBUG"}):
-            # Mock the get_log_level_from_env function to control return value
-            with patch("mcp_server_tree_sitter.bootstrap.logging_bootstrap.get_log_level_from_env") as mock_get_level:
-                mock_get_level.return_value = logging.DEBUG
+            import mcp_server_tree_sitter.bootstrap.logging_bootstrap
 
-                # Force reload to trigger initialization
-                import mcp_server_tree_sitter.bootstrap.logging_bootstrap
+            importlib.reload(mcp_server_tree_sitter.bootstrap.logging_bootstrap)
 
-                importlib.reload(mcp_server_tree_sitter.bootstrap.logging_bootstrap)
-
-                # Verify handler level was set
-                mock_handler.setLevel.assert_called_with(logging.DEBUG)
+            # Verify handler level was NOT set on import
+            mock_handler.setLevel.assert_not_called()
     finally:
-        # Restore original handlers
         root_logger.handlers = original_handlers
