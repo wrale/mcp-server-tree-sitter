@@ -50,9 +50,21 @@ class Project:
             languages: Dict[str, int] = {}
             scanned: Set[str] = set()
 
-            for root, _, files in os.walk(self.root_path):
-                # Skip hidden directories
-                if any(part.startswith(".") for part in Path(root).parts):
+            # Get excluded directories from config
+            try:
+                from ..api import get_config
+
+                config = get_config()
+                excluded_dirs = set(config.security.excluded_dirs)
+            except Exception:
+                excluded_dirs = {".git", "node_modules", "__pycache__"}
+
+            for root, dirs, files in os.walk(self.root_path):
+                # Prune hidden and excluded directories in-place to prevent descent
+                dirs[:] = [d for d in dirs if not d.startswith(".") and d not in excluded_dirs]
+
+                # Skip hidden directories in the current path
+                if any(part.startswith(".") for part in Path(root).relative_to(self.root_path).parts):
                     continue
 
                 for file in files:
