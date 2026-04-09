@@ -142,5 +142,3 @@ def get_logger(name: str) -> logging.Logger:
         logger.propagate = True
 
     return logger
-
-

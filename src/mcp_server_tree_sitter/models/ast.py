@@ -8,7 +8,6 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from ..utils.tree_sitter_helpers import (
     get_node_text,
-    walk_tree,
 )
 from ..utils.tree_sitter_types import ensure_node
 

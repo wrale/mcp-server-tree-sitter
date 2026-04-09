@@ -186,8 +186,10 @@ def test_direct_query_with_language_pack() -> None:
         query_string = "(function_definition name: (identifier) @name)"
         query = language.query(query_string)
 
-        # Execute the query
-        captures = query.captures(root_node)
+        # Execute the query using compatibility wrapper
+        from mcp_server_tree_sitter.utils.tree_sitter_helpers import query_captures
+
+        captures = query_captures(query, root_node)
 
         # Verify captures
         assert len(captures) > 0, "Query should return captures"
