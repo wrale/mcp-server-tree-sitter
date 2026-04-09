@@ -104,8 +104,9 @@ class ServerConfig(BaseModel):
 def update_config_from_env(config: ServerConfig) -> None:
     """Update configuration from environment variables.
 
-    This function applies all environment variables with the MCP_TS_ prefix
-    to the provided config object, using the single underscore format only.
+    Supports two formats:
+        MCP_TS_CACHE__MAX_SIZE_MB  (double underscore = explicit section separator)
+        MCP_TS_CACHE_MAX_SIZE_MB   (single underscore = greedy first-part match)
 
     Args:
         config: The ServerConfig object to update with environment variables
@@ -122,22 +123,23 @@ def update_config_from_env(config: ServerConfig) -> None:
         key = env_name[len(env_prefix) :]
         logger.debug(f"Processing environment variable: {env_name}, key after prefix removal: {key}")
 
-        # Single underscore format only (MCP_TS_CACHE_MAX_SIZE_MB)
-        # If the config has a section matching the first part, use it
-        # Otherwise, it might be a top-level setting
-        parts = key.lower().split("_")
-
-        # Check if first part is a valid section
-        if len(parts) > 1 and hasattr(config, parts[0]):
-            section = parts[0]
-            # All remaining parts form the setting name
-            setting = "_".join(parts[1:])
-            logger.debug(f"Single underscore format: section={section}, setting={setting}")
+        # Double underscore format (MCP_TS_CACHE__MAX_SIZE_MB) — unambiguous
+        if "__" in key:
+            dparts = key.lower().split("__", 1)
+            section = dparts[0]
+            setting = dparts[1]
+            logger.debug(f"Double underscore format: section={section}, setting={setting}")
         else:
-            # No section match found, treat as top-level setting
-            section = None
-            setting = key.lower()
-            logger.debug(f"Top-level setting: {setting}")
+            # Single underscore format (MCP_TS_CACHE_MAX_SIZE_MB) — greedy first-part match
+            parts = key.lower().split("_")
+            if len(parts) > 1 and hasattr(config, parts[0]):
+                section = parts[0]
+                setting = "_".join(parts[1:])
+                logger.debug(f"Single underscore format: section={section}, setting={setting}")
+            else:
+                section = None
+                setting = key.lower()
+                logger.debug(f"Top-level setting: {setting}")
 
         # Apply the setting to the configuration
         if section is None:
