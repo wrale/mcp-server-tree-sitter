@@ -37,7 +37,9 @@ class SecurityConfig(BaseModel):
     """Security settings."""
 
     max_file_size_mb: int = 5
-    excluded_dirs: List[str] = Field(default_factory=lambda: [".git", "node_modules", "__pycache__"])
+    excluded_dirs: List[str] = Field(
+        default_factory=lambda: [".git", "node_modules", "__pycache__", ".venv", "venv", ".tox"]
+    )
     allowed_extensions: Optional[List[str]] = None  # None means all extensions allowed
 
 
