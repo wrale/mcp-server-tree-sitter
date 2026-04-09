@@ -46,6 +46,7 @@ class LanguageRegistry:
             "php": "php",
             "scala": "scala",
             "swift": "swift",
+            "dart": "dart",
             "kt": "kotlin",
             "lua": "lua",
             "hs": "haskell",
