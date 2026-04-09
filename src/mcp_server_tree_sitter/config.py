@@ -200,25 +200,32 @@ class ConfigurationManager:
     """Manages server configuration without relying on global variables."""
 
     def __init__(self, initial_config: Optional[ServerConfig] = None):
-        """Initialize with optional initial configuration."""
+        """Initialize with optional initial configuration.
+
+        Auto-discovers and loads YAML config from MCP_TS_CONFIG_PATH env var
+        or the default platform path (~/.config/tree-sitter/config.yaml).
+        Environment variables are applied last to ensure highest precedence.
+        """
         self._config = initial_config or ServerConfig()
         self._logger = logging.getLogger(__name__)
 
-        # Apply environment variables to the initial configuration
-        # Log before state for debugging
-        self._logger.debug(
-            f"Before applying env vars in __init__: cache.max_size_mb = {self._config.cache.max_size_mb}, "
-            f"security.max_file_size_mb = {self._config.security.max_file_size_mb}"
-        )
+        # Auto-discover and load YAML config from env var or default path
+        config_path = os.environ.get("MCP_TS_CONFIG_PATH")
+        if config_path:
+            path_to_load: Optional[Path] = Path(config_path)
+        else:
+            path_to_load = get_default_config_path()
 
-        # Apply environment variables
+        if path_to_load and path_to_load.exists():
+            self._logger.info(f"Auto-loading configuration from {path_to_load}")
+            try:
+                new_config = ServerConfig.from_file(str(path_to_load))
+                update_config_from_new(self._config, new_config)
+            except Exception as e:
+                self._logger.error(f"Error auto-loading configuration from {path_to_load}: {e}")
+
+        # Apply environment variables (highest precedence)
         update_config_from_env(self._config)
-
-        # Log after state for debugging
-        self._logger.debug(
-            f"After applying env vars in __init__: cache.max_size_mb = {self._config.cache.max_size_mb}, "
-            f"security.max_file_size_mb = {self._config.security.max_file_size_mb}"
-        )
 
     def get_config(self) -> ServerConfig:
         """Get the current configuration."""
