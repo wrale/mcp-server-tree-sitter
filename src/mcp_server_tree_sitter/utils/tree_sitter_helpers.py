@@ -25,6 +25,20 @@ from ..utils.tree_sitter_types import (
 T = TypeVar("T")
 
 
+def query_captures(query: Any, node: Any) -> Any:
+    """Compat wrapper: works with both old (query.captures) and new (QueryCursor) API."""
+    # New API (py-tree-sitter >= 0.24): Query has no .captures(), use QueryCursor
+    if not hasattr(query, "captures"):
+        try:
+            from tree_sitter import QueryCursor
+            cursor = QueryCursor(query)
+            return cursor.captures(node)
+        except ImportError:
+            raise AttributeError("tree_sitter.Query has no 'captures' and QueryCursor is unavailable")
+    # Old API (py-tree-sitter < 0.24): query.captures(node)
+    return query.captures(node)
+
+
 def create_parser(language_obj: Any) -> Parser:
     """
     Create a parser configured for a specific language.
