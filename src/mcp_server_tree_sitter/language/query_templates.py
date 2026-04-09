@@ -1,6 +1,6 @@
 """Query templates for common code patterns by language."""
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from .templates import QUERY_TEMPLATES
 
@@ -22,16 +22,20 @@ def get_query_template(language: str, template_name: str) -> Optional[str]:
     return None
 
 
-def list_query_templates(language: Optional[str] = None) -> Dict[str, Any]:
+def list_query_templates(language: Optional[Union[str, List[str]]] = None) -> Dict[str, Any]:
     """
     List available query templates.
 
     Args:
-        language: Optional language to filter by
+        language: Optional language or list of languages to filter by
 
     Returns:
         Dictionary of templates by language
     """
     if language:
-        return {language: QUERY_TEMPLATES.get(language, {})}
+        if isinstance(language, str):
+            languages = [lang.strip() for lang in language.split(",")]
+        else:
+            languages = language
+        return {lang: QUERY_TEMPLATES.get(lang, {}) for lang in languages}
     return QUERY_TEMPLATES
