@@ -337,6 +337,8 @@ def register_tools(mcp_server: Any, container: DependencyContainer) -> None:
         file_path: Optional[str] = None,
         language: Optional[str] = None,
         max_results: int = 100,
+        capture_filter: Optional[str] = None,
+        compact: bool = False,
     ) -> List[Dict[str, Any]]:
         """Run a tree-sitter query on project files.
 
@@ -346,6 +348,8 @@ def register_tools(mcp_server: Any, container: DependencyContainer) -> None:
             file_path: Optional specific file to query
             language: Language to use (required if file_path not provided)
             max_results: Maximum number of results
+            capture_filter: Optional capture name to filter results (e.g. "class.name")
+            compact: If true, return only {capture, text} per match
 
         Returns:
             List of query matches
@@ -362,6 +366,8 @@ def register_tools(mcp_server: Any, container: DependencyContainer) -> None:
             file_path,
             language,
             max_results if max_results is not None else config.max_results_default,
+            capture_filter=capture_filter,
+            compact=compact,
         )
 
     @mcp_server.tool()

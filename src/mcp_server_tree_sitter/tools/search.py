@@ -145,6 +145,8 @@ def query_code(
     language: Optional[str] = None,
     max_results: int = 100,
     include_snippets: bool = True,
+    capture_filter: Optional[str] = None,
+    compact: bool = False,
 ) -> List[Dict[str, Any]]:
     """
     Run a tree-sitter query on code files.
@@ -211,6 +213,9 @@ def query_code(
             if isinstance(captures, dict):
                 # Dictionary format: {capture_name: [node1, node2, ...], ...}
                 for capture_name, nodes in captures.items():
+                    if capture_filter and capture_name != capture_filter:
+                        continue
+
                     for node in nodes:
                         # Skip if we've reached max results
                         if max_results is not None and len(results) >= max_results:
@@ -223,21 +228,23 @@ def query_code(
                         except Exception:
                             text = "<binary data>"
 
-                        result = {
-                            "file": file_path,
-                            "capture": capture_name,
-                            "start": {
-                                "row": node.start_point[0],
-                                "column": node.start_point[1],
-                            },
-                            "end": {
-                                "row": node.end_point[0],
-                                "column": node.end_point[1],
-                            },
-                        }
-
-                        if include_snippets:
-                            result["text"] = text
+                        if compact:
+                            result: Dict[str, Any] = {"capture": capture_name, "text": text}
+                        else:
+                            result = {
+                                "file": file_path,
+                                "capture": capture_name,
+                                "start": {
+                                    "row": node.start_point[0],
+                                    "column": node.start_point[1],
+                                },
+                                "end": {
+                                    "row": node.end_point[0],
+                                    "column": node.end_point[1],
+                                },
+                            }
+                            if include_snippets:
+                                result["text"] = text
 
                         results.append(result)
             else:
@@ -257,6 +264,9 @@ def query_code(
                         # Skip if format is unknown
                         continue
 
+                    if capture_filter and capture_name != capture_filter:
+                        continue
+
                     # Skip if we've reached max results
                     if max_results is not None and len(results) >= max_results:
                         break
@@ -268,18 +278,20 @@ def query_code(
                     except Exception:
                         text = "<binary data>"
 
-                    result = {
-                        "file": file_path,
-                        "capture": capture_name,
-                        "start": {
-                            "row": node.start_point[0],
-                            "column": node.start_point[1],
-                        },
-                        "end": {"row": node.end_point[0], "column": node.end_point[1]},
-                    }
-
-                    if include_snippets:
-                        result["text"] = text
+                    if compact:
+                        result = {"capture": capture_name, "text": text}
+                    else:
+                        result = {
+                            "file": file_path,
+                            "capture": capture_name,
+                            "start": {
+                                "row": node.start_point[0],
+                                "column": node.start_point[1],
+                            },
+                            "end": {"row": node.end_point[0], "column": node.end_point[1]},
+                        }
+                        if include_snippets:
+                            result["text"] = text
 
                     results.append(result)
         except Exception as e:
