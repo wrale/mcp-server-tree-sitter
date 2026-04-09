@@ -457,6 +457,13 @@ The server provides the following MCP prompts:
 - `suggest_improvements` - Create a prompt for suggesting code improvements
 - `project_overview` - Create a prompt for a project overview analysis
 
+## Feedback & Community
+
+We'd love to hear how you're using mcp-server-tree-sitter and what would make it more useful for your workflow.
+
+- **Questions & Feature Requests**: [GitHub Discussions](https://github.com/wrale/mcp-server-tree-sitter/discussions)
+- **Bug Reports**: [GitHub Issues](https://github.com/wrale/mcp-server-tree-sitter/issues)
+
 ## License
 
 MIT
