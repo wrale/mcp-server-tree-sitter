@@ -87,7 +87,10 @@ def summarize_node(node: Any, source_bytes: Optional[bytes] = None) -> Dict[str,
 
 def find_node_at_position(root_node: Any, row: int, column: int) -> Optional[Any]:
     """
-    Find the most specific node at a given position using cursor-based traversal.
+    Find the most specific node at a given position.
+
+    Uses tree-sitter's built-in descendant_for_point_range which delegates
+    to the C implementation for efficient lookup.
 
     Args:
         root_node: Root node to search from
@@ -100,70 +103,11 @@ def find_node_at_position(root_node: Any, row: int, column: int) -> Optional[Any
     safe_node = ensure_node(root_node)
     point = (row, column)
 
-    # Check if point is within root_node
-    if not (safe_node.start_point <= point <= safe_node.end_point):
+    # Check if point is within root_node (end_point is exclusive in tree-sitter)
+    if not (safe_node.start_point <= point < safe_node.end_point):
         return None
 
-    # Find the smallest node that contains the point
-    cursor = walk_tree(safe_node)
-    current_best = cursor.node
-
-    # Special handling for function definitions and identifiers
-    def check_for_specific_nodes(node: Any) -> Optional[Any]:
-        # For function definitions, check if position is over the function name
-        if node.type == "function_definition":
-            for child in node.children:
-                if child.type in ["identifier", "name"]:
-                    if (
-                        child.start_point[0] <= row <= child.end_point[0]
-                        and child.start_point[1] <= column <= child.end_point[1]
-                    ):
-                        return child
-        return None
-
-    # First check if we have a specific node like a function name
-    specific_node = check_for_specific_nodes(safe_node)
-    if specific_node:
-        return specific_node
-
-    while cursor.goto_first_child():
-        # If current node contains the point, it's better than the parent
-        if cursor.node is not None and cursor.node.start_point <= point <= cursor.node.end_point:
-            current_best = cursor.node
-
-            # Check for specific nodes like identifiers
-            specific_node = check_for_specific_nodes(cursor.node)
-            if specific_node:
-                return specific_node
-
-            continue  # Continue to first child
-
-        # If first child doesn't contain point, try siblings
-        cursor.goto_parent()
-        current_best = cursor.node  # Reset current best to parent
-
-        # Try siblings
-        found_in_sibling = False
-        while cursor.goto_next_sibling():
-            if cursor.node is not None and cursor.node.start_point <= point <= cursor.node.end_point:
-                current_best = cursor.node
-
-                # Check for specific nodes
-                specific_node = check_for_specific_nodes(cursor.node)
-                if specific_node:
-                    return specific_node
-
-                found_in_sibling = True
-                break
-
-        # If a sibling contains the point, continue to its children
-        if found_in_sibling:
-            continue
-        else:
-            # No child or sibling contains the point, we're done
-            break
-
-    return current_best
+    return safe_node.descendant_for_point_range(point, point)
 
 
 def extract_node_path(
