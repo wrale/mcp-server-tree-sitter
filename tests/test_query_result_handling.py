@@ -184,10 +184,9 @@ def test_direct_query_with_language_pack() -> None:
 
         # Define a query to find the function name
         query_string = "(function_definition name: (identifier) @name)"
-        query = language.query(query_string)
+        from mcp_server_tree_sitter.utils.tree_sitter_helpers import create_query, query_captures
 
-        # Execute the query using compatibility wrapper
-        from mcp_server_tree_sitter.utils.tree_sitter_helpers import query_captures
+        query = create_query(language, query_string)
 
         captures = query_captures(query, root_node)
 
