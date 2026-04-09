@@ -42,7 +42,7 @@ class LanguageRegistry:
             "cc": "cpp",
             "h": "c",
             "hpp": "cpp",
-            "cs": "c_sharp",
+            "cs": "csharp",
             "php": "php",
             "scala": "scala",
             "swift": "swift",
