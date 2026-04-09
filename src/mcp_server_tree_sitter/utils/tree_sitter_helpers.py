@@ -31,10 +31,11 @@ def query_captures(query: Any, node: Any) -> Any:
     if not hasattr(query, "captures"):
         try:
             from tree_sitter import QueryCursor
+
             cursor = QueryCursor(query)
             return cursor.captures(node)
-        except ImportError:
-            raise AttributeError("tree_sitter.Query has no 'captures' and QueryCursor is unavailable")
+        except ImportError as err:
+            raise AttributeError("tree_sitter.Query has no 'captures' and QueryCursor is unavailable") from err
     # Old API (py-tree-sitter < 0.24): query.captures(node)
     return query.captures(node)
 

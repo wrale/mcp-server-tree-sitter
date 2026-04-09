@@ -204,6 +204,7 @@ def query_code(
             query = lang.query(query_string)
 
             from ..utils.tree_sitter_helpers import query_captures
+
             captures = query_captures(query, tree.root_node)
 
             # Handle different return formats from query.captures()
