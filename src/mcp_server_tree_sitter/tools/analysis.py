@@ -68,6 +68,8 @@ def extract_symbols(
             symbol_types = ["functions", "classes", "interfaces", "imports"]
         elif language == "kotlin":
             symbol_types = ["functions", "classes", "interfaces", "imports"]
+        elif language == "dart":
+            symbol_types = ["functions", "classes", "mixins", "enums", "imports"]
         elif language == "julia":
             symbol_types = ["functions", "modules", "structs", "imports"]
         elif language == "apl":
