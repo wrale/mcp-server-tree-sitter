@@ -346,3 +346,155 @@ def query_code(
                 continue
 
     return results[:max_results] if max_results is not None else results
+
+
+def _extract_ast_fingerprint(node: Any, source_bytes: bytes) -> set:
+    """Extract a structural fingerprint from an AST node.
+
+    The fingerprint is a set of (node_type, text) pairs for leaf nodes
+    and node_type strings for interior nodes. This captures both the
+    structure and the identifiers used in the code.
+    """
+    fingerprint: set = set()
+    stack = [node]
+    while stack:
+        n = stack.pop()
+        if n.child_count == 0:
+            # Leaf node — include type and text
+            text = source_bytes[n.start_byte : n.end_byte].decode("utf-8", errors="replace")
+            fingerprint.add((n.type, text))
+        else:
+            # Interior node — include type
+            fingerprint.add(n.type)
+            for i in range(n.child_count):
+                child = n.child(i)
+                if child is not None:
+                    stack.append(child)
+    return fingerprint
+
+
+def _iter_top_level_blocks(tree: Any) -> list:
+    """Yield top-level definitions (functions, classes) and their children."""
+    blocks = []
+    root = tree.root_node
+    for i in range(root.child_count):
+        child = root.child(i)
+        if child is None:
+            continue
+        blocks.append(child)
+        # Also yield nested definitions (methods inside classes)
+        if child.type in ("class_definition", "class_declaration", "impl_item"):
+            for j in range(child.child_count):
+                nested = child.child(j)
+                if nested is not None and nested.type in (
+                    "function_definition",
+                    "function_declaration",
+                    "method_definition",
+                    "method_declaration",
+                    "function_item",
+                ):
+                    blocks.append(nested)
+    return blocks
+
+
+def find_similar_code(
+    project: Any,
+    snippet: str,
+    language_registry: Any,
+    tree_cache: Any,
+    language: Optional[str] = None,
+    threshold: float = 0.6,
+    max_results: int = 10,
+) -> List[Dict[str, Any]]:
+    """Find code structurally similar to a snippet using AST fingerprinting.
+
+    Parses the snippet and each candidate code block into ASTs, extracts
+    structural fingerprints (node types + leaf identifiers), and computes
+    containment similarity — what fraction of the snippet's fingerprint
+    is found in each candidate block.
+
+    Args:
+        project: Project object
+        snippet: Code snippet to find similar code for
+        language_registry: Language registry
+        tree_cache: Tree cache instance
+        language: Language of the snippet
+        threshold: Minimum containment similarity (0.0-1.0)
+        max_results: Maximum number of results
+
+    Returns:
+        List of similar code blocks with similarity scores
+    """
+    if not language:
+        raise QueryError("Language is required for find_similar_code")
+
+    # Parse the snippet
+    try:
+        parser = language_registry.get_parser(language)
+        snippet_bytes = snippet.encode("utf-8")
+        snippet_tree = parser.parse(snippet_bytes)
+        snippet_fp = _extract_ast_fingerprint(snippet_tree.root_node, snippet_bytes)
+    except Exception as e:
+        raise QueryError(f"Failed to parse snippet as {language}: {e}") from e
+
+    if not snippet_fp:
+        return []
+
+    root = project.root_path
+    results: List[Dict[str, Any]] = []
+
+    # Find files for this language
+    extensions = [ext for ext, lang in language_registry._language_map.items() if lang == language]
+    if not extensions:
+        raise QueryError(f"No file extensions found for language {language}")
+
+    for ext in extensions:
+        for file_path in root.glob(f"**/*.{ext}"):
+            if not file_path.is_file():
+                continue
+
+            rel_path = str(file_path.relative_to(root))
+
+            try:
+                validate_file_access(file_path, root)
+
+                # Parse file
+                cached = tree_cache.get(file_path, language)
+                if cached:
+                    tree, source_bytes = cached
+                else:
+                    with open(file_path, "rb") as f:
+                        source_bytes = f.read()
+                    tree = parser.parse(source_bytes)
+                    tree_cache.put(file_path, language, tree, source_bytes)
+
+                # Compare each top-level block against the snippet
+                for block in _iter_top_level_blocks(tree):
+                    block_fp = _extract_ast_fingerprint(block, source_bytes)
+                    if not block_fp:
+                        continue
+
+                    # Containment similarity: what fraction of the snippet's
+                    # fingerprint is found in the candidate block. This handles
+                    # asymmetric sizes well — a short snippet can match a long
+                    # function if the snippet's structure is contained within it.
+                    intersection = len(snippet_fp & block_fp)
+                    similarity = intersection / len(snippet_fp) if snippet_fp else 0.0
+
+                    if similarity >= threshold:
+                        block_text = source_bytes[block.start_byte : block.end_byte].decode("utf-8", errors="replace")
+                        results.append(
+                            {
+                                "file": rel_path,
+                                "start": {"row": block.start_point[0], "column": block.start_point[1]},
+                                "end": {"row": block.end_point[0], "column": block.end_point[1]},
+                                "similarity": round(similarity, 3),
+                                "node_type": block.type,
+                                "text": block_text[:500],
+                            }
+                        )
+            except (SecurityError, Exception):
+                continue
+
+    results.sort(key=lambda x: x["similarity"], reverse=True)
+    return results[:max_results]

@@ -541,54 +541,34 @@ def register_tools(mcp_server: Any, container: DependencyContainer) -> None:
         project: str,
         snippet: str,
         language: Optional[str] = None,
-        threshold: float = 0.8,
+        threshold: float = 0.6,
         max_results: int = 10,
     ) -> List[Dict[str, Any]]:
-        """Find similar code to a snippet.
+        """Find code structurally similar to a snippet using AST fingerprinting.
+
+        Parses the snippet and candidate code blocks into ASTs, extracts
+        structural fingerprints, and computes Jaccard similarity.
 
         Args:
             project: Project name
-            snippet: Code snippet to find
-            language: Language of the snippet
-            threshold: Similarity threshold (0.0-1.0)
+            snippet: Code snippet to find similar code for
+            language: Language of the snippet (required)
+            threshold: Minimum Jaccard similarity (0.0-1.0, default 0.6)
             max_results: Maximum number of results
 
         Returns:
-            List of similar code locations
+            List of similar code blocks with similarity scores
         """
-        # This is a simple implementation that uses text search
-        from ..tools.search import search_text
+        from ..tools.search import find_similar_code as _find_similar
 
-        # Clean the snippet to handle potential whitespace differences
-        clean_snippet = snippet.strip()
-
-        # Map language names to file extensions
-        extension_map = {
-            "python": "py",
-            "javascript": "js",
-            "typescript": "ts",
-            "rust": "rs",
-            "go": "go",
-            "java": "java",
-            "c": "c",
-            "cpp": "cpp",
-            "ruby": "rb",
-            "swift": "swift",
-            "kotlin": "kt",
-        }
-
-        # Get the appropriate file extension for the language
-        extension = extension_map.get(language, language) if language else None
-        file_pattern = f"**/*.{extension}" if extension else None
-
-        return search_text(
+        return _find_similar(
             project_registry.get_project(project),
-            clean_snippet,
-            file_pattern=file_pattern,
-            max_results=max_results,
-            case_sensitive=False,  # Ignore case differences
-            whole_word=False,  # Allow partial matches
-            use_regex=False,  # Simple text search is more reliable for this case
+            snippet,
+            language_registry,
+            tree_cache,
+            language,
+            threshold,
+            max_results,
         )
 
     @mcp_server.tool()
