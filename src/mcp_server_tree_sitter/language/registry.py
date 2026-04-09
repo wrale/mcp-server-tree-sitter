@@ -132,7 +132,7 @@ class LanguageRegistry:
             "json",
             "yaml",
             "markdown",
-            "c_sharp",
+            "csharp",
             "objective_c",
             "xml",
         ]

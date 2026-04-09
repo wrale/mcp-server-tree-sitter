@@ -34,17 +34,17 @@ TEMPLATES = {
         (import_statement) @import
 
         (import_statement
-            source: (string) @import.source) @import.source_only
+            source: (string) @import.source)
 
         (import_statement
-            source: (string) @import.source
-            specifier: (named_imports
-                (import_specifier
-                    name: (identifier) @import.name))) @import.named
+            (import_clause
+                (named_imports
+                    (import_specifier
+                        name: (identifier) @import.name))))
 
         (import_statement
-            source: (string) @import.source
-            specifier: (namespace_import
-                name: (identifier) @import.namespace)) @import.namespace
+            (import_clause
+                (namespace_import
+                    (identifier) @import.namespace)))
     """,
 }
