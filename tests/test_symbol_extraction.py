@@ -442,9 +442,11 @@ def test_query_based_symbol_extraction(test_project) -> None:
         classes_q = Query(language_obj, class_query)
         imports_q = Query(language_obj, import_query)
 
-        function_captures = functions_q.captures(tree.root_node)
-        class_captures = classes_q.captures(tree.root_node)
-        import_captures = imports_q.captures(tree.root_node)
+        from mcp_server_tree_sitter.utils.tree_sitter_helpers import query_captures
+
+        function_captures = query_captures(functions_q, tree.root_node)
+        class_captures = query_captures(classes_q, tree.root_node)
+        import_captures = query_captures(imports_q, tree.root_node)
 
         # Process and extract unique symbols
         functions: Dict[str, Dict[str, Any]] = {}
