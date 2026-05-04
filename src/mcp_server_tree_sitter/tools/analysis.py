@@ -1,8 +1,15 @@
 """Code analysis tools using tree-sitter."""
 
+import json as _json
 import os
 from collections import Counter, defaultdict
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
+
+try:  # Python 3.11+
+    import tomllib as _tomllib
+except ImportError:  # Python 3.10
+    import tomli as _tomllib  # type: ignore[no-redef]
 
 from ..exceptions import SecurityError
 from ..language.query_templates import get_query_template
@@ -416,6 +423,167 @@ def process_symbol_matches(
             process_node(node, capture_name)
 
 
+def _read_toml(path: Path) -> Dict[str, Any]:
+    try:
+        with open(path, "rb") as f:
+            return _tomllib.load(f)
+    except (OSError, _tomllib.TOMLDecodeError):
+        return {}
+
+
+def _read_json(path: Path) -> Dict[str, Any]:
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = _json.load(f)
+        return data if isinstance(data, dict) else {}
+    except (OSError, _json.JSONDecodeError):
+        return {}
+
+
+def _resolve_python_target(root: Path, target: str) -> Optional[str]:
+    """Resolve a 'pkg.module:callable' or 'pkg.module' target to a file under root.
+
+    Tries ``<root>/<parts>.py`` and ``<root>/<parts>/__init__.py``,
+    plus the same under ``src/``.
+    """
+    module = target.split(":", 1)[0].strip()
+    if not module:
+        return None
+    parts = module.split(".")
+    for prefix in ((), ("src",)):
+        base = root.joinpath(*prefix, *parts)
+        for candidate in (base.with_suffix(".py"), base / "__init__.py"):
+            if candidate.is_file():
+                return str(candidate.relative_to(root))
+    return None
+
+
+def _detect_manifest_entry_points(
+    root: Path, languages: Dict[str, int]
+) -> List[Dict[str, str]]:
+    """Detect entry points declared in package manifests.
+
+    Augments filename-based heuristics with explicit declarations:
+
+    - Python: ``pyproject.toml`` ``[project.scripts]`` / ``[project.gui-scripts]``
+      (PEP 621) and ``[tool.poetry.scripts]``.
+    - Node:   ``package.json`` ``"bin"`` (string or object) and ``"main"``.
+    - Rust:   ``Cargo.toml`` ``[[bin]]``.
+
+    Returned entries include ``path`` and ``language`` (matching the existing
+    schema) plus ``name`` (declared script/binary name) and ``source``
+    (manifest file the entry was read from).
+    """
+    found: List[Dict[str, str]] = []
+
+    if "python" in languages:
+        pyproject = root / "pyproject.toml"
+        if pyproject.is_file():
+            data = _read_toml(pyproject)
+            scripts: Dict[str, str] = {}
+            project = data.get("project")
+            if isinstance(project, dict):
+                for key in ("scripts", "gui-scripts"):
+                    section = project.get(key)
+                    if isinstance(section, dict):
+                        for name, target in section.items():
+                            if isinstance(name, str) and isinstance(target, str):
+                                scripts.setdefault(name, target)
+            tool = data.get("tool")
+            if isinstance(tool, dict):
+                poetry = tool.get("poetry")
+                if isinstance(poetry, dict):
+                    poetry_scripts = poetry.get("scripts")
+                    if isinstance(poetry_scripts, dict):
+                        for name, target in poetry_scripts.items():
+                            if not isinstance(name, str):
+                                continue
+                            if isinstance(target, str):
+                                scripts.setdefault(name, target)
+                            elif isinstance(target, dict):
+                                ref = target.get("reference") or target.get("callable")
+                                if isinstance(ref, str):
+                                    scripts.setdefault(name, ref)
+            for script_name, target in scripts.items():
+                resolved = _resolve_python_target(root, target)
+                if resolved:
+                    found.append(
+                        {
+                            "path": resolved,
+                            "language": "python",
+                            "name": script_name,
+                            "source": "pyproject.toml",
+                        }
+                    )
+
+    if "javascript" in languages or "typescript" in languages:
+        pkg_json = root / "package.json"
+        if pkg_json.is_file():
+            data = _read_json(pkg_json)
+            entries: Dict[str, str] = {}
+            bin_field = data.get("bin")
+            if isinstance(bin_field, str):
+                pkg_name = data.get("name") if isinstance(data.get("name"), str) else "default"
+                entries[pkg_name] = bin_field  # type: ignore[index]
+            elif isinstance(bin_field, dict):
+                for k, v in bin_field.items():
+                    if isinstance(k, str) and isinstance(v, str):
+                        entries[k] = v
+            main_field = data.get("main")
+            if not entries and isinstance(main_field, str):
+                pkg_name = data.get("name") if isinstance(data.get("name"), str) else "main"
+                entries[pkg_name] = main_field  # type: ignore[index]
+            for script_name, target in entries.items():
+                rel = (root / target).resolve()
+                try:
+                    rel_path = rel.relative_to(root.resolve())
+                except ValueError:
+                    continue
+                if (root / rel_path).is_file():
+                    rel_str = str(rel_path)
+                    lang = "typescript" if rel_str.endswith((".ts", ".tsx", ".mts", ".cts")) else "javascript"
+                    found.append(
+                        {
+                            "path": rel_str,
+                            "language": lang,
+                            "name": script_name,
+                            "source": "package.json",
+                        }
+                    )
+
+    if "rust" in languages:
+        cargo = root / "Cargo.toml"
+        if cargo.is_file():
+            data = _read_toml(cargo)
+            bins = data.get("bin")
+            if isinstance(bins, list):
+                for b in bins:
+                    if not isinstance(b, dict):
+                        continue
+                    name = b.get("name")
+                    if not isinstance(name, str):
+                        continue
+                    candidates: List[str] = []
+                    explicit_path = b.get("path")
+                    if isinstance(explicit_path, str):
+                        candidates.append(explicit_path)
+                    candidates.extend([f"src/bin/{name}.rs", f"src/bin/{name}/main.rs"])
+                    for cand in candidates:
+                        target = root / cand
+                        if target.is_file():
+                            found.append(
+                                {
+                                    "path": str(target.relative_to(root)),
+                                    "language": "rust",
+                                    "name": name,
+                                    "source": "Cargo.toml",
+                                }
+                            )
+                            break
+
+    return found
+
+
 def analyze_project_structure(
     project: Any, language_registry: Any, scan_depth: int = 3, mcp_ctx: Optional[Any] = None
 ) -> Dict[str, Any]:
@@ -469,6 +637,15 @@ def analyze_project_structure(
                                 "language": language,
                             }
                         )
+
+    # Augment with manifest-declared entry points (pyproject.toml, package.json,
+    # Cargo.toml). Skip duplicates by path so a script that also matches a
+    # filename heuristic is only listed once.
+    existing_paths = {ep["path"] for ep in entry_points}
+    for ep in _detect_manifest_entry_points(root, languages):
+        if ep["path"] not in existing_paths:
+            entry_points.append(ep)
+            existing_paths.add(ep["path"])
 
     # Look for build configuration files
     build_files = []
